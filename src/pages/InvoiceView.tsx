@@ -12,6 +12,7 @@ import {
   Mail,
   Phone,
   MapPin,
+  Printer,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -102,8 +103,15 @@ export default function InvoiceView() {
               <p className="text-muted-foreground">Invoice Preview</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 print:hidden">
             {getStatusBadge(invoice.status)}
+            <Button
+              variant="outline"
+              onClick={() => window.print()}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
             <Button
               variant="outline"
               onClick={() => {
