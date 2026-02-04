@@ -1,7 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Pencil, Printer } from "lucide-react";
+import { ArrowLeft, Download, Pencil, Printer, Share2, Copy, Mail, MessageCircle } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { mockInvoices, mockCompanies } from "@/data/mockData";
 import { InvoiceStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -91,7 +97,7 @@ export default function InvoiceView() {
               <p className="text-muted-foreground">Invoice Preview</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {getStatusBadge(invoice.status)}
             <Button variant="outline" onClick={() => window.print()}>
               <Printer className="h-4 w-4 mr-2" />
@@ -110,6 +116,53 @@ export default function InvoiceView() {
               <Download className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    const url = window.location.href;
+                    navigator.clipboard.writeText(url);
+                    toast({
+                      title: "Link copied",
+                      description: "Invoice link copied to clipboard.",
+                    });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const url = window.location.href;
+                    const message = encodeURIComponent(
+                      `Invoice ${invoice.invoiceNumber} - ${invoice.clientName}\nTotal: ৳${invoice.totalAmount}\nDue: ৳${invoice.dueAmount}\n\nView: ${url}`
+                    );
+                    window.open(`https://wa.me/?text=${message}`, "_blank");
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Share via WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const subject = encodeURIComponent(`Invoice ${invoice.invoiceNumber}`);
+                    const body = encodeURIComponent(
+                      `Dear ${invoice.clientName},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoiceNumber}\nTotal Amount: ৳${invoice.totalAmount}\nPaid: ৳${invoice.paidAmount}\nDue: ৳${invoice.dueAmount}\n\nView Invoice: ${window.location.href}\n\nThank you for your business!`
+                    );
+                    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+                  }}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Share via Email
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               onClick={() => navigate(`/invoices/${id}/edit`)}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
