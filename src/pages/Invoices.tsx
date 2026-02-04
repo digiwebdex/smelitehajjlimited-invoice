@@ -285,8 +285,14 @@ export default function Invoices() {
 
                   {/* Mobile View */}
                   <div className="md:hidden space-y-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={selectedInvoices.has(invoice.id)}
+                          onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${invoice.invoiceNumber}`}
+                        />
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5">
                           <FileText className="h-5 w-5 text-primary" />
                         </div>
@@ -301,7 +307,7 @@ export default function Invoices() {
                       </div>
                       {getStatusBadge(invoice.status)}
                     </div>
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-sm pl-12">
                       <span className="text-muted-foreground">
                         {invoice.clientName} • {formatDate(invoice.date)}
                       </span>
