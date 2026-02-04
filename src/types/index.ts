@@ -29,11 +29,18 @@ export interface Invoice {
   invoiceNumber: string;
   companyId: string;
   clientName: string;
+  clientAddress?: string;
+  clientEmail?: string;
+  clientPhone?: string;
   date: Date;
+  dueDate?: Date;
   items: InvoiceItem[];
   installments: Installment[];
   status: InvoiceStatus;
   totalAmount: number;
+  vatRate?: number;
+  vatAmount?: number;
+  subtotal?: number;
   paidAmount: number;
   dueAmount: number;
 }
