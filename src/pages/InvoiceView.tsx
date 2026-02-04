@@ -13,6 +13,7 @@ import { InvoiceStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 
 export default function InvoiceView() {
   const { id } = useParams();
@@ -357,20 +358,21 @@ export default function InvoiceView() {
           )}
 
           {/* FOOTER */}
-          <div className="flex justify-between items-center mt-12 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-start mt-12 pt-6 border-t border-gray-200">
             <div>
               <p className="text-sm text-muted-foreground">
                 Thank you for your business!
               </p>
               {company?.address && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                   {company.address}
                 </p>
               )}
+              <p className="text-xs text-muted-foreground mt-2">
+                Generated on {formatDate(new Date())}
+              </p>
             </div>
-            <div className="text-right text-xs text-muted-foreground">
-              <p>Generated on {formatDate(new Date())}</p>
-            </div>
+            <InvoiceQRCode invoiceId={invoice.id} size={70} />
           </div>
         </div>
       </div>

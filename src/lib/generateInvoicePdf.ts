@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { Invoice, Company } from "@/types";
 
 const formatCurrency = (amount: number): string => {
@@ -19,7 +20,7 @@ const formatDate = (date: Date | undefined): string => {
   });
 };
 
-export const generateInvoicePdf = (invoice: Invoice, company?: Company) => {
+export const generateInvoicePdf = async (invoice: Invoice, company?: Company) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -373,20 +374,36 @@ export const generateInvoicePdf = (invoice: Invoice, company?: Company) => {
   }
 
   // ===================== FOOTER =====================
-  const footerY = pageHeight - 25;
+  const footerY = pageHeight - 30;
 
   doc.setDrawColor(...borderColor);
-  doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+  doc.line(margin, footerY - 10, pageWidth - margin, footerY - 10);
+
+  // Generate QR code for invoice URL
+  const invoiceUrl = `${window.location.origin}/invoices/${invoice.id}`;
+  try {
+    const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
+      width: 60,
+      margin: 1,
+      errorCorrectionLevel: "M",
+    });
+    doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 25, footerY - 8, 25, 25);
+    doc.setFontSize(6);
+    doc.setTextColor(...mutedColor);
+    doc.text("Scan to view", pageWidth - margin - 12.5, footerY + 20, { align: "center" });
+  } catch (error) {
+    console.error("Failed to generate QR code:", error);
+  }
 
   doc.setTextColor(...mutedColor);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("Thank you for your business!", pageWidth / 2, footerY, { align: "center" });
+  doc.text("Thank you for your business!", margin + 40, footerY, { align: "center" });
 
   doc.setFontSize(7);
   doc.text(
     `Generated on ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`,
-    pageWidth / 2,
+    margin + 40,
     footerY + 6,
     { align: "center" }
   );
