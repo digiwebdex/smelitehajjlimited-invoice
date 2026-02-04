@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileText, Loader2, Lock, Mail, AlertCircle } from "lucide-react";
+import { Loader2, Lock, Mail, AlertCircle } from "lucide-react";
+import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -41,9 +42,11 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg mb-4">
-            <FileText className="h-7 w-7 text-primary-foreground" />
-          </div>
+          <img 
+            src={smEliteLogo} 
+            alt="SM Elite Hajj Logo" 
+            className="h-20 w-20 rounded-2xl shadow-lg mb-4 object-cover"
+          />
           <h1 className="text-2xl font-bold text-foreground">S M Invoice Software</h1>
           <p className="text-sm text-muted-foreground mt-1">Invoice Management System</p>
         </div>

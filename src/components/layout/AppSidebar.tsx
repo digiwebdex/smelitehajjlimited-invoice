@@ -2,6 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import { Home, Building2, FileText, Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
 import {
   Sidebar,
   SidebarContent,
@@ -37,9 +38,11 @@ export function AppSidebar() {
     >
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-            <FileText className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>
+          <img 
+            src={smEliteLogo} 
+            alt="SM Elite Hajj Logo" 
+            className="h-9 w-9 rounded-lg object-cover shrink-0"
+          />
           {!isCollapsed && (
             <div className="animate-fade-in">
               <h1 className="text-base font-semibold text-sidebar-accent-foreground">
