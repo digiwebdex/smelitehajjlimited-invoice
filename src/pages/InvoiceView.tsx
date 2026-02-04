@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Pencil, Printer, Share2, Copy, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, Download, Pencil, Printer, Share2, Copy, Mail, MessageCircle, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,11 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { mockInvoices, mockCompanies } from "@/data/mockData";
-import { InvoiceStatus } from "@/types";
+import { useInvoice } from "@/hooks/useInvoices";
+import { useCompany } from "@/hooks/useCompanies";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 
 export default function InvoiceView() {
@@ -20,10 +19,10 @@ export default function InvoiceView() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const invoice = mockInvoices.find((inv) => inv.id === id);
-  const company = invoice
-    ? mockCompanies.find((c) => c.id === invoice.companyId)
-    : null;
+  const { data: invoice, isLoading: invoiceLoading } = useInvoice(id);
+  const { data: company, isLoading: companyLoading } = useCompany(invoice?.company_id);
+
+  const isLoading = invoiceLoading || companyLoading;
 
   const formatCurrency = (amount: number) => {
     return `৳${new Intl.NumberFormat("en-BD", {
@@ -32,17 +31,17 @@ export default function InvoiceView() {
     }).format(amount)}`;
   };
 
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return "—";
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  const getStatusBadge = (status: InvoiceStatus) => {
-    const styles = {
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
       paid: "bg-green-100 text-green-800",
       partial: "bg-yellow-100 text-yellow-800",
       unpaid: "bg-red-100 text-red-800",
@@ -51,13 +50,23 @@ export default function InvoiceView() {
       <span
         className={cn(
           "px-3 py-1 text-sm font-medium rounded-full capitalize",
-          styles[status]
+          styles[status] || styles.unpaid
         )}
       >
         {status}
       </span>
     );
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!invoice) {
     return (
@@ -78,6 +87,9 @@ export default function InvoiceView() {
     );
   }
 
+  const items = invoice.items || [];
+  const installments = invoice.installments || [];
+
   return (
     <AppLayout>
       <div className="min-h-screen print:bg-white print:min-h-0">
@@ -93,7 +105,7 @@ export default function InvoiceView() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                {invoice.invoiceNumber}
+                {invoice.invoice_number}
               </h1>
               <p className="text-muted-foreground">Invoice Preview</p>
             </div>
@@ -103,19 +115,6 @@ export default function InvoiceView() {
             <Button variant="outline" onClick={() => window.print()}>
               <Printer className="h-4 w-4 mr-2" />
               Print
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                generateInvoicePdf(invoice, company);
-                toast({
-                  title: "PDF exported",
-                  description: `${invoice.invoiceNumber}.pdf has been downloaded.`,
-                });
-              }}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -142,7 +141,7 @@ export default function InvoiceView() {
                   onClick={() => {
                     const url = window.location.href;
                     const message = encodeURIComponent(
-                      `Invoice ${invoice.invoiceNumber} - ${invoice.clientName}\nTotal: ৳${invoice.totalAmount}\nDue: ৳${invoice.dueAmount}\n\nView: ${url}`
+                      `Invoice ${invoice.invoice_number} - ${invoice.client_name}\nTotal: ৳${invoice.total_amount}\nDue: ৳${invoice.due_amount}\n\nView: ${url}`
                     );
                     window.open(`https://wa.me/?text=${message}`, "_blank");
                   }}
@@ -152,9 +151,9 @@ export default function InvoiceView() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    const subject = encodeURIComponent(`Invoice ${invoice.invoiceNumber}`);
+                    const subject = encodeURIComponent(`Invoice ${invoice.invoice_number}`);
                     const body = encodeURIComponent(
-                      `Dear ${invoice.clientName},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoiceNumber}\nTotal Amount: ৳${invoice.totalAmount}\nPaid: ৳${invoice.paidAmount}\nDue: ৳${invoice.dueAmount}\n\nView Invoice: ${window.location.href}\n\nThank you for your business!`
+                      `Dear ${invoice.client_name},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoice_number}\nTotal Amount: ৳${invoice.total_amount}\nPaid: ৳${invoice.paid_amount}\nDue: ৳${invoice.due_amount}\n\nView Invoice: ${window.location.href}\n\nThank you for your business!`
                     );
                     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
                   }}
@@ -179,9 +178,9 @@ export default function InvoiceView() {
           {/* HEADER */}
           <div className="flex justify-between items-start border-b border-gray-200 pb-6">
             <div className="flex items-center gap-4">
-              {company?.logo ? (
+              {company?.logo_url ? (
                 <img
-                  src={company.logo}
+                  src={company.logo_url}
                   alt={company.name}
                   className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
                 />
@@ -210,7 +209,7 @@ export default function InvoiceView() {
             <div className="text-right">
               <h1 className="text-3xl font-bold text-primary">INVOICE</h1>
               <p className="text-accent font-semibold text-lg mt-1">
-                {invoice.invoiceNumber}
+                {invoice.invoice_number}
               </p>
               <div className="mt-2">{getStatusBadge(invoice.status)}</div>
             </div>
@@ -223,33 +222,33 @@ export default function InvoiceView() {
                 Bill To
               </p>
               <h3 className="font-bold text-lg text-foreground">
-                {invoice.clientName}
+                {invoice.client_name}
               </h3>
-              {invoice.clientEmail && (
+              {invoice.client_email && (
                 <p className="text-sm text-muted-foreground">
-                  {invoice.clientEmail}
+                  {invoice.client_email}
                 </p>
               )}
-              {invoice.clientPhone && (
+              {invoice.client_phone && (
                 <p className="text-sm text-muted-foreground">
-                  {invoice.clientPhone}
+                  {invoice.client_phone}
                 </p>
               )}
-              {invoice.clientAddress && (
+              {invoice.client_address && (
                 <p className="text-sm text-muted-foreground">
-                  {invoice.clientAddress}
+                  {invoice.client_address}
                 </p>
               )}
             </div>
             <div className="text-right text-sm space-y-1">
               <p>
                 <span className="text-muted-foreground">Invoice Date:</span>{" "}
-                <span className="font-medium">{formatDate(invoice.date)}</span>
+                <span className="font-medium">{formatDate(invoice.invoice_date)}</span>
               </p>
               <p>
                 <span className="text-muted-foreground">Due Date:</span>{" "}
                 <span className="font-medium">
-                  {formatDate(invoice.dueDate)}
+                  {formatDate(invoice.due_date)}
                 </span>
               </p>
             </div>
@@ -272,14 +271,14 @@ export default function InvoiceView() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item, i) => (
+                {items.map((item, i) => (
                   <tr key={item.id} className="border-b border-gray-100">
                     <td className="py-4 text-muted-foreground">{i + 1}</td>
                     <td className="py-4 font-medium text-foreground">
                       {item.title || "—"}
                     </td>
                     <td className="py-4 text-right font-semibold text-foreground">
-                      {formatCurrency(item.amount)}
+                      {formatCurrency(Number(item.amount))}
                     </td>
                   </tr>
                 ))}
@@ -293,49 +292,49 @@ export default function InvoiceView() {
               <div className="flex justify-between py-2">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium">
-                  {formatCurrency(invoice.subtotal || 0)}
+                  {formatCurrency(Number(invoice.subtotal) || 0)}
                 </span>
               </div>
-              {(invoice.vatRate || 0) > 0 && (
+              {Number(invoice.vat_rate) > 0 && (
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">
-                    VAT ({invoice.vatRate}%)
+                    VAT ({invoice.vat_rate}%)
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(invoice.vatAmount || 0)}
+                    {formatCurrency(Number(invoice.vat_amount) || 0)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between py-2 border-t border-gray-200 font-bold text-base">
                 <span>Total</span>
-                <span>{formatCurrency(invoice.totalAmount)}</span>
+                <span>{formatCurrency(Number(invoice.total_amount))}</span>
               </div>
               <div className="flex justify-between py-2 text-green-600 font-semibold">
                 <span>Total Paid</span>
-                <span>{formatCurrency(invoice.paidAmount)}</span>
+                <span>{formatCurrency(Number(invoice.paid_amount))}</span>
               </div>
               <div
                 className={cn(
                   "flex justify-between px-4 py-3 rounded-lg font-bold",
-                  invoice.dueAmount > 0
+                  Number(invoice.due_amount) > 0
                     ? "bg-red-600 text-white"
                     : "bg-green-600 text-white"
                 )}
               >
-                <span>{invoice.dueAmount > 0 ? "Balance Due" : "Paid in Full"}</span>
-                <span>{formatCurrency(invoice.dueAmount)}</span>
+                <span>{Number(invoice.due_amount) > 0 ? "Balance Due" : "Paid in Full"}</span>
+                <span>{formatCurrency(Number(invoice.due_amount))}</span>
               </div>
             </div>
           </div>
 
           {/* PAYMENT HISTORY */}
-          {invoice.installments.length > 0 && (
+          {installments.length > 0 && (
             <div className="mt-10 border border-gray-200 rounded-lg p-6 bg-gray-50 print:bg-gray-50">
               <h4 className="font-semibold text-foreground mb-4 uppercase tracking-wide text-sm">
                 Payment History
               </h4>
               <div className="space-y-2">
-                {invoice.installments.map((pay, i) => (
+                {installments.map((pay, i) => (
                   <div
                     key={pay.id}
                     className="flex justify-between items-center bg-white p-4 rounded-lg border border-gray-100"
@@ -345,11 +344,11 @@ export default function InvoiceView() {
                         #{i + 1}
                       </span>
                       <span className="text-sm text-foreground">
-                        {formatDate(pay.paidDate)}
+                        {formatDate(pay.paid_date)}
                       </span>
                     </div>
                     <div className="text-green-600 font-semibold">
-                      {formatCurrency(pay.amount)}
+                      {formatCurrency(Number(pay.amount))}
                     </div>
                   </div>
                 ))}
@@ -369,7 +368,7 @@ export default function InvoiceView() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground mt-2">
-                Generated on {formatDate(new Date())}
+                Generated on {formatDate(new Date().toISOString())}
               </p>
             </div>
             <InvoiceQRCode invoiceId={invoice.id} size={70} />

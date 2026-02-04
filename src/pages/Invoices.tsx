@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, FileText, Filter, Download, X, Eye, Pencil, CalendarIcon, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, FileText, Filter, Download, X, Eye, Pencil, CalendarIcon, FileSpreadsheet, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -19,17 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockInvoices, mockCompanies } from "@/data/mockData";
-import { Invoice, InvoiceStatus } from "@/types";
+import { useInvoices, Invoice } from "@/hooks/useInvoices";
+import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
-import { exportInvoicesToExcel } from "@/lib/exportToExcel";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Invoices() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [invoices] = useState<Invoice[]>(mockInvoices);
+  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
+  const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
@@ -37,15 +37,17 @@ export default function Invoices() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
 
+  const isLoading = invoicesLoading || companiesLoading;
+
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
-      invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
+      invoice.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.client_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || invoice.status === statusFilter;
     const matchesCompany =
-      companyFilter === "all" || invoice.companyId === companyFilter;
-    const invoiceDate = new Date(invoice.date);
+      companyFilter === "all" || invoice.company_id === companyFilter;
+    const invoiceDate = new Date(invoice.invoice_date);
     const matchesStartDate = !startDate || invoiceDate >= startDate;
     const matchesEndDate = !endDate || invoiceDate <= endDate;
     return matchesSearch && matchesStatus && matchesCompany && matchesStartDate && matchesEndDate;
@@ -76,19 +78,6 @@ export default function Invoices() {
     }
   };
 
-  const handleBatchExport = () => {
-    const invoicesToExport = invoices.filter((inv) => selectedInvoices.has(inv.id));
-    invoicesToExport.forEach((invoice) => {
-      const company = mockCompanies.find((c) => c.id === invoice.companyId);
-      generateInvoicePdf(invoice, company);
-    });
-    toast({
-      title: "PDFs exported",
-      description: `${invoicesToExport.length} invoice${invoicesToExport.length > 1 ? "s" : ""} downloaded.`,
-    });
-    setSelectedInvoices(new Set());
-  };
-
   const formatCurrency = (amount: number) => {
     return `৳${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 0,
@@ -96,15 +85,15 @@ export default function Invoices() {
     }).format(amount)}`;
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  const getStatusBadge = (status: InvoiceStatus) => {
+  const getStatusBadge = (status: Invoice["status"]) => {
     const styles = {
       paid: "status-paid",
       partial: "status-partial",
@@ -123,8 +112,18 @@ export default function Invoices() {
   };
 
   const getCompanyName = (companyId: string) => {
-    return mockCompanies.find((c) => c.id === companyId)?.name || "Unknown";
+    return companies.find((c) => c.id === companyId)?.name || "Unknown";
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -140,19 +139,6 @@ export default function Invoices() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                exportInvoicesToExcel(filteredInvoices, getCompanyName);
-                toast({
-                  title: "Excel exported",
-                  description: `${filteredInvoices.length} invoice${filteredInvoices.length > 1 ? "s" : ""} exported to Excel.`,
-                });
-              }}
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export Excel
-            </Button>
             <Button
               onClick={() => navigate("/invoices/new")}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
@@ -180,10 +166,6 @@ export default function Invoices() {
                 Clear
               </Button>
             </div>
-            <Button onClick={handleBatchExport} size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export {selectedInvoices.size} PDF{selectedInvoices.size > 1 ? "s" : ""}
-            </Button>
           </div>
         )}
 
@@ -217,7 +199,7 @@ export default function Invoices() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Companies</SelectItem>
-                {mockCompanies.map((company) => (
+                {companies.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.name}
                   </SelectItem>
@@ -354,7 +336,7 @@ export default function Invoices() {
                       <Checkbox
                         checked={selectedInvoices.has(invoice.id)}
                         onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
-                        aria-label={`Select ${invoice.invoiceNumber}`}
+                        aria-label={`Select ${invoice.invoice_number}`}
                       />
                     </div>
                     <div className="col-span-2">
@@ -363,22 +345,22 @@ export default function Invoices() {
                           <FileText className="h-4 w-4 text-primary" />
                         </div>
                         <span className="font-medium text-foreground">
-                          {invoice.invoiceNumber}
+                          {invoice.invoice_number}
                         </span>
                       </div>
                     </div>
                     <div className="col-span-2 text-muted-foreground truncate">
-                      {getCompanyName(invoice.companyId)}
+                      {getCompanyName(invoice.company_id)}
                     </div>
                     <div className="col-span-2 text-muted-foreground truncate">
-                      {invoice.clientName}
+                      {invoice.client_name}
                     </div>
                     <div className="col-span-1 text-muted-foreground text-sm">
-                      {formatDate(invoice.date)}
+                      {formatDate(invoice.invoice_date)}
                     </div>
                     <div className="col-span-1 text-right">
                       <p className="font-semibold text-foreground">
-                        {formatCurrency(invoice.totalAmount)}
+                        {formatCurrency(Number(invoice.total_amount))}
                       </p>
                     </div>
                     <div className="col-span-1 text-center">
@@ -413,17 +395,17 @@ export default function Invoices() {
                         <Checkbox
                           checked={selectedInvoices.has(invoice.id)}
                           onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
-                          aria-label={`Select ${invoice.invoiceNumber}`}
+                          aria-label={`Select ${invoice.invoice_number}`}
                         />
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5">
                           <FileText className="h-5 w-5 text-primary" />
                         </div>
                         <div>
                           <p className="font-medium text-foreground">
-                            {invoice.invoiceNumber}
+                            {invoice.invoice_number}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {getCompanyName(invoice.companyId)}
+                            {getCompanyName(invoice.company_id)}
                           </p>
                         </div>
                       </div>
@@ -431,11 +413,11 @@ export default function Invoices() {
                     </div>
                     <div className="flex items-center justify-between text-sm pl-12">
                       <span className="text-muted-foreground">
-                        {invoice.clientName} • {formatDate(invoice.date)}
+                        {invoice.client_name} • {formatDate(invoice.invoice_date)}
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-foreground">
-                          {formatCurrency(invoice.totalAmount)}
+                          {formatCurrency(Number(invoice.total_amount))}
                         </span>
                         <Button
                           variant="ghost"

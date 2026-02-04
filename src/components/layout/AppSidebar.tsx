@@ -98,12 +98,12 @@ export function AppSidebar() {
             isCollapsed && "justify-center"
           )}>
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold shrink-0">
-              {user.name.charAt(0).toUpperCase()}
+              {(user.user_metadata?.full_name || user.email || "U").charAt(0).toUpperCase()}
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-sidebar-accent-foreground truncate">
-                  {user.name}
+                  {user.user_metadata?.full_name || "User"}
                 </p>
                 <p className="text-[10px] text-sidebar-foreground truncate">
                   {user.email}

@@ -1,76 +1,99 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-interface User {
-  email: string;
-  name: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  signup: (email: string, password: string, fullName: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Admin credentials
-const ADMIN_CREDENTIALS = {
-  email: "smelitehajj@gmail.com",
-  password: "admin123@",
-  name: "SM Elite Hajj",
-};
-
-const AUTH_STORAGE_KEY = "sm_invoice_auth";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (storedAuth) {
-      try {
-        const parsedUser = JSON.parse(storedAuth);
-        setUser(parsedUser);
-      } catch {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (
-      email.toLowerCase() === ADMIN_CREDENTIALS.email.toLowerCase() &&
-      password === ADMIN_CREDENTIALS.password
-    ) {
-      const loggedInUser = { email: ADMIN_CREDENTIALS.email, name: ADMIN_CREDENTIALS.name };
-      setUser(loggedInUser);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(loggedInUser));
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       return { success: true };
+    } catch (error) {
+      return { success: false, error: "An unexpected error occurred" };
     }
-
-    return { success: false, error: "Invalid email or password" };
   };
 
-  const logout = () => {
+  const signup = async (email: string, password: string, fullName: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: "An unexpected error occurred" };
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setSession(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        session,
+        isAuthenticated: !!session,
         isLoading,
         login,
+        signup,
         logout,
       }}
     >

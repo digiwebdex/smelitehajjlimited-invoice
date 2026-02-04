@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Building2, Mail, Phone, MapPin, Calendar, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, Mail, Phone, MapPin, Calendar, Search, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,14 +24,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { mockCompanies } from "@/data/mockData";
-import { Company } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany, Company } from "@/hooks/useCompanies";
 import { LogoUpload } from "@/components/LogoUpload";
 
 export default function Companies() {
-  const { toast } = useToast();
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies);
+  const { data: companies = [], isLoading } = useCompanies();
+  const createCompany = useCreateCompany();
+  const updateCompany = useUpdateCompany();
+  const deleteCompany = useDeleteCompany();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [deleteCompanyId, setDeleteCompanyId] = useState<string | null>(null);
@@ -43,9 +44,9 @@ export default function Companies() {
     return companies.filter(
       (company) =>
         company.name.toLowerCase().includes(query) ||
-        company.email.toLowerCase().includes(query) ||
-        company.phone.toLowerCase().includes(query) ||
-        company.address.toLowerCase().includes(query) ||
+        (company.email && company.email.toLowerCase().includes(query)) ||
+        (company.phone && company.phone.toLowerCase().includes(query)) ||
+        (company.address && company.address.toLowerCase().includes(query)) ||
         (company.tagline && company.tagline.toLowerCase().includes(query))
     );
   }, [companies, searchQuery]);
@@ -56,11 +57,11 @@ export default function Companies() {
     email: "",
     phone: "",
     address: "",
-    logo: undefined as string | undefined,
+    logo_url: undefined as string | undefined,
   });
 
   const resetForm = () => {
-    setFormData({ name: "", tagline: "", email: "", phone: "", address: "", logo: undefined });
+    setFormData({ name: "", tagline: "", email: "", phone: "", address: "", logo_url: undefined });
     setEditingCompany(null);
   };
 
@@ -70,10 +71,10 @@ export default function Companies() {
       setFormData({
         name: company.name,
         tagline: company.tagline || "",
-        email: company.email,
-        phone: company.phone,
-        address: company.address,
-        logo: company.logo,
+        email: company.email || "",
+        phone: company.phone || "",
+        address: company.address || "",
+        logo_url: company.logo_url || undefined,
       });
     } else {
       resetForm();
@@ -86,49 +87,55 @@ export default function Companies() {
     resetForm();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCompany) {
-      setCompanies(
-        companies.map((c) =>
-          c.id === editingCompany.id
-            ? { ...c, ...formData }
-            : c
-        )
-      );
-      toast({ title: "Company updated", description: `${formData.name} has been updated.` });
+      await updateCompany.mutateAsync({
+        id: editingCompany.id,
+        name: formData.name,
+        tagline: formData.tagline || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+        logo_url: formData.logo_url,
+      });
     } else {
-      const newCompany: Company = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date(),
-      };
-      setCompanies([...companies, newCompany]);
-      toast({ title: "Company created", description: `${formData.name} has been added.` });
+      await createCompany.mutateAsync({
+        name: formData.name,
+        tagline: formData.tagline || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+        logo_url: formData.logo_url,
+      });
     }
     handleCloseDialog();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteCompanyId) {
-      const company = companies.find((c) => c.id === deleteCompanyId);
-      setCompanies(companies.filter((c) => c.id !== deleteCompanyId));
-      toast({
-        title: "Company deleted",
-        description: `${company?.name} has been removed.`,
-        variant: "destructive",
-      });
+      await deleteCompany.mutateAsync(deleteCompanyId);
       setDeleteCompanyId(null);
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -166,8 +173,8 @@ export default function Companies() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <LogoUpload
-                  currentLogo={formData.logo}
-                  onLogoChange={(logo) => setFormData({ ...formData, logo })}
+                  currentLogo={formData.logo_url}
+                  onLogoChange={(logo) => setFormData({ ...formData, logo_url: logo })}
                   companyName={formData.name}
                 />
                 <div className="space-y-2">
@@ -203,7 +210,6 @@ export default function Companies() {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     placeholder="billing@company.com"
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -215,7 +221,6 @@ export default function Companies() {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     placeholder="+880 1XXX XXXXXX"
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -228,7 +233,6 @@ export default function Companies() {
                     }
                     placeholder="Enter full address"
                     rows={3}
-                    required
                   />
                 </div>
                 <DialogFooter className="mt-6">
@@ -239,7 +243,14 @@ export default function Companies() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Button 
+                    type="submit" 
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    disabled={createCompany.isPending || updateCompany.isPending}
+                  >
+                    {(createCompany.isPending || updateCompany.isPending) && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
                     {editingCompany ? "Save Changes" : "Create Company"}
                   </Button>
                 </DialogFooter>
@@ -271,9 +282,9 @@ export default function Companies() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
-                    {company.logo ? (
+                    {company.logo_url ? (
                       <img
-                        src={company.logo}
+                        src={company.logo_url}
                         alt={company.name}
                         className="h-8 w-8 rounded-lg object-cover"
                       />
@@ -292,7 +303,7 @@ export default function Companies() {
                     )}
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Calendar className="h-3 w-3" />
-                      {formatDate(company.createdAt)}
+                      {formatDate(company.created_at)}
                     </p>
                   </div>
                 </div>
@@ -318,22 +329,28 @@ export default function Companies() {
 
               {/* Contact Info */}
               <div className="space-y-3 pt-2 border-t border-border">
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground truncate">
-                    {company.email}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground">{company.phone}</span>
-                </div>
-                <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground line-clamp-2">
-                    {company.address}
-                  </span>
-                </div>
+                {company.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground truncate">
+                      {company.email}
+                    </span>
+                  </div>
+                )}
+                {company.phone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">{company.phone}</span>
+                  </div>
+                )}
+                {company.address && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground line-clamp-2">
+                      {company.address}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -381,7 +398,11 @@ export default function Companies() {
               <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-destructive hover:bg-destructive/90"
+                disabled={deleteCompany.isPending}
               >
+                {deleteCompany.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>

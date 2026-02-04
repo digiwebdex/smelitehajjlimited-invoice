@@ -6,10 +6,9 @@ import {
   Trash2,
   Save,
   FileText,
-  Calendar,
   DollarSign,
   CheckCircle,
-  Download,
+  Loader2,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -22,144 +21,139 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockInvoices, mockCompanies } from "@/data/mockData";
-import { Invoice, InvoiceItem, Installment, InvoiceStatus } from "@/types";
+import { useInvoice, useCreateInvoice, useUpdateInvoice, useNextInvoiceNumber } from "@/hooks/useInvoices";
+import { useCompanies } from "@/hooks/useCompanies";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+
+interface LocalItem {
+  id: string;
+  title: string;
+  amount: number;
+}
+
+interface LocalInstallment {
+  id: string;
+  amount: number;
+  paid_date: string;
+}
+
+type InvoiceStatus = "unpaid" | "partial" | "paid";
 
 export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isNew = id === "new";
+  const isNew = !id || id === "new";
 
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const count = mockInvoices.length + 1;
-    return `INV-${year}-${count.toString().padStart(3, "0")}`;
-  };
+  const { data: existingInvoice, isLoading: invoiceLoading } = useInvoice(isNew ? undefined : id);
+  const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  const { data: nextInvoiceNumber } = useNextInvoiceNumber();
+  const createInvoice = useCreateInvoice();
+  const updateInvoice = useUpdateInvoice();
 
-  const emptyInvoice: Invoice = {
-    id: "",
-    invoiceNumber: generateInvoiceNumber(),
-    companyId: "",
-    clientName: "",
-    clientAddress: "",
-    clientEmail: "",
-    clientPhone: "",
-    date: new Date(),
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    items: [{ id: "1", title: "", amount: 0 }],
-    installments: [],
-    status: "unpaid",
-    subtotal: 0,
-    vatRate: 0,
-    vatAmount: 0,
-    totalAmount: 0,
-    paidAmount: 0,
-    dueAmount: 0,
-  };
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState("");
+  const [vatRate, setVatRate] = useState(0);
+  const [items, setItems] = useState<LocalItem[]>([{ id: "1", title: "", amount: 0 }]);
+  const [installments, setInstallments] = useState<LocalInstallment[]>([]);
 
-  const existingInvoice = mockInvoices.find((inv) => inv.id === id);
-  const [invoice, setInvoice] = useState<Invoice>(
-    isNew ? emptyInvoice : existingInvoice || emptyInvoice
-  );
+  // Calculated values
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const vatAmount = (subtotal * vatRate) / 100;
+  const totalAmount = subtotal + vatAmount;
+  const paidAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
+  const dueAmount = totalAmount - paidAmount;
 
-  // Calculate totals whenever items, installments, or VAT changes
+  let status: InvoiceStatus = "unpaid";
+  if (paidAmount >= totalAmount && totalAmount > 0) {
+    status = "paid";
+  } else if (paidAmount > 0) {
+    status = "partial";
+  }
+
+  // Load existing invoice data
   useEffect(() => {
-    const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
-    const vatAmount = (subtotal * (invoice.vatRate || 0)) / 100;
-    const totalAmount = subtotal + vatAmount;
-    const paidAmount = invoice.installments.reduce(
-      (sum, inst) => sum + inst.amount,
-      0
-    );
-    const dueAmount = totalAmount - paidAmount;
-
-    let status: InvoiceStatus = "unpaid";
-    if (paidAmount >= totalAmount && totalAmount > 0) {
-      status = "paid";
-    } else if (paidAmount > 0) {
-      status = "partial";
+    if (isNew && nextInvoiceNumber) {
+      setInvoiceNumber(nextInvoiceNumber);
     }
+  }, [isNew, nextInvoiceNumber]);
 
-    setInvoice((prev) => ({
-      ...prev,
-      subtotal,
-      vatAmount,
-      totalAmount,
-      paidAmount,
-      dueAmount,
-      status,
-    }));
-  }, [invoice.items, invoice.installments, invoice.vatRate]);
+  useEffect(() => {
+    if (existingInvoice) {
+      setInvoiceNumber(existingInvoice.invoice_number);
+      setCompanyId(existingInvoice.company_id);
+      setClientName(existingInvoice.client_name);
+      setClientEmail(existingInvoice.client_email || "");
+      setClientPhone(existingInvoice.client_phone || "");
+      setClientAddress(existingInvoice.client_address || "");
+      setInvoiceDate(existingInvoice.invoice_date);
+      setDueDate(existingInvoice.due_date || "");
+      setVatRate(Number(existingInvoice.vat_rate) || 0);
+      
+      if (existingInvoice.items && existingInvoice.items.length > 0) {
+        setItems(existingInvoice.items.map((item) => ({
+          id: item.id,
+          title: item.title,
+          amount: Number(item.amount),
+        })));
+      }
+      
+      if (existingInvoice.installments) {
+        setInstallments(existingInvoice.installments.map((inst) => ({
+          id: inst.id,
+          amount: Number(inst.amount),
+          paid_date: inst.paid_date,
+        })));
+      }
+    }
+  }, [existingInvoice]);
 
   const handleAddItem = () => {
-    const newItem: InvoiceItem = {
-      id: Date.now().toString(),
-      title: "",
-      amount: 0,
-    };
-    setInvoice({ ...invoice, items: [...invoice.items, newItem] });
+    setItems([...items, { id: Date.now().toString(), title: "", amount: 0 }]);
   };
 
   const handleRemoveItem = (itemId: string) => {
-    if (invoice.items.length > 1) {
-      setInvoice({
-        ...invoice,
-        items: invoice.items.filter((item) => item.id !== itemId),
-      });
+    if (items.length > 1) {
+      setItems(items.filter((item) => item.id !== itemId));
     }
   };
 
-  const handleUpdateItem = (
-    itemId: string,
-    field: keyof InvoiceItem,
-    value: string | number
-  ) => {
-    setInvoice({
-      ...invoice,
-      items: invoice.items.map((item) =>
-        item.id === itemId ? { ...item, [field]: value } : item
-      ),
-    });
+  const handleUpdateItem = (itemId: string, field: keyof LocalItem, value: string | number) => {
+    setItems(items.map((item) =>
+      item.id === itemId ? { ...item, [field]: value } : item
+    ));
   };
 
   const handleAddInstallment = () => {
-    const newInstallment: Installment = {
-      id: Date.now().toString(),
-      amount: 0,
-      paidDate: new Date(),
-    };
-    setInvoice({
-      ...invoice,
-      installments: [...invoice.installments, newInstallment],
-    });
+    setInstallments([
+      ...installments,
+      { id: Date.now().toString(), amount: 0, paid_date: new Date().toISOString().split("T")[0] },
+    ]);
   };
 
   const handleRemoveInstallment = (instId: string) => {
-    setInvoice({
-      ...invoice,
-      installments: invoice.installments.filter((inst) => inst.id !== instId),
-    });
+    setInstallments(installments.filter((inst) => inst.id !== instId));
   };
 
   const handleUpdateInstallment = (
     instId: string,
-    field: keyof Installment,
-    value: string | number | Date
+    field: keyof LocalInstallment,
+    value: string | number
   ) => {
-    setInvoice({
-      ...invoice,
-      installments: invoice.installments.map((inst) =>
-        inst.id === instId ? { ...inst, [field]: value } : inst
-      ),
-    });
+    setInstallments(installments.map((inst) =>
+      inst.id === instId ? { ...inst, [field]: value } : inst
+    ));
   };
 
-  const handleSave = () => {
-    if (!invoice.companyId || !invoice.clientName) {
+  const handleSave = async () => {
+    if (!companyId || !clientName) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -168,12 +162,42 @@ export default function InvoiceDetail() {
       return;
     }
 
-    toast({
-      title: isNew ? "Invoice created" : "Invoice updated",
-      description: `${invoice.invoiceNumber} has been saved.`,
-    });
+    const invoiceData = {
+      company_id: companyId,
+      invoice_number: invoiceNumber,
+      client_name: clientName,
+      client_email: clientEmail || undefined,
+      client_phone: clientPhone || undefined,
+      client_address: clientAddress || undefined,
+      invoice_date: invoiceDate,
+      due_date: dueDate || undefined,
+      subtotal,
+      vat_rate: vatRate,
+      vat_amount: vatAmount,
+      total_amount: totalAmount,
+      paid_amount: paidAmount,
+      due_amount: dueAmount,
+      status,
+      items: items.filter((item) => item.title.trim() !== "").map((item) => ({
+        title: item.title,
+        amount: item.amount,
+      })),
+      installments: installments.map((inst) => ({
+        amount: inst.amount,
+        paid_date: inst.paid_date,
+      })),
+    };
 
-    navigate("/invoices");
+    try {
+      if (isNew) {
+        await createInvoice.mutateAsync(invoiceData);
+      } else {
+        await updateInvoice.mutateAsync({ id: id!, ...invoiceData });
+      }
+      navigate("/invoices");
+    } catch (error) {
+      // Error handling is done in the hooks
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -201,7 +225,20 @@ export default function InvoiceDetail() {
     );
   };
 
-  if (!isNew && !existingInvoice) {
+  const isLoading = invoiceLoading || companiesLoading;
+  const isSaving = createInvoice.isPending || updateInvoice.isPending;
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!isNew && !existingInvoice && !invoiceLoading) {
     return (
       <AppLayout>
         <div className="text-center py-12">
@@ -235,7 +272,7 @@ export default function InvoiceDetail() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                {isNew ? "New Invoice" : invoice.invoiceNumber}
+                {isNew ? "New Invoice" : invoiceNumber}
               </h1>
               <p className="text-muted-foreground">
                 {isNew ? "Create a new invoice" : "Edit invoice details"}
@@ -243,26 +280,17 @@ export default function InvoiceDetail() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {getStatusBadge(invoice.status)}
-            <Button
-              variant="outline"
-              onClick={() => {
-                const company = mockCompanies.find(c => c.id === invoice.companyId);
-                generateInvoicePdf(invoice, company);
-                toast({
-                  title: "PDF exported",
-                  description: `${invoice.invoiceNumber}.pdf has been downloaded.`,
-                });
-              }}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
+            {getStatusBadge(status)}
             <Button
               onClick={handleSave}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={isSaving}
             >
-              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Save
             </Button>
           </div>
@@ -283,25 +311,18 @@ export default function InvoiceDetail() {
                   <Label htmlFor="invoiceNumber">Invoice Number</Label>
                   <Input
                     id="invoiceNumber"
-                    value={invoice.invoiceNumber}
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, invoiceNumber: e.target.value })
-                    }
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company">Company *</Label>
-                  <Select
-                    value={invoice.companyId}
-                    onValueChange={(value) =>
-                      setInvoice({ ...invoice, companyId: value })
-                    }
-                  >
+                  <Select value={companyId} onValueChange={setCompanyId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select company" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockCompanies.map((company) => (
+                      {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}
                         </SelectItem>
@@ -314,14 +335,8 @@ export default function InvoiceDetail() {
                   <Input
                     id="date"
                     type="date"
-                    value={
-                      invoice.date instanceof Date
-                        ? invoice.date.toISOString().split("T")[0]
-                        : new Date(invoice.date).toISOString().split("T")[0]
-                    }
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, date: new Date(e.target.value) })
-                    }
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -329,16 +344,8 @@ export default function InvoiceDetail() {
                   <Input
                     id="dueDate"
                     type="date"
-                    value={
-                      invoice.dueDate instanceof Date
-                        ? invoice.dueDate.toISOString().split("T")[0]
-                        : invoice.dueDate
-                        ? new Date(invoice.dueDate).toISOString().split("T")[0]
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, dueDate: new Date(e.target.value) })
-                    }
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
                   />
                 </div>
               </div>
@@ -352,10 +359,8 @@ export default function InvoiceDetail() {
                   <Label htmlFor="clientName">Client Name *</Label>
                   <Input
                     id="clientName"
-                    value={invoice.clientName}
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, clientName: e.target.value })
-                    }
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
                     placeholder="Enter client name"
                   />
                 </div>
@@ -364,10 +369,8 @@ export default function InvoiceDetail() {
                   <Input
                     id="clientEmail"
                     type="email"
-                    value={invoice.clientEmail || ""}
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, clientEmail: e.target.value })
-                    }
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
                     placeholder="client@example.com"
                   />
                 </div>
@@ -375,10 +378,8 @@ export default function InvoiceDetail() {
                   <Label htmlFor="clientPhone">Client Phone</Label>
                   <Input
                     id="clientPhone"
-                    value={invoice.clientPhone || ""}
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, clientPhone: e.target.value })
-                    }
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
                     placeholder="+880 1XXX XXXXXX"
                   />
                 </div>
@@ -386,10 +387,8 @@ export default function InvoiceDetail() {
                   <Label htmlFor="clientAddress">Client Address</Label>
                   <Input
                     id="clientAddress"
-                    value={invoice.clientAddress || ""}
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, clientAddress: e.target.value })
-                    }
+                    value={clientAddress}
+                    onChange={(e) => setClientAddress(e.target.value)}
                     placeholder="Enter address"
                   />
                 </div>
@@ -409,7 +408,7 @@ export default function InvoiceDetail() {
                 </Button>
               </div>
               <div className="space-y-3">
-                {invoice.items.map((item, index) => (
+                {items.map((item, index) => (
                   <div
                     key={item.id}
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
@@ -419,9 +418,7 @@ export default function InvoiceDetail() {
                     </span>
                     <Input
                       value={item.title}
-                      onChange={(e) =>
-                        handleUpdateItem(item.id, "title", e.target.value)
-                      }
+                      onChange={(e) => handleUpdateItem(item.id, "title", e.target.value)}
                       placeholder="Item description"
                       className="flex-1"
                     />
@@ -432,13 +429,7 @@ export default function InvoiceDetail() {
                       <Input
                         type="number"
                         value={item.amount || ""}
-                        onChange={(e) =>
-                          handleUpdateItem(
-                            item.id,
-                            "amount",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
+                        onChange={(e) => handleUpdateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
                         placeholder="0"
                         className="pl-7"
                       />
@@ -448,7 +439,7 @@ export default function InvoiceDetail() {
                       size="icon"
                       className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
                       onClick={() => handleRemoveItem(item.id)}
-                      disabled={invoice.items.length === 1}
+                      disabled={items.length === 1}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -464,27 +455,23 @@ export default function InvoiceDetail() {
                   <CheckCircle className="h-5 w-5 text-accent" />
                   Payment Installments
                 </h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddInstallment}
-                >
+                <Button variant="outline" size="sm" onClick={handleAddInstallment}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Payment
                 </Button>
               </div>
-              {invoice.installments.length === 0 ? (
+              {installments.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
                   No payments recorded yet. Add a payment when the client pays.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {invoice.installments.map((inst, index) => (
+                  {installments.map((inst, index) => (
                     <div
                       key={inst.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200"
                     >
-                      <span className="text-sm text-success font-medium w-6">
+                      <span className="text-sm text-green-600 font-medium w-6">
                         #{index + 1}
                       </span>
                       <div className="relative w-32">
@@ -494,31 +481,15 @@ export default function InvoiceDetail() {
                         <Input
                           type="number"
                           value={inst.amount || ""}
-                          onChange={(e) =>
-                            handleUpdateInstallment(
-                              inst.id,
-                              "amount",
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
+                          onChange={(e) => handleUpdateInstallment(inst.id, "amount", parseFloat(e.target.value) || 0)}
                           placeholder="0"
                           className="pl-7"
                         />
                       </div>
                       <Input
                         type="date"
-                        value={
-                          inst.paidDate instanceof Date
-                            ? inst.paidDate.toISOString().split("T")[0]
-                            : new Date(inst.paidDate).toISOString().split("T")[0]
-                        }
-                        onChange={(e) =>
-                          handleUpdateInstallment(
-                            inst.id,
-                            "paidDate",
-                            new Date(e.target.value)
-                          )
-                        }
+                        value={inst.paid_date}
+                        onChange={(e) => handleUpdateInstallment(inst.id, "paid_date", e.target.value)}
                         className="flex-1"
                       />
                       <Button
@@ -536,64 +507,52 @@ export default function InvoiceDetail() {
             </div>
           </div>
 
-          {/* Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="card-elevated p-6 sticky top-6 space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Summary</h2>
-              
-              {/* VAT Input */}
-              <div className="space-y-2">
-                <Label htmlFor="vatRate">VAT Rate (%)</Label>
-                <Input
-                  id="vatRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={invoice.vatRate || ""}
-                  onChange={(e) =>
-                    setInvoice({ ...invoice, vatRate: parseFloat(e.target.value) || 0 })
-                  }
-                  placeholder="0"
-                />
-              </div>
-
+          {/* Sidebar Summary */}
+          <div className="space-y-6">
+            <div className="card-elevated p-6 space-y-4 sticky top-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                Summary
+              </h2>
               <div className="space-y-3">
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">
-                    {formatCurrency(invoice.subtotal || 0)}
+                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="vatRate" className="text-sm text-muted-foreground">
+                    VAT %
+                  </Label>
+                  <Input
+                    id="vatRate"
+                    type="number"
+                    value={vatRate || ""}
+                    onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
+                    className="w-20 h-8 text-sm"
+                    placeholder="0"
+                  />
+                  <span className="text-sm font-medium ml-auto">
+                    {formatCurrency(vatAmount)}
                   </span>
                 </div>
-                {(invoice.vatRate || 0) > 0 && (
-                  <div className="flex justify-between py-2 border-t border-border">
-                    <span className="text-muted-foreground">VAT ({invoice.vatRate}%)</span>
-                    <span className="font-medium">
-                      {formatCurrency(invoice.vatAmount || 0)}
-                    </span>
-                  </div>
-                )}
                 <div className="flex justify-between py-2 border-t border-border">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-medium">
-                    {formatCurrency(invoice.totalAmount)}
-                  </span>
+                  <span className="font-semibold">Total</span>
+                  <span className="font-bold text-lg">{formatCurrency(totalAmount)}</span>
                 </div>
-                <div className="flex justify-between py-2 border-t border-border">
-                  <span className="text-muted-foreground">Paid</span>
-                  <span className="font-medium text-success">
-                    {formatCurrency(invoice.paidAmount)}
-                  </span>
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Paid</span>
+                  <span className="font-semibold">{formatCurrency(paidAmount)}</span>
                 </div>
-                <div className="flex justify-between items-center py-3 border-t-2 border-foreground/10">
-                  <span className="font-semibold text-foreground">Amount Due</span>
-                  <span className="text-2xl font-bold text-destructive">
-                    {formatCurrency(invoice.dueAmount)}
-                  </span>
+                <div
+                  className={cn(
+                    "flex justify-between p-3 rounded-lg font-semibold",
+                    dueAmount > 0
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  )}
+                >
+                  <span>{dueAmount > 0 ? "Due" : "Fully Paid"}</span>
+                  <span>{formatCurrency(dueAmount)}</span>
                 </div>
-              </div>
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground">Status</p>
-                <div className="mt-2">{getStatusBadge(invoice.status)}</div>
               </div>
             </div>
           </div>

@@ -6,16 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, Mail, AlertCircle } from "lucide-react";
+import { Loader2, Lock, Mail, AlertCircle, User } from "lucide-react";
 import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
 
 export default function Login() {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,14 +27,25 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
-    const result = await login(email, password);
-
-    if (result.success) {
-      navigate(from, { replace: true });
+    if (isSignUp) {
+      const result = await signup(email, password, fullName);
+      if (result.success) {
+        setSuccess("Account created! Please check your email to verify your account before signing in.");
+        setIsSignUp(false);
+        setPassword("");
+      } else {
+        setError(result.error || "Sign up failed");
+      }
     } else {
-      setError(result.error || "Login failed");
+      const result = await login(email, password);
+      if (result.success) {
+        navigate(from, { replace: true });
+      } else {
+        setError(result.error || "Login failed");
+      }
     }
 
     setIsLoading(false);
@@ -54,9 +68,13 @@ export default function Login() {
         {/* Login Card */}
         <Card className="shadow-xl border-border/50">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-center">Sign In</CardTitle>
+            <CardTitle className="text-xl text-center">
+              {isSignUp ? "Create Account" : "Sign In"}
+            </CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access the admin panel
+              {isSignUp 
+                ? "Enter your details to create a new account" 
+                : "Enter your credentials to access the admin panel"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -66,6 +84,31 @@ export default function Login() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
+              )}
+
+              {success && (
+                <Alert className="py-3 border-green-500 bg-green-50 text-green-700">
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="pl-10"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
               )}
 
               <div className="space-y-2">
@@ -98,6 +141,7 @@ export default function Login() {
                     className="pl-10"
                     required
                     disabled={isLoading}
+                    minLength={6}
                   />
                 </div>
               </div>
@@ -106,12 +150,46 @@ export default function Login() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {isSignUp ? "Creating account..." : "Signing in..."}
                   </>
                 ) : (
-                  "Sign In"
+                  isSignUp ? "Create Account" : "Sign In"
                 )}
               </Button>
+
+              <div className="text-center text-sm">
+                {isSignUp ? (
+                  <span className="text-muted-foreground">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSignUp(false);
+                        setError("");
+                        setSuccess("");
+                      }}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSignUp(true);
+                        setError("");
+                        setSuccess("");
+                      }}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Create one
+                    </button>
+                  </span>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>
