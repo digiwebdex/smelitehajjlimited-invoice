@@ -7,9 +7,9 @@ interface RevenueChartProps {
 export function RevenueChart({ data }: RevenueChartProps) {
   const formatCurrency = (value: number) => {
     if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}k`;
+      return `৳${(value / 1000).toFixed(0)}k`;
     }
-    return `$${value}`;
+    return `৳${value}`;
   };
 
   return (
@@ -40,11 +40,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
             }}
             labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
             formatter={(value: number) => [
-              new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
+              `৳${new Intl.NumberFormat("en-BD", {
                 minimumFractionDigits: 0,
-              }).format(value),
+              }).format(value)}`,
               "Revenue",
             ]}
           />

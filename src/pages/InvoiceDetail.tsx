@@ -45,10 +45,17 @@ export default function InvoiceDetail() {
     invoiceNumber: generateInvoiceNumber(),
     companyId: "",
     clientName: "",
+    clientAddress: "",
+    clientEmail: "",
+    clientPhone: "",
     date: new Date(),
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     items: [{ id: "1", title: "", amount: 0 }],
     installments: [],
     status: "unpaid",
+    subtotal: 0,
+    vatRate: 0,
+    vatAmount: 0,
     totalAmount: 0,
     paidAmount: 0,
     dueAmount: 0,
@@ -59,9 +66,11 @@ export default function InvoiceDetail() {
     isNew ? emptyInvoice : existingInvoice || emptyInvoice
   );
 
-  // Calculate totals whenever items or installments change
+  // Calculate totals whenever items, installments, or VAT changes
   useEffect(() => {
-    const totalAmount = invoice.items.reduce((sum, item) => sum + item.amount, 0);
+    const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
+    const vatAmount = (subtotal * (invoice.vatRate || 0)) / 100;
+    const totalAmount = subtotal + vatAmount;
     const paidAmount = invoice.installments.reduce(
       (sum, inst) => sum + inst.amount,
       0
@@ -77,12 +86,14 @@ export default function InvoiceDetail() {
 
     setInvoice((prev) => ({
       ...prev,
+      subtotal,
+      vatAmount,
       totalAmount,
       paidAmount,
       dueAmount,
       status,
     }));
-  }, [invoice.items, invoice.installments]);
+  }, [invoice.items, invoice.installments, invoice.vatRate]);
 
   const handleAddItem = () => {
     const newItem: InvoiceItem = {
@@ -166,12 +177,10 @@ export default function InvoiceDetail() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+    return `৳${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount)}`;
   };
 
   const getStatusBadge = (status: InvoiceStatus) => {
@@ -281,21 +290,6 @@ export default function InvoiceDetail() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={
-                      invoice.date instanceof Date
-                        ? invoice.date.toISOString().split("T")[0]
-                        : new Date(invoice.date).toISOString().split("T")[0]
-                    }
-                    onChange={(e) =>
-                      setInvoice({ ...invoice, date: new Date(e.target.value) })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="company">Company *</Label>
                   <Select
                     value={invoice.companyId}
@@ -316,6 +310,45 @@ export default function InvoiceDetail() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="date">Invoice Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={
+                      invoice.date instanceof Date
+                        ? invoice.date.toISOString().split("T")[0]
+                        : new Date(invoice.date).toISOString().split("T")[0]
+                    }
+                    onChange={(e) =>
+                      setInvoice({ ...invoice, date: new Date(e.target.value) })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dueDate">Due Date</Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={
+                      invoice.dueDate instanceof Date
+                        ? invoice.dueDate.toISOString().split("T")[0]
+                        : invoice.dueDate
+                        ? new Date(invoice.dueDate).toISOString().split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setInvoice({ ...invoice, dueDate: new Date(e.target.value) })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Client Information */}
+              <h3 className="text-md font-medium text-foreground pt-4 border-t border-border mt-4">
+                Client Information
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
                   <Label htmlFor="clientName">Client Name *</Label>
                   <Input
                     id="clientName"
@@ -324,6 +357,40 @@ export default function InvoiceDetail() {
                       setInvoice({ ...invoice, clientName: e.target.value })
                     }
                     placeholder="Enter client name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientEmail">Client Email</Label>
+                  <Input
+                    id="clientEmail"
+                    type="email"
+                    value={invoice.clientEmail || ""}
+                    onChange={(e) =>
+                      setInvoice({ ...invoice, clientEmail: e.target.value })
+                    }
+                    placeholder="client@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientPhone">Client Phone</Label>
+                  <Input
+                    id="clientPhone"
+                    value={invoice.clientPhone || ""}
+                    onChange={(e) =>
+                      setInvoice({ ...invoice, clientPhone: e.target.value })
+                    }
+                    placeholder="+880 1XXX XXXXXX"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientAddress">Client Address</Label>
+                  <Input
+                    id="clientAddress"
+                    value={invoice.clientAddress || ""}
+                    onChange={(e) =>
+                      setInvoice({ ...invoice, clientAddress: e.target.value })
+                    }
+                    placeholder="Enter address"
                   />
                 </div>
               </div>
@@ -360,7 +427,7 @@ export default function InvoiceDetail() {
                     />
                     <div className="relative w-32">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        $
+                        ৳
                       </span>
                       <Input
                         type="number"
@@ -422,7 +489,7 @@ export default function InvoiceDetail() {
                       </span>
                       <div className="relative w-32">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                          $
+                          ৳
                         </span>
                         <Input
                           type="number"
@@ -473,9 +540,40 @@ export default function InvoiceDetail() {
           <div className="lg:col-span-1">
             <div className="card-elevated p-6 sticky top-6 space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Summary</h2>
+              
+              {/* VAT Input */}
+              <div className="space-y-2">
+                <Label htmlFor="vatRate">VAT Rate (%)</Label>
+                <Input
+                  id="vatRate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={invoice.vatRate || ""}
+                  onChange={(e) =>
+                    setInvoice({ ...invoice, vatRate: parseFloat(e.target.value) || 0 })
+                  }
+                  placeholder="0"
+                />
+              </div>
+
               <div className="space-y-3">
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium">
+                    {formatCurrency(invoice.subtotal || 0)}
+                  </span>
+                </div>
+                {(invoice.vatRate || 0) > 0 && (
+                  <div className="flex justify-between py-2 border-t border-border">
+                    <span className="text-muted-foreground">VAT ({invoice.vatRate}%)</span>
+                    <span className="font-medium">
+                      {formatCurrency(invoice.vatAmount || 0)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2 border-t border-border">
+                  <span className="text-muted-foreground">Total</span>
                   <span className="font-medium">
                     {formatCurrency(invoice.totalAmount)}
                   </span>
@@ -486,16 +584,10 @@ export default function InvoiceDetail() {
                     {formatCurrency(invoice.paidAmount)}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-t border-border">
-                  <span className="text-muted-foreground">Due</span>
-                  <span className="font-medium text-destructive">
-                    {formatCurrency(invoice.dueAmount)}
-                  </span>
-                </div>
                 <div className="flex justify-between items-center py-3 border-t-2 border-foreground/10">
-                  <span className="font-semibold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-foreground">
-                    {formatCurrency(invoice.totalAmount)}
+                  <span className="font-semibold text-foreground">Amount Due</span>
+                  <span className="text-2xl font-bold text-destructive">
+                    {formatCurrency(invoice.dueAmount)}
                   </span>
                 </div>
               </div>
