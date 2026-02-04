@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
-import { Home, Building2, FileText, Menu } from "lucide-react";
+import { Home, Building2, FileText, Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +24,7 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
+  const { user, logout } = useAuth();
   const isCollapsed = state === "collapsed";
 
   return (
@@ -85,7 +87,40 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="mt-auto border-t border-sidebar-border p-3">
+      {/* User section */}
+      <div className="mt-auto border-t border-sidebar-border p-3 space-y-2">
+        {user && (
+          <div className={cn(
+            "flex items-center gap-2 px-2 py-1.5 rounded-lg bg-sidebar-accent/50",
+            isCollapsed && "justify-center"
+          )}>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold shrink-0">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-sidebar-accent-foreground truncate">
+                  {user.name}
+                </p>
+                <p className="text-[10px] text-sidebar-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <button
+          onClick={logout}
+          className={cn(
+            "flex items-center gap-2 h-10 w-full rounded-lg text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
+            isCollapsed ? "justify-center" : "px-3"
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!isCollapsed && <span className="text-sm font-medium">Sign Out</span>}
+        </button>
+        
         <SidebarTrigger className="h-10 w-full justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
           <Menu className="h-5 w-5" />
           {!isCollapsed && <span className="ml-2">Collapse</span>}
