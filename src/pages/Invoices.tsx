@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, FileText, Filter, Download, X } from "lucide-react";
+import { Plus, Search, FileText, Filter, Download, X, Eye, Pencil } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,8 +220,9 @@ export default function Invoices() {
             <div className="col-span-2">Company</div>
             <div className="col-span-2">Client</div>
             <div className="col-span-1">Date</div>
-            <div className="col-span-2 text-right">Amount</div>
-            <div className="col-span-2 text-right">Status</div>
+            <div className="col-span-1 text-right">Amount</div>
+            <div className="col-span-1 text-center">Status</div>
+            <div className="col-span-2 text-center">Actions</div>
           </div>
 
           {/* Invoice Rows */}
@@ -243,11 +244,10 @@ export default function Invoices() {
                 <div
                   key={invoice.id}
                   className={cn(
-                    "p-4 hover:bg-muted/30 transition-colors cursor-pointer",
+                    "p-4 hover:bg-muted/30 transition-colors",
                     selectedInvoices.has(invoice.id) && "bg-primary/5"
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
-                  onClick={() => navigate(`/invoices/${invoice.id}`)}
                 >
                   {/* Desktop View */}
                   <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
@@ -255,7 +255,6 @@ export default function Invoices() {
                       <Checkbox
                         checked={selectedInvoices.has(invoice.id)}
                         onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
-                        onClick={(e) => e.stopPropagation()}
                         aria-label={`Select ${invoice.invoiceNumber}`}
                       />
                     </div>
@@ -275,21 +274,36 @@ export default function Invoices() {
                     <div className="col-span-2 text-muted-foreground truncate">
                       {invoice.clientName}
                     </div>
-                    <div className="col-span-1 text-muted-foreground">
+                    <div className="col-span-1 text-muted-foreground text-sm">
                       {formatDate(invoice.date)}
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="col-span-1 text-right">
                       <p className="font-semibold text-foreground">
                         {formatCurrency(invoice.totalAmount)}
                       </p>
-                      {invoice.dueAmount > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Due: {formatCurrency(invoice.dueAmount)}
-                        </p>
-                      )}
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="col-span-1 text-center">
                       {getStatusBadge(invoice.status)}
+                    </div>
+                    <div className="col-span-2 flex items-center justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        title="View Invoice"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-accent"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        title="Edit Invoice"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -300,7 +314,6 @@ export default function Invoices() {
                         <Checkbox
                           checked={selectedInvoices.has(invoice.id)}
                           onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
-                          onClick={(e) => e.stopPropagation()}
                           aria-label={`Select ${invoice.invoiceNumber}`}
                         />
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5">
@@ -321,9 +334,27 @@ export default function Invoices() {
                       <span className="text-muted-foreground">
                         {invoice.clientName} • {formatDate(invoice.date)}
                       </span>
-                      <span className="font-semibold text-foreground">
-                        {formatCurrency(invoice.totalAmount)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency(invoice.totalAmount)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-accent"
+                          onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
