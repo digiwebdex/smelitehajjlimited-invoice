@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Building2, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, Building2, Mail, Phone, MapPin, Calendar, Search } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,20 @@ export default function Companies() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [deleteCompanyId, setDeleteCompanyId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCompanies = useMemo(() => {
+    if (!searchQuery.trim()) return companies;
+    const query = searchQuery.toLowerCase();
+    return companies.filter(
+      (company) =>
+        company.name.toLowerCase().includes(query) ||
+        company.email.toLowerCase().includes(query) ||
+        company.phone.toLowerCase().includes(query) ||
+        company.address.toLowerCase().includes(query) ||
+        (company.tagline && company.tagline.toLowerCase().includes(query))
+    );
+  }, [companies, searchQuery]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -234,9 +248,20 @@ export default function Companies() {
           </Dialog>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search companies..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {/* Companies Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {companies.map((company, index) => (
+          {filteredCompanies.map((company, index) => (
             <div
               key={company.id}
               className="card-elevated p-6 space-y-4 group"
@@ -314,7 +339,19 @@ export default function Companies() {
           ))}
         </div>
 
-        {companies.length === 0 && (
+        {filteredCompanies.length === 0 && searchQuery && (
+          <div className="text-center py-12">
+            <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground">
+              No companies found
+            </h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search query.
+            </p>
+          </div>
+        )}
+
+        {companies.length === 0 && !searchQuery && (
           <div className="text-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground">
