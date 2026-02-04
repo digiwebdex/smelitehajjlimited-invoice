@@ -9,6 +9,7 @@ import {
   Calendar,
   DollarSign,
   CheckCircle,
+  Download,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import { mockInvoices, mockCompanies } from "@/data/mockData";
 import { Invoice, InvoiceItem, Installment, InvoiceStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 
 export default function InvoiceDetail() {
   const { id } = useParams();
@@ -233,6 +235,20 @@ export default function InvoiceDetail() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(invoice.status)}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const company = mockCompanies.find(c => c.id === invoice.companyId);
+                generateInvoicePdf(invoice, company);
+                toast({
+                  title: "PDF exported",
+                  description: `${invoice.invoiceNumber}.pdf has been downloaded.`,
+                });
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
             <Button
               onClick={handleSave}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
