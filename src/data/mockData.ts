@@ -1,15 +1,16 @@
 import { Company, Invoice, InvoiceStatus } from '@/types';
+import smEliteHajjLogo from '@/assets/sm-elite-hajj-logo.jpeg';
 
 // Mock Companies
 export const mockCompanies: Company[] = [
   {
     id: '1',
-    name: 'TechCorp Solutions',
-    tagline: 'Excellence in Every Step',
-    logo: undefined,
-    email: 'billing@techcorp.com.bd',
-    phone: '+880 1711-123456',
-    address: 'House 45, Road 12, Gulshan-1, Dhaka 1212',
+    name: 'S M Elite Hajj Limited',
+    tagline: 'Your Trusted Hajj & Umrah Partner',
+    logo: smEliteHajjLogo,
+    email: 'info@smelitehajj.com.bd',
+    phone: '+880 1867-666888',
+    address: 'B-25/4, Al-Baraka Super Market, Savar Bazar Bus-Stand, Savar, Dhaka-1340',
     createdAt: new Date('2024-01-15'),
   },
   {
