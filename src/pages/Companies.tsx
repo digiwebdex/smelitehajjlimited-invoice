@@ -38,6 +38,7 @@ export default function Companies() {
 
   const [formData, setFormData] = useState({
     name: "",
+    tagline: "",
     email: "",
     phone: "",
     address: "",
@@ -45,7 +46,7 @@ export default function Companies() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", address: "", logo: undefined });
+    setFormData({ name: "", tagline: "", email: "", phone: "", address: "", logo: undefined });
     setEditingCompany(null);
   };
 
@@ -54,6 +55,7 @@ export default function Companies() {
       setEditingCompany(company);
       setFormData({
         name: company.name,
+        tagline: company.tagline || "",
         email: company.email,
         phone: company.phone,
         address: company.address,
@@ -164,6 +166,17 @@ export default function Companies() {
                     }
                     placeholder="Enter company name"
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    value={formData.tagline}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tagline: e.target.value })
+                    }
+                    placeholder="e.g., Excellence in Every Step"
                   />
                 </div>
                 <div className="space-y-2">
