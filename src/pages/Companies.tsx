@@ -27,6 +27,7 @@ import {
 import { mockCompanies } from "@/data/mockData";
 import { Company } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { LogoUpload } from "@/components/LogoUpload";
 
 export default function Companies() {
   const { toast } = useToast();
@@ -40,10 +41,11 @@ export default function Companies() {
     email: "",
     phone: "",
     address: "",
+    logo: undefined as string | undefined,
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", address: "" });
+    setFormData({ name: "", email: "", phone: "", address: "", logo: undefined });
     setEditingCompany(null);
   };
 
@@ -55,6 +57,7 @@ export default function Companies() {
         email: company.email,
         phone: company.phone,
         address: company.address,
+        logo: company.logo,
       });
     } else {
       resetForm();
@@ -146,6 +149,11 @@ export default function Companies() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <LogoUpload
+                  currentLogo={formData.logo}
+                  onLogoChange={(logo) => setFormData({ ...formData, logo })}
+                  companyName={formData.name}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="name">Company Name</Label>
                   <Input
@@ -179,7 +187,7 @@ export default function Companies() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+880 1XXX XXXXXX"
                     required
                   />
                 </div>
