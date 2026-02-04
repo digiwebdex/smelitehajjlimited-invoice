@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, FileText, Filter, Download, X, Eye, Pencil } from "lucide-react";
+import { Plus, Search, FileText, Filter, Download, X, Eye, Pencil, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -25,6 +32,8 @@ export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
 
   const filteredInvoices = invoices.filter((invoice) => {
@@ -35,9 +44,16 @@ export default function Invoices() {
       statusFilter === "all" || invoice.status === statusFilter;
     const matchesCompany =
       companyFilter === "all" || invoice.companyId === companyFilter;
-    return matchesSearch && matchesStatus && matchesCompany;
+    const invoiceDate = new Date(invoice.date);
+    const matchesStartDate = !startDate || invoiceDate >= startDate;
+    const matchesEndDate = !endDate || invoiceDate <= endDate;
+    return matchesSearch && matchesStatus && matchesCompany && matchesStartDate && matchesEndDate;
   });
 
+  const clearDateFilters = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
 
   const toggleInvoiceSelection = (invoiceId: string) => {
     setSelectedInvoices((prev) => {
@@ -156,41 +172,108 @@ export default function Invoices() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search invoices..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search invoices..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={companyFilter} onValueChange={setCompanyFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="All Companies" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Companies</SelectItem>
+                {mockCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="partial">Partial</SelectItem>
-              <SelectItem value="unpaid">Unpaid</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={companyFilter} onValueChange={setCompanyFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="All Companies" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Companies</SelectItem>
-              {mockCompanies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Date Range Filter */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <span className="text-sm text-muted-foreground">Date Range:</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[150px] justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "MMM d, yyyy") : "From"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground">—</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[150px] justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "MMM d, yyyy") : "To"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearDateFilters}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Invoice List */}
