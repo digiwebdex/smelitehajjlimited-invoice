@@ -44,21 +44,37 @@ export const generateInvoicePdf = (invoice: Invoice, company?: Company) => {
   let yPos = margin;
 
   // ===================== HEADER SECTION =====================
-  // Company Logo placeholder and name
-  doc.setFillColor(...accentColor);
-  doc.roundedRect(margin, yPos, 12, 12, 2, 2, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
-  if (company?.name) {
-    doc.text(company.name.substring(0, 2).toUpperCase(), margin + 6, yPos + 7.5, { align: "center" });
+  // Company Logo or placeholder
+  if (company?.logo && company.logo.startsWith("data:image")) {
+    try {
+      doc.addImage(company.logo, "JPEG", margin, yPos, 14, 14);
+    } catch {
+      // Fallback to placeholder if image fails
+      doc.setFillColor(...accentColor);
+      doc.roundedRect(margin, yPos, 14, 14, 2, 2, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      if (company?.name) {
+        doc.text(company.name.substring(0, 2).toUpperCase(), margin + 7, yPos + 9, { align: "center" });
+      }
+    }
+  } else {
+    doc.setFillColor(...accentColor);
+    doc.roundedRect(margin, yPos, 14, 14, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    if (company?.name) {
+      doc.text(company.name.substring(0, 2).toUpperCase(), margin + 7, yPos + 9, { align: "center" });
+    }
   }
 
   // Company Name
   doc.setTextColor(...primaryColor);
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text(company?.name || "Your Company", margin + 16, yPos + 9);
+  doc.text(company?.name || "Your Company", margin + 18, yPos + 10);
 
   // INVOICE title on right
   doc.setFontSize(28);
