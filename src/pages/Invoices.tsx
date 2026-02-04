@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, FileText, Filter } from "lucide-react";
+import { Plus, Search, FileText, Filter, Download, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -14,13 +15,17 @@ import {
 import { mockInvoices, mockCompanies } from "@/data/mockData";
 import { Invoice, InvoiceStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Invoices() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [invoices] = useState<Invoice[]>(mockInvoices);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
@@ -32,6 +37,40 @@ export default function Invoices() {
       companyFilter === "all" || invoice.companyId === companyFilter;
     return matchesSearch && matchesStatus && matchesCompany;
   });
+
+
+  const toggleInvoiceSelection = (invoiceId: string) => {
+    setSelectedInvoices((prev) => {
+      const next = new Set(prev);
+      if (next.has(invoiceId)) {
+        next.delete(invoiceId);
+      } else {
+        next.add(invoiceId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedInvoices.size === filteredInvoices.length) {
+      setSelectedInvoices(new Set());
+    } else {
+      setSelectedInvoices(new Set(filteredInvoices.map((inv) => inv.id)));
+    }
+  };
+
+  const handleBatchExport = () => {
+    const invoicesToExport = invoices.filter((inv) => selectedInvoices.has(inv.id));
+    invoicesToExport.forEach((invoice) => {
+      const company = mockCompanies.find((c) => c.id === invoice.companyId);
+      generateInvoicePdf(invoice, company);
+    });
+    toast({
+      title: "PDFs exported",
+      description: `${invoicesToExport.length} invoice${invoicesToExport.length > 1 ? "s" : ""} downloaded.`,
+    });
+    setSelectedInvoices(new Set());
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -94,6 +133,30 @@ export default function Invoices() {
           </Button>
         </div>
 
+        {/* Batch Actions Bar */}
+        {selectedInvoices.size > 0 && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-foreground">
+                {selectedInvoices.size} invoice{selectedInvoices.size > 1 ? "s" : ""} selected
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedInvoices(new Set())}
+                className="text-muted-foreground"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            </div>
+            <Button onClick={handleBatchExport} size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export {selectedInvoices.size} PDF{selectedInvoices.size > 1 ? "s" : ""}
+            </Button>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -136,10 +199,17 @@ export default function Invoices() {
         <div className="card-elevated overflow-hidden">
           {/* Table Header (Desktop) */}
           <div className="hidden md:grid md:grid-cols-12 gap-4 p-4 border-b border-border bg-muted/30 text-sm font-medium text-muted-foreground">
+            <div className="col-span-1 flex items-center">
+              <Checkbox
+                checked={filteredInvoices.length > 0 && selectedInvoices.size === filteredInvoices.length}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+              />
+            </div>
             <div className="col-span-2">Invoice #</div>
             <div className="col-span-2">Company</div>
             <div className="col-span-2">Client</div>
-            <div className="col-span-2">Date</div>
+            <div className="col-span-1">Date</div>
             <div className="col-span-2 text-right">Amount</div>
             <div className="col-span-2 text-right">Status</div>
           </div>
@@ -162,12 +232,23 @@ export default function Invoices() {
               filteredInvoices.map((invoice, index) => (
                 <div
                   key={invoice.id}
-                  className="p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                  className={cn(
+                    "p-4 hover:bg-muted/30 transition-colors cursor-pointer",
+                    selectedInvoices.has(invoice.id) && "bg-primary/5"
+                  )}
                   style={{ animationDelay: `${index * 30}ms` }}
                   onClick={() => navigate(`/invoices/${invoice.id}`)}
                 >
                   {/* Desktop View */}
                   <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
+                    <div className="col-span-1 flex items-center">
+                      <Checkbox
+                        checked={selectedInvoices.has(invoice.id)}
+                        onCheckedChange={() => toggleInvoiceSelection(invoice.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${invoice.invoiceNumber}`}
+                      />
+                    </div>
                     <div className="col-span-2">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/5">
@@ -184,7 +265,7 @@ export default function Invoices() {
                     <div className="col-span-2 text-muted-foreground truncate">
                       {invoice.clientName}
                     </div>
-                    <div className="col-span-2 text-muted-foreground">
+                    <div className="col-span-1 text-muted-foreground">
                       {formatDate(invoice.date)}
                     </div>
                     <div className="col-span-2 text-right">
