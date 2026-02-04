@@ -260,7 +260,12 @@ export default function Companies() {
                     <h3 className="font-semibold text-foreground">
                       {company.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {company.tagline && (
+                      <p className="text-xs text-muted-foreground italic">
+                        {company.tagline}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(company.createdAt)}
                     </p>
