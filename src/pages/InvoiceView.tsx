@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Pencil, Printer, Share2, Copy, Mail, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Pencil, Printer, Share2, Copy, Mail, MessageCircle, Loader2, FileDown } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,8 @@ import { useCompany } from "@/hooks/useCompanies";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
-
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { Invoice, Company, InvoiceItem, Installment } from "@/types";
 export default function InvoiceView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -112,6 +113,57 @@ export default function InvoiceView() {
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {getStatusBadge(invoice.status)}
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const pdfInvoice: Invoice = {
+                  id: invoice.id,
+                  invoiceNumber: invoice.invoice_number,
+                  companyId: invoice.company_id,
+                  clientName: invoice.client_name,
+                  clientAddress: invoice.client_address || undefined,
+                  clientEmail: invoice.client_email || undefined,
+                  clientPhone: invoice.client_phone || undefined,
+                  date: new Date(invoice.invoice_date),
+                  dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
+                  items: items.map(item => ({
+                    id: item.id,
+                    title: item.title,
+                    amount: Number(item.amount),
+                  })),
+                  installments: installments.map(inst => ({
+                    id: inst.id,
+                    amount: Number(inst.amount),
+                    paidDate: new Date(inst.paid_date),
+                  })),
+                  status: invoice.status as "unpaid" | "partial" | "paid",
+                  totalAmount: Number(invoice.total_amount),
+                  vatRate: Number(invoice.vat_rate) || 0,
+                  vatAmount: Number(invoice.vat_amount) || 0,
+                  subtotal: Number(invoice.subtotal) || 0,
+                  paidAmount: Number(invoice.paid_amount),
+                  dueAmount: Number(invoice.due_amount),
+                };
+                const pdfCompany: Company | undefined = company ? {
+                  id: company.id,
+                  name: company.name,
+                  tagline: company.tagline || undefined,
+                  logo: company.logo_url || undefined,
+                  email: company.email || "",
+                  phone: company.phone || "",
+                  address: company.address || "",
+                  createdAt: new Date(company.created_at),
+                } : undefined;
+                await generateInvoicePdf(pdfInvoice, pdfCompany);
+                toast({
+                  title: "PDF Downloaded",
+                  description: `Invoice ${invoice.invoice_number} has been downloaded.`,
+                });
+              }}
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
             <Button variant="outline" onClick={() => window.print()}>
               <Printer className="h-4 w-4 mr-2" />
               Print
