@@ -44,20 +44,48 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   let yPos = margin;
 
   // ===================== HEADER SECTION =====================
-  // Company Logo (circular)
+  // Company Logo (circular) - handle both base64 and URL
   const logoSize = 14;
-  if (company?.logo && company.logo.startsWith("data:image")) {
+  let logoDrawn = false;
+  
+  if (company?.logo) {
     try {
-      doc.addImage(company.logo, "JPEG", margin, yPos, logoSize, logoSize);
-    } catch {
-      doc.setFillColor(...primaryColor);
-      doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(company?.name?.charAt(0) || "C", margin + logoSize / 2, yPos + logoSize / 2 + 3, { align: "center" });
+      // For URLs, we need to load the image first
+      if (company.logo.startsWith("http") || company.logo.startsWith("https")) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = 100;
+              canvas.height = 100;
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, 100, 100);
+                const dataUrl = canvas.toDataURL("image/jpeg");
+                doc.addImage(dataUrl, "JPEG", margin, yPos, logoSize, logoSize);
+                logoDrawn = true;
+              }
+            } catch (e) {
+              console.error("Failed to draw logo:", e);
+            }
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = company.logo!;
+        });
+      } else if (company.logo.startsWith("data:image")) {
+        doc.addImage(company.logo, "JPEG", margin, yPos, logoSize, logoSize);
+        logoDrawn = true;
+      }
+    } catch (e) {
+      console.error("Failed to add logo:", e);
     }
-  } else {
+  }
+  
+  // Fallback circular logo
+  if (!logoDrawn) {
     doc.setFillColor(...primaryColor);
     doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
     doc.setTextColor(255, 255, 255);
@@ -71,28 +99,28 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setTextColor(...primaryColor);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(company?.name || "Company Name", companyInfoX, yPos + 5);
+  doc.text(company?.name || "Company Name", companyInfoX, yPos + 7);
 
   if (company?.tagline) {
     doc.setTextColor(...mutedColor);
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
-    doc.text(company.tagline, companyInfoX, yPos + 10);
+    doc.text(company.tagline, companyInfoX, yPos + 12);
   }
 
   // INVOICE title on right
   doc.setTextColor(...primaryColor);
-  doc.setFontSize(20);
+  doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("INVOICE", pageWidth - margin, yPos + 5, { align: "right" });
+  doc.text("INVOICE", pageWidth - margin, yPos + 7, { align: "right" });
 
   // Invoice number in accent color
   doc.setTextColor(...accentColor);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 12, { align: "right" });
+  doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 14, { align: "right" });
 
-  yPos += 22;
+  yPos += 24;
 
   // ===================== BILL TO & DATES SECTION =====================
   // Divider line
