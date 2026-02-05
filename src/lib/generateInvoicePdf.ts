@@ -92,40 +92,43 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   yPos += 15;
 
   // ===================== INFO SECTION =====================
-  // Left side - Company & Client Info
+  // Left side - Company Info
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 10;
+  const maxTextWidth = 80;
 
   // FROM section
+  let fromY = yPos;
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "bold");
-  doc.text("FROM", leftColX, yPos);
+  doc.text("FROM", leftColX, fromY);
 
-  yPos += 6;
+  fromY += 6;
   doc.setTextColor(...textColor);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(company?.name || "Your Company", leftColX, yPos);
+  doc.text(company?.name || "Your Company", leftColX, fromY);
 
-  yPos += 5;
+  fromY += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   if (company?.address) {
-    const addressLines = doc.splitTextToSize(company.address, 70);
-    doc.text(addressLines, leftColX, yPos);
-    yPos += addressLines.length * 4;
+    const addressLines = doc.splitTextToSize(company.address, maxTextWidth);
+    doc.text(addressLines, leftColX, fromY);
+    fromY += addressLines.length * 4;
   }
   if (company?.email) {
-    doc.text(company.email, leftColX, yPos);
-    yPos += 4;
+    doc.text(company.email, leftColX, fromY);
+    fromY += 4;
   }
   if (company?.phone) {
-    doc.text(company.phone, leftColX, yPos);
+    doc.text(company.phone, leftColX, fromY);
+    fromY += 4;
   }
 
-  // BILL TO section (right column, same starting Y)
-  let billToY = yPos - 19;
+  // BILL TO section (right column, same starting Y as FROM)
+  let billToY = yPos;
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "bold");
@@ -141,7 +144,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   if (invoice.clientAddress) {
-    const clientAddressLines = doc.splitTextToSize(invoice.clientAddress, 70);
+    const clientAddressLines = doc.splitTextToSize(invoice.clientAddress, maxTextWidth);
     doc.text(clientAddressLines, rightColX, billToY);
     billToY += clientAddressLines.length * 4;
   }
@@ -151,9 +154,10 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   }
   if (invoice.clientPhone) {
     doc.text(invoice.clientPhone, rightColX, billToY);
+    billToY += 4;
   }
 
-  yPos = Math.max(yPos, billToY) + 15;
+  yPos = Math.max(fromY, billToY) + 10;
 
   // ===================== INVOICE DETAILS BOX =====================
   const detailsBoxHeight = 28;

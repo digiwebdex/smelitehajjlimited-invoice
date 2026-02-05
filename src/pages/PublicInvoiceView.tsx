@@ -1,11 +1,12 @@
- import { useParams } from "react-router-dom";
- import { Loader2, Printer } from "lucide-react";
- import { Button } from "@/components/ui/button";
- import { cn } from "@/lib/utils";
- import { InvoiceQRCode } from "@/components/InvoiceQRCode";
- import { useQuery } from "@tanstack/react-query";
- import { supabase } from "@/integrations/supabase/client";
- 
+import { useParams } from "react-router-dom";
+import { Loader2, Printer, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { InvoiceQRCode } from "@/components/InvoiceQRCode";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { Invoice, Company } from "@/types";
  export default function PublicInvoiceView() {
    const { id } = useParams();
  
@@ -111,15 +112,62 @@
    const items = invoice.items || [];
    const installments = invoice.installments || [];
  
-   return (
-     <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:py-0 print:px-0">
-       {/* Print Button - Hidden on Print */}
-       <div className="max-w-4xl mx-auto mb-6 flex justify-end print:hidden">
-         <Button variant="outline" onClick={() => window.print()}>
-           <Printer className="h-4 w-4 mr-2" />
-           Print Invoice
-         </Button>
-       </div>
+    return (
+      <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:py-0 print:px-0">
+        {/* Action Buttons - Hidden on Print */}
+        <div className="max-w-4xl mx-auto mb-6 flex justify-end gap-3 print:hidden">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const pdfInvoice: Invoice = {
+                id: invoice.id,
+                invoiceNumber: invoice.invoice_number,
+                companyId: invoice.company_id,
+                clientName: invoice.client_name,
+                clientAddress: invoice.client_address || undefined,
+                clientEmail: invoice.client_email || undefined,
+                clientPhone: invoice.client_phone || undefined,
+                date: new Date(invoice.invoice_date),
+                dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
+                items: items.map(item => ({
+                  id: item.id,
+                  title: item.title,
+                  amount: Number(item.amount),
+                })),
+                installments: installments.map(inst => ({
+                  id: inst.id,
+                  amount: Number(inst.amount),
+                  paidDate: new Date(inst.paid_date),
+                })),
+                status: invoice.status as "unpaid" | "partial" | "paid",
+                totalAmount: Number(invoice.total_amount),
+                vatRate: Number(invoice.vat_rate) || 0,
+                vatAmount: Number(invoice.vat_amount) || 0,
+                subtotal: Number(invoice.subtotal) || 0,
+                paidAmount: Number(invoice.paid_amount),
+                dueAmount: Number(invoice.due_amount),
+              };
+              const pdfCompany: Company | undefined = company ? {
+                id: company.id,
+                name: company.name,
+                tagline: company.tagline || undefined,
+                logo: company.logo_url || undefined,
+                email: company.email || "",
+                phone: company.phone || "",
+                address: company.address || "",
+                createdAt: new Date(company.created_at),
+              } : undefined;
+              await generateInvoicePdf(pdfInvoice, pdfCompany);
+            }}
+          >
+            <FileDown className="h-4 w-4 mr-2" />
+            Download Invoice
+          </Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print Invoice
+          </Button>
+        </div>
  
        {/* Invoice Document */}
        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
