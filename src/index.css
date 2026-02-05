@@ -282,6 +282,13 @@
 
 /* Print styles - Match PDF design exactly */
 @media print {
+  /* Reset everything first */
+  *, *::before, *::after {
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+  }
+
   /* Hide ALL navigation, sidebar, and non-essential elements */
   .sidebar,
   nav,
