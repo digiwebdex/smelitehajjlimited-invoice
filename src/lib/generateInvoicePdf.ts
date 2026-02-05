@@ -33,10 +33,10 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   const contentWidth = pageWidth - margin * 2;
 
   // Colors matching the invoice view page exactly
-  const primaryColor: [number, number, number] = [15, 23, 42]; // Primary/Navy
+  const primaryColor: [number, number, number] = [46, 65, 158]; // Primary/Mid-blue
   const accentColor: [number, number, number] = [20, 184, 166]; // Accent/Teal
   const mutedColor: [number, number, number] = [100, 116, 139]; // Muted gray
-  const textColor: [number, number, number] = [30, 41, 59]; // Foreground
+  const textColor: [number, number, number] = [40, 56, 138]; // Foreground/Dark blue
   const greenColor: [number, number, number] = [22, 163, 74]; // Green-600
   const redColor: [number, number, number] = [220, 38, 38]; // Red-600
   const orangeColor: [number, number, number] = [249, 115, 22]; // Orange-500
