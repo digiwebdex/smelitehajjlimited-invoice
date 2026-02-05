@@ -1,8 +1,9 @@
-import { useLocation, Link } from "react-router-dom";
-import { Home, Building2, FileText, Menu, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
+ import { useLocation, Link } from "react-router-dom";
+ import { Home, Building2, FileText, Menu, LogOut, Shield } from "lucide-react";
+ import { cn } from "@/lib/utils";
+ import { useAuth } from "@/contexts/AuthContext";
+ import { useAdmin } from "@/hooks/useAdmin";
+ import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
 import {
   Sidebar,
   SidebarContent,
@@ -16,17 +17,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Companies", url: "/companies", icon: Building2 },
-  { title: "Invoices", url: "/invoices", icon: FileText },
-];
+ const baseNavItems = [
+   { title: "Dashboard", url: "/", icon: Home },
+   { title: "Companies", url: "/companies", icon: Building2 },
+   { title: "Invoices", url: "/invoices", icon: FileText },
+ ];
+ 
+ const adminNavItems = [
+   { title: "Admin Panel", url: "/admin", icon: Shield },
+ ];
 
 export function AppSidebar() {
   const location = useLocation();
-  const { state } = useSidebar();
-  const { user, logout } = useAuth();
-  const isCollapsed = state === "collapsed";
+ const { state } = useSidebar();
+   const { user, logout } = useAuth();
+   const { isAdmin } = useAdmin();
+   const isCollapsed = state === "collapsed";
+ 
+   const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 
   return (
     <Sidebar

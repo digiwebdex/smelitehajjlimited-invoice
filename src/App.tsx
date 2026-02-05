@@ -10,9 +10,10 @@ import Companies from "./pages/Companies";
 import CompanyDetail from "./pages/CompanyDetail";
 import Invoices from "./pages/Invoices";
 import InvoiceDetail from "./pages/InvoiceDetail";
-import InvoiceView from "./pages/InvoiceView";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
+ import InvoiceView from "./pages/InvoiceView";
+ import Login from "./pages/Login";
+ import AdminPanel from "./pages/AdminPanel";
+ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -27,14 +28,17 @@ const App = () => (
             {/* Public route */}
             <Route path="/login" element={<Login />} />
             
-            {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
-            <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetail /></ProtectedRoute>} />
-            <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-            <Route path="/invoices/new" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
-            <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceView /></ProtectedRoute>} />
-            <Route path="/invoices/:id/edit" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
+             {/* Admin routes */}
+             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
+             
+             {/* Protected routes */}
+             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+             <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+             <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetail /></ProtectedRoute>} />
+             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+             <Route path="/invoices/new" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
+             <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceView /></ProtectedRoute>} />
+             <Route path="/invoices/:id/edit" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
