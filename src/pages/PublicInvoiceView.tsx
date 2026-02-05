@@ -190,7 +190,7 @@ import { Invoice, Company } from "@/types";
                   {company?.name || "Company Name"}
                 </h2>
                 {company?.tagline && (
-                  <p className="text-sm text-muted-foreground italic">
+                  <p className="text-sm text-primary/70 italic">
                     {company.tagline}
                   </p>
                 )}
