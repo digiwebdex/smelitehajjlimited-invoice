@@ -126,7 +126,7 @@ export default function InvoiceView() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    const url = window.location.href;
+                     const url = `${window.location.origin}/view/${id}`;
                     navigator.clipboard.writeText(url);
                     toast({
                       title: "Link copied",
@@ -139,7 +139,7 @@ export default function InvoiceView() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    const url = window.location.href;
+                     const url = `${window.location.origin}/view/${id}`;
                     const message = encodeURIComponent(
                       `Invoice ${invoice.invoice_number} - ${invoice.client_name}\nTotal: ৳${invoice.total_amount}\nDue: ৳${invoice.due_amount}\n\nView: ${url}`
                     );
@@ -151,9 +151,10 @@ export default function InvoiceView() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
+                     const url = `${window.location.origin}/view/${id}`;
                     const subject = encodeURIComponent(`Invoice ${invoice.invoice_number}`);
                     const body = encodeURIComponent(
-                      `Dear ${invoice.client_name},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoice_number}\nTotal Amount: ৳${invoice.total_amount}\nPaid: ৳${invoice.paid_amount}\nDue: ৳${invoice.due_amount}\n\nView Invoice: ${window.location.href}\n\nThank you for your business!`
+                       `Dear ${invoice.client_name},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoice_number}\nTotal Amount: ৳${invoice.total_amount}\nPaid: ৳${invoice.paid_amount}\nDue: ৳${invoice.due_amount}\n\nView Invoice: ${url}\n\nThank you for your business!`
                     );
                     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
                   }}

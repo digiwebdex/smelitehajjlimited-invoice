@@ -14,7 +14,7 @@ export function InvoiceQRCode({
   className,
   showLabel = true,
 }: InvoiceQRCodeProps) {
-  const invoiceUrl = `${window.location.origin}/invoices/${invoiceId}`;
+   const invoiceUrl = `${window.location.origin}/view/${invoiceId}`;
 
   return (
     <div className={cn("flex flex-col items-center gap-1", className)}>
