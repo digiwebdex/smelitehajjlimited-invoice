@@ -198,7 +198,7 @@ import { Invoice, Company } from "@/types";
             </div>
             <div className="text-right">
               <h1 className="text-3xl font-bold text-primary">INVOICE</h1>
-              <p className="text-accent font-semibold text-lg mt-1">
+              <p className="text-orange-500 font-semibold text-lg mt-1">
                 {invoice.invoice_number}
               </p>
             </div>
