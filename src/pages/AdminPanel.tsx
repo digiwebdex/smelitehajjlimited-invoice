@@ -8,8 +8,19 @@
  import { Badge } from "@/components/ui/badge";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
- import { Loader2, UserCheck, UserX, Users, Clock, CheckCircle } from "lucide-react";
+ import { Loader2, UserCheck, UserX, Users, Clock, CheckCircle, Trash2 } from "lucide-react";
  import { format } from "date-fns";
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+   AlertDialogTrigger,
+ } from "@/components/ui/alert-dialog";
  
  export default function AdminPanel() {
    const { user } = useAuth();
@@ -24,9 +35,19 @@
      revokeUser,
      isApproving,
      isRevoking,
+     deleteUser,
+     isDeleting,
    } = useAdmin();
  
    const [activeTab, setActiveTab] = useState("pending");
+   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+
+   const handleDeleteUser = () => {
+     if (userToDelete) {
+       deleteUser(userToDelete.id);
+       setUserToDelete(null);
+     }
+   };
  
    // Show loading while checking admin status
    if (isCheckingAdmin) {
@@ -141,18 +162,31 @@
                              {format(new Date(pendingUser.created_at), "MMM d, yyyy HH:mm")}
                            </TableCell>
                            <TableCell className="text-right">
-                             <Button
-                               size="sm"
-                               onClick={() => approveUser(pendingUser.user_id)}
-                               disabled={isApproving}
-                             >
-                               {isApproving ? (
-                                 <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                               ) : (
-                                 <UserCheck className="h-4 w-4 mr-1" />
-                               )}
-                               Approve
-                             </Button>
+                               <div className="flex items-center justify-end gap-2">
+                                 <Button
+                                   size="sm"
+                                   onClick={() => approveUser(pendingUser.user_id)}
+                                   disabled={isApproving}
+                                 >
+                                   {isApproving ? (
+                                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                   ) : (
+                                     <UserCheck className="h-4 w-4 mr-1" />
+                                   )}
+                                   Approve
+                                 </Button>
+                                 <Button
+                                   size="sm"
+                                   variant="destructive"
+                                   onClick={() => setUserToDelete({ 
+                                     id: pendingUser.user_id, 
+                                     name: pendingUser.full_name || "this user" 
+                                   })}
+                                   disabled={isDeleting}
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
                            </TableCell>
                          </TableRow>
                        ))}
@@ -196,19 +230,32 @@
                              </Badge>
                            </TableCell>
                            <TableCell className="text-right">
-                             <Button
-                               size="sm"
-                               variant="destructive"
-                               onClick={() => revokeUser(approvedUser.user_id)}
-                               disabled={isRevoking}
-                             >
-                               {isRevoking ? (
-                                 <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                               ) : (
-                                 <UserX className="h-4 w-4 mr-1" />
-                               )}
-                               Revoke
-                             </Button>
+                               <div className="flex items-center justify-end gap-2">
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => revokeUser(approvedUser.user_id)}
+                                   disabled={isRevoking}
+                                 >
+                                   {isRevoking ? (
+                                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                   ) : (
+                                     <UserX className="h-4 w-4 mr-1" />
+                                   )}
+                                   Revoke
+                                 </Button>
+                                 <Button
+                                   size="sm"
+                                   variant="destructive"
+                                   onClick={() => setUserToDelete({ 
+                                     id: approvedUser.user_id, 
+                                     name: approvedUser.full_name || "this user" 
+                                   })}
+                                   disabled={isDeleting}
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
                            </TableCell>
                          </TableRow>
                        ))}
@@ -259,24 +306,50 @@
                              </TableCell>
                              <TableCell className="text-right">
                                {userItem.is_approved ? (
-                                 <Button
-                                   size="sm"
-                                   variant="destructive"
-                                   onClick={() => revokeUser(userItem.user_id)}
-                                   disabled={isRevoking}
-                                 >
-                                   <UserX className="h-4 w-4 mr-1" />
-                                   Revoke
-                                 </Button>
+                                   <div className="flex items-center justify-end gap-2">
+                                     <Button
+                                       size="sm"
+                                       variant="outline"
+                                       onClick={() => revokeUser(userItem.user_id)}
+                                       disabled={isRevoking}
+                                     >
+                                       <UserX className="h-4 w-4 mr-1" />
+                                       Revoke
+                                     </Button>
+                                     <Button
+                                       size="sm"
+                                       variant="destructive"
+                                       onClick={() => setUserToDelete({ 
+                                         id: userItem.user_id, 
+                                         name: userItem.full_name || "this user" 
+                                       })}
+                                       disabled={isDeleting}
+                                     >
+                                       <Trash2 className="h-4 w-4" />
+                                     </Button>
+                                   </div>
                                ) : (
-                                 <Button
-                                   size="sm"
-                                   onClick={() => approveUser(userItem.user_id)}
-                                   disabled={isApproving}
-                                 >
-                                   <UserCheck className="h-4 w-4 mr-1" />
-                                   Approve
-                                 </Button>
+                                   <div className="flex items-center justify-end gap-2">
+                                     <Button
+                                       size="sm"
+                                       onClick={() => approveUser(userItem.user_id)}
+                                       disabled={isApproving}
+                                     >
+                                       <UserCheck className="h-4 w-4 mr-1" />
+                                       Approve
+                                     </Button>
+                                     <Button
+                                       size="sm"
+                                       variant="destructive"
+                                       onClick={() => setUserToDelete({ 
+                                         id: userItem.user_id, 
+                                         name: userItem.full_name || "this user" 
+                                       })}
+                                       disabled={isDeleting}
+                                     >
+                                       <Trash2 className="h-4 w-4" />
+                                     </Button>
+                                   </div>
                                )}
                              </TableCell>
                            </TableRow>
@@ -288,6 +361,34 @@
              </Tabs>
            </CardContent>
          </Card>
+
+         {/* Delete Confirmation Dialog */}
+         <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+           <AlertDialogContent>
+             <AlertDialogHeader>
+               <AlertDialogTitle>Delete User</AlertDialogTitle>
+               <AlertDialogDescription>
+                 Are you sure you want to permanently delete {userToDelete?.name}? This action cannot be undone and will remove all their data from the system.
+               </AlertDialogDescription>
+             </AlertDialogHeader>
+             <AlertDialogFooter>
+               <AlertDialogCancel>Cancel</AlertDialogCancel>
+               <AlertDialogAction
+                 onClick={handleDeleteUser}
+                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+               >
+                 {isDeleting ? (
+                   <>
+                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                     Deleting...
+                   </>
+                 ) : (
+                   "Delete User"
+                 )}
+               </AlertDialogAction>
+             </AlertDialogFooter>
+           </AlertDialogContent>
+         </AlertDialog>
        </div>
      </AppLayout>
    );

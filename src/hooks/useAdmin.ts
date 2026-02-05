@@ -2,6 +2,7 @@
  import { supabase } from "@/integrations/supabase/client";
  import { useAuth } from "@/contexts/AuthContext";
  import { useToast } from "@/hooks/use-toast";
+ import { supabase as supabaseClient } from "@/integrations/supabase/client";
  
  interface PendingUser {
    id: string;
@@ -147,6 +148,48 @@
      },
    });
  
+   // Delete user mutation
+   const deleteUserMutation = useMutation({
+     mutationFn: async (userId: string) => {
+       const { data: { session } } = await supabase.auth.getSession();
+       if (!session) throw new Error("Not authenticated");
+       
+       const response = await fetch(
+         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+         {
+           method: "POST",
+           headers: {
+             "Content-Type": "application/json",
+             "Authorization": `Bearer ${session.access_token}`,
+           },
+           body: JSON.stringify({ userId }),
+         }
+       );
+       
+       const result = await response.json();
+       if (!response.ok) {
+         throw new Error(result.error || "Failed to delete user");
+       }
+       
+       return result;
+     },
+     onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["pendingUsers"] });
+       queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+       toast({
+         title: "User deleted",
+         description: "The user has been permanently removed from the system.",
+       });
+     },
+     onError: (error: Error) => {
+       toast({
+         title: "Error",
+         description: error.message,
+         variant: "destructive",
+       });
+     },
+   });
+
    return {
      isAdmin: isAdmin ?? false,
      isApproved: isApproved ?? false,
@@ -160,6 +203,8 @@
      revokeUser: revokeUserMutation.mutate,
      isApproving: approveUserMutation.isPending,
      isRevoking: revokeUserMutation.isPending,
+     deleteUser: deleteUserMutation.mutate,
+     isDeleting: deleteUserMutation.isPending,
      hasAccess: isAdmin || isApproved,
    };
  }
