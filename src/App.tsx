@@ -12,6 +12,7 @@ import Invoices from "./pages/Invoices";
 import InvoiceDetail from "./pages/InvoiceDetail";
  import InvoiceView from "./pages/InvoiceView";
  import Login from "./pages/Login";
+  import ResetPassword from "./pages/ResetPassword";
  import AdminPanel from "./pages/AdminPanel";
  import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             {/* Public route */}
             <Route path="/login" element={<Login />} />
+             <Route path="/reset-password" element={<ResetPassword />} />
             
              {/* Admin routes */}
              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />

@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, Mail, AlertCircle, User } from "lucide-react";
+import { Loader2, Lock, Mail, AlertCircle, User, ArrowLeft } from "lucide-react";
 import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
+   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -20,7 +21,7 @@ export default function Login() {
   const [authErrorCode, setAuthErrorCode] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
 
-  const { login, signup, resendConfirmationEmail } = useAuth();
+  const { login, signup, resendConfirmationEmail, resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,7 +36,14 @@ export default function Login() {
     setAuthErrorCode(null);
     setIsLoading(true);
 
-    if (isSignUp) {
+    if (isForgotPassword) {
+      const result = await resetPassword(email);
+      if (result.success) {
+        setSuccess("Password reset email sent! Check your inbox for the reset link.");
+      } else {
+        setError(result.error || "Failed to send reset email");
+      }
+    } else if (isSignUp) {
       const result = await signup(email, password, fullName);
       if (result.success) {
         setSuccess("Account created! Please check your email to verify your account before signing in.");
@@ -132,12 +140,12 @@ export default function Login() {
               )}
 
               {success && (
-                <Alert className="py-3 border-green-500 bg-green-50 text-green-700">
+                <Alert className="py-3 border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                   <AlertDescription>{success}</AlertDescription>
                 </Alert>
               )}
 
-              {isSignUp && (
+              {isSignUp && !isForgotPassword && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
                   <div className="relative">
@@ -173,36 +181,70 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                    minLength={6}
-                  />
+              {!isForgotPassword && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    {!isSignUp && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsForgotPassword(true);
+                          setError("");
+                          setSuccess("");
+                        }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      disabled={isLoading}
+                      minLength={6}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isSignUp ? "Creating account..." : "Signing in..."}
+                    {isForgotPassword ? "Sending reset email..." : isSignUp ? "Creating account..." : "Signing in..."}
                   </>
                 ) : (
-                  isSignUp ? "Create Account" : "Sign In"
+                  isForgotPassword ? "Send Reset Email" : isSignUp ? "Create Account" : "Sign In"
                 )}
               </Button>
 
-              <div className="text-center text-sm">
+              {isForgotPassword && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setError("");
+                    setSuccess("");
+                  }}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Button>
+              )}
+ 
+              {!isForgotPassword && (
+                <div className="text-center text-sm">
                 {isSignUp ? (
                   <span className="text-muted-foreground">
                     Already have an account?{" "}
@@ -237,6 +279,7 @@ export default function Login() {
                   </span>
                 )}
               </div>
+              )}
             </form>
           </CardContent>
         </Card>
