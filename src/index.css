@@ -341,7 +341,7 @@
     padding: 16px !important;
   }
 
-  /* Remove shadows from cards but keep structure */
+  /* Remove shadows and borders from cards */
   .card-elevated,
   .shadow-lg,
   .shadow-md,
@@ -355,9 +355,13 @@
   .rounded-lg,
   .rounded-md,
   .border,
-  [class*="border-"] {
+  [class*="border-"],
+  .card,
+  .bg-card,
+  .max-w-4xl > div {
     border-radius: 0 !important;
     border: none !important;
+    outline: none !important;
   }
 
   /* ===== BALANCE BOX COLORS - CRITICAL ===== */
