@@ -282,51 +282,117 @@
 
 /* Print styles */
 @media print {
-  /* Hide navigation and non-essential elements */
+  /* Hide ALL navigation, sidebar, and non-essential elements */
   .sidebar,
   nav,
   header,
-  .print\\:hidden {
+  aside,
+  .print\:hidden,
+  [data-sidebar],
+  [data-sidebar-wrapper],
+  button,
+  .fixed {
     display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 10mm;
+    size: A4;
   }
 
   /* Reset background and colors for print */
-  body {
+  html, body {
     background: white !important;
     color: black !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Make main content full width */
-  main {
+  /* Make main content full width - remove all constraints */
+  main,
+  .min-h-screen,
+  [class*="SidebarInset"],
+  [class*="peer-data"] {
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-height: auto !important;
+    transform: none !important;
+    position: static !important;
+    left: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  /* Invoice document styling for print */
+  .max-w-4xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Ensure cards print nicely */
-  .card-elevated {
+  .card-elevated,
+  .bg-white,
+  .shadow-lg,
+  .rounded-xl {
     box-shadow: none !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
+    border-radius: 0 !important;
     break-inside: avoid;
   }
 
-  /* Status badges print colors */
-  .status-paid {
+  /* Status badges print colors - force exact colors */
+  .bg-green-100 {
     background-color: #dcfce7 !important;
+  }
+  .text-green-800 {
     color: #166534 !important;
   }
-
-  .status-partial {
+  .bg-yellow-100 {
     background-color: #fef3c7 !important;
+  }
+  .text-yellow-800 {
     color: #92400e !important;
   }
-
-  .status-unpaid {
+  .bg-red-100 {
     background-color: #fee2e2 !important;
+  }
+  .text-red-800 {
     color: #991b1b !important;
+  }
+
+  /* Balance due box colors */
+  .bg-red-600 {
+    background-color: #dc2626 !important;
+    color: white !important;
+  }
+  .bg-green-600 {
+    background-color: #16a34a !important;
+    color: white !important;
+  }
+
+  /* Green text for paid amount */
+  .text-green-600 {
+    color: #16a34a !important;
+  }
+
+  /* Payment history section */
+  .bg-gray-50 {
+    background-color: #f9fafb !important;
+  }
+  .border-gray-200 {
+    border-color: #e5e7eb !important;
   }
 
   /* Page breaks */
@@ -334,8 +400,25 @@
     page-break-before: always;
   }
 
-  /* Hide sidebar wrapper */
-  [data-sidebar] {
-    display: none !important;
+  /* Ensure text is black */
+  .text-foreground,
+  .text-primary,
+  h1, h2, h3, h4, p, span, td, th {
+    color: #1f2937 !important;
+  }
+
+  .text-muted-foreground {
+    color: #6b7280 !important;
+  }
+
+  /* Ensure tables print well */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  /* Print footer with QR code */
+  .border-t {
+    border-top: 1px solid #e5e7eb !important;
   }
 }
