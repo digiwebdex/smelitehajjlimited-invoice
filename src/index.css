@@ -280,7 +280,7 @@
   @apply bg-muted-foreground/30;
 }
 
-/* Print styles */
+/* Print styles - Match PDF design exactly */
 @media print {
   /* Hide ALL navigation, sidebar, and non-essential elements */
   .sidebar,
@@ -301,14 +301,13 @@
 
   /* Reset page margins - smaller for fitting content */
   @page {
-    margin: 8mm;
+    margin: 10mm;
     size: A4;
   }
 
   /* Reset background and colors for print */
   html, body {
     background: white !important;
-    color: black !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
@@ -335,33 +334,96 @@
     margin-left: 0 !important;
   }
 
-  /* Invoice document styling for print - NO BORDERS */
+  /* Invoice document styling for print */
   .max-w-4xl {
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 16px !important;
   }
 
-  /* Remove ALL borders and shadows from cards */
+  /* Remove shadows from cards but keep structure */
   .card-elevated,
-  .bg-white,
   .shadow-lg,
   .shadow-md,
   .shadow-sm,
   .shadow,
-  .rounded-xl,
-  .rounded-lg,
-  .rounded-md,
-  .border,
-  [class*="border-"],
   [class*="shadow-"] {
     box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    break-inside: avoid;
   }
 
-  /* Status badges - FORCE exact background colors */
+  .rounded-xl,
+  .rounded-lg,
+  .rounded-md {
+    border-radius: 0 !important;
+  }
+
+  /* ===== BALANCE BOX COLORS - CRITICAL ===== */
+  .bg-red-500 {
+    background-color: #ef4444 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-green-500 {
+    background-color: #22c55e !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-red-600 {
+    background-color: #dc2626 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-green-600 {
+    background-color: #16a34a !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== ORANGE COLORS - Total Paid ===== */
+  .text-orange-500 {
+    color: #f97316 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-orange-500 {
+    background-color: #f97316 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== ACCENT/TEAL COLORS ===== */
+  .text-accent,
+  .text-teal-600,
+  .text-teal-500 {
+    color: #14b8a6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-accent {
+    background-color: #14b8a6 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .border-accent {
+    border-color: #14b8a6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== PAYMENT BADGE COLORS ===== */
+  .bg-gray-400 {
+    background-color: #9ca3af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== STATUS BADGES ===== */
   .bg-green-100 {
     background-color: #dcfce7 !important;
     -webkit-print-color-adjust: exact !important;
@@ -387,78 +449,83 @@
     color: #991b1b !important;
   }
 
-  /* Balance due box colors - FORCE background */
-  .bg-red-600 {
-    background-color: #dc2626 !important;
-    color: white !important;
+  /* ===== KEEP IMPORTANT BORDERS ===== */
+  .border-l-4 {
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+  }
+  .border-l-4.border-accent {
+    border-left-color: #14b8a6 !important;
+  }
+  .border-l-4.border-gray-300 {
+    border-left-color: #d1d5db !important;
+  }
+  .border-t {
+    border-top: 1px solid #e5e7eb !important;
+  }
+  .border-b,
+  .border-b-2 {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  .border-b-2 {
+    border-bottom-width: 2px !important;
+  }
+  .border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  .border-gray-200 {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Payment history box */
+  .border.border-gray-200.rounded-lg {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  .bg-green-600 {
-    background-color: #16a34a !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
 
-  /* Green text for paid amount */
-  .text-green-600 {
-    color: #16a34a !important;
-  }
-
-  /* Teal/accent colors */
-  .text-teal-600,
-  .text-accent {
-    color: #0d9488 !important;
-  }
-
-  /* Payment history section */
-  .bg-gray-50 {
-    background-color: #f9fafb !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Remove all remaining borders */
-  .border-gray-200,
-  .border-gray-100,
-  .border-border {
-    border-color: transparent !important;
-  }
-
-  /* Ensure text is black */
+  /* ===== TEXT COLORS ===== */
   .text-foreground,
-  .text-primary,
-  h1, h2, h3, h4, p, span, td, th {
-    color: #1f2937 !important;
+  .text-primary {
+    color: #0f172a !important;
   }
-
   .text-muted-foreground {
     color: #6b7280 !important;
   }
+  h1, h2, h3, h4 {
+    color: #0f172a !important;
+  }
 
-  /* Ensure tables print well - compact spacing */
+  /* ===== TABLE STYLING ===== */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
   }
-
-  /* Compact text for fitting on one page */
-  * {
-    font-size: 95% !important;
-    line-height: 1.3 !important;
+  th {
+    color: #6b7280 !important;
+  }
+  td {
+    color: #1f2937 !important;
   }
 
-  h1 { font-size: 1.4rem !important; }
-  h2 { font-size: 1.2rem !important; }
+  /* ===== TYPOGRAPHY - Match PDF ===== */
+  * {
+    font-size: 100% !important;
+    line-height: 1.4 !important;
+  }
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
   h3 { font-size: 1rem !important; }
 
-  /* Footer border - keep this one */
-  .border-t {
-    border-top: 1px solid #e5e7eb !important;
+  /* ===== QR CODE ===== */
+  canvas,
+  svg {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Page breaks */
+  /* ===== PAGE BREAKS ===== */
   .page-break {
     page-break-before: always;
   }
