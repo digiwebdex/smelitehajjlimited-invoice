@@ -363,12 +363,34 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   // ===================== FOOTER =====================
   // Position footer at bottom
-  const footerY = pageHeight - 30;
+  const footerY = pageHeight - 28;
 
   // Divider line
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 6, pageWidth - margin, footerY - 6);
+  doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+
+  // QR Code - positioned on the right side
+  const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
+  const qrSize = 22;
+  const qrX = pageWidth - margin - qrSize;
+  const qrY = footerY - 4;
+  
+  try {
+    const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
+      width: 110,
+      margin: 1,
+      errorCorrectionLevel: "M",
+    });
+    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+    // QR Label - centered below QR code
+    doc.setFontSize(6);
+    doc.setTextColor(...mutedColor);
+    doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
+  } catch (error) {
+    console.error("Failed to generate QR code:", error);
+  }
 
   // Thank you message (accent/teal color like web view)
   doc.setTextColor(...accentColor);
@@ -376,10 +398,11 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "normal");
   doc.text("Thank you for staying with us.", margin, footerY);
 
-  // Company contact info (muted)
+  // Company contact info (muted) - left side, below thank you
   let footerDetailY = footerY + 5;
   doc.setTextColor(...mutedColor);
   doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
   
   if (company?.email) {
     doc.text(company.email, margin, footerDetailY);
@@ -390,31 +413,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     footerDetailY += 4;
   }
   if (company?.address) {
-    const addressLines = doc.splitTextToSize(company.address, 85);
+    const addressLines = doc.splitTextToSize(company.address, 80);
     doc.text(addressLines, margin, footerDetailY);
-  }
-
-  // QR Code with labels - positioned to align with footer content
-  const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
-  const qrSize = 24;
-  const qrX = pageWidth - margin - qrSize;
-  const qrY = footerY - 8;
-  
-  try {
-    const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
-      width: 120,
-      margin: 1,
-      errorCorrectionLevel: "M",
-    });
-    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-
-    // QR Labels - centered below QR code
-    const qrCenterX = qrX + qrSize / 2;
-    doc.setFontSize(6);
-    doc.setTextColor(...mutedColor);
-    doc.text("Scan to view invoice", qrCenterX, qrY + qrSize + 3, { align: "center" });
-  } catch (error) {
-    console.error("Failed to generate QR code:", error);
   }
 
   // Save the PDF
