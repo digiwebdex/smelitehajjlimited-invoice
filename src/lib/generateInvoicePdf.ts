@@ -50,31 +50,22 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   
   if (company?.logo) {
     try {
-      // For URLs, we need to load the image first
+      // For URLs, fetch the image as blob to avoid CORS issues
       if (company.logo.startsWith("http") || company.logo.startsWith("https")) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        await new Promise<void>((resolve) => {
-          img.onload = () => {
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = 100;
-              canvas.height = 100;
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.drawImage(img, 0, 0, 100, 100);
-                const dataUrl = canvas.toDataURL("image/jpeg");
-                doc.addImage(dataUrl, "JPEG", margin, yPos, logoSize, logoSize);
-                logoDrawn = true;
-              }
-            } catch (e) {
-              console.error("Failed to draw logo:", e);
-            }
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = company.logo!;
-        });
+        try {
+          const response = await fetch(company.logo);
+          const blob = await response.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          doc.addImage(dataUrl, "JPEG", margin, yPos, logoSize, logoSize);
+          logoDrawn = true;
+        } catch (e) {
+          console.error("Failed to fetch logo:", e);
+        }
       } else if (company.logo.startsWith("data:image")) {
         doc.addImage(company.logo, "JPEG", margin, yPos, logoSize, logoSize);
         logoDrawn = true;
@@ -84,7 +75,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     }
   }
   
-  // Fallback circular logo
+  // Fallback circular logo with company initial
   if (!logoDrawn) {
     doc.setFillColor(...primaryColor);
     doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
