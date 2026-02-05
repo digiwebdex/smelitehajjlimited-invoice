@@ -360,8 +360,8 @@ export default function InvoiceView() {
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-accent font-bold">Total Paid</span>
-                <span className="font-bold text-accent">
+                <span className="text-orange-500 font-bold">Total Paid</span>
+                <span className="font-bold text-orange-500">
                   {formatCurrency(Number(invoice.paid_amount))}
                 </span>
               </div>

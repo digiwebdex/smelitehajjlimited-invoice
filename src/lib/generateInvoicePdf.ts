@@ -254,9 +254,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 8;
 
-  // Total Paid (accent/teal color)
+  // Total Paid (orange color)
   doc.setFontSize(9);
-  doc.setTextColor(...accentColor);
+  doc.setTextColor(249, 115, 22); // Orange-500
   doc.setFont("helvetica", "bold");
   doc.text("Total Paid", summaryX, yPos);
   doc.text(formatCurrency(invoice.paidAmount), pageWidth - margin, yPos, { align: "right" });
