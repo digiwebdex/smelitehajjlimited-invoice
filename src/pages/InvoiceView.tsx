@@ -415,6 +415,16 @@ export default function InvoiceView() {
               <p className="text-sm text-muted-foreground">
                 Thank you for your business!
               </p>
+              {company?.email && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {company.email}
+                </p>
+              )}
+              {company?.phone && (
+                <p className="text-xs text-muted-foreground">
+                  {company.phone}
+                </p>
+              )}
               {company?.address && (
                 <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                   {company.address}

@@ -352,23 +352,33 @@ import { Invoice, Company } from "@/types";
            </div>
          )}
  
-         {/* FOOTER */}
-         <div className="flex justify-between items-start mt-12 pt-6 border-t border-gray-200">
-           <div>
-             <p className="text-sm text-muted-foreground">
-               Thank you for your business!
-             </p>
-             {company?.address && (
-               <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                 {company.address}
-               </p>
-             )}
-             <p className="text-xs text-muted-foreground mt-2">
-               Generated on {formatDate(new Date().toISOString())}
-             </p>
-           </div>
-           <InvoiceQRCode invoiceId={invoice.id} size={70} />
-         </div>
+          {/* FOOTER */}
+          <div className="flex justify-between items-start mt-12 pt-6 border-t border-gray-200">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Thank you for your business!
+              </p>
+              {company?.email && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {company.email}
+                </p>
+              )}
+              {company?.phone && (
+                <p className="text-xs text-muted-foreground">
+                  {company.phone}
+                </p>
+              )}
+              {company?.address && (
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                  {company.address}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                Generated on {formatDate(new Date().toISOString())}
+              </p>
+            </div>
+            <InvoiceQRCode invoiceId={invoice.id} size={70} />
+          </div>
        </div>
  
        {/* Branding Footer */}
