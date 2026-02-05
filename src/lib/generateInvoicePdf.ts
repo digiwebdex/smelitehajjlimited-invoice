@@ -329,18 +329,30 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "normal");
   doc.text("Thank you for your business!", margin, footerY);
 
+  // Company email and phone
+  let footerDetailY = footerY + 5;
+  doc.setTextColor(...mutedColor);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  
+  if (company?.email) {
+    doc.text(company.email, margin, footerDetailY);
+    footerDetailY += 4;
+  }
+  if (company?.phone) {
+    doc.text(company.phone, margin, footerDetailY);
+    footerDetailY += 4;
+  }
+
   // Company address
   if (company?.address) {
-    doc.setTextColor(...mutedColor);
-    doc.setFontSize(7);
     const addressLines = doc.splitTextToSize(company.address, 80);
-    doc.text(addressLines, margin, footerY + 5);
+    doc.text(addressLines, margin, footerDetailY);
+    footerDetailY += addressLines.length * 3;
   }
 
   // Generation date
-  doc.setTextColor(...mutedColor);
-  doc.setFontSize(7);
-  doc.text(`Generated on ${formatDate(new Date())}`, margin, footerY + 14);
+  doc.text(`Generated on ${formatDate(new Date())}`, margin, footerDetailY + 2);
 
   // QR Code
   const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
