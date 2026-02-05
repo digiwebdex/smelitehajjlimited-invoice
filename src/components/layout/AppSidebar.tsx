@@ -1,9 +1,10 @@
  import { useLocation, Link } from "react-router-dom";
- import { Home, Building2, FileText, Menu, LogOut, Shield } from "lucide-react";
+ import { Home, Building2, FileText, Menu, LogOut, Shield, Download } from "lucide-react";
  import { cn } from "@/lib/utils";
  import { useAuth } from "@/contexts/AuthContext";
  import { useAdmin } from "@/hooks/useAdmin";
  import smEliteLogo from "@/assets/sm-elite-hajj-logo.jpeg";
+ import { generateBrochurePdf } from "@/lib/generateBrochurePdf";
 import {
   Sidebar,
   SidebarContent,
@@ -100,6 +101,18 @@ export function AppSidebar() {
 
       {/* User section */}
       <div className="mt-auto border-t border-sidebar-border p-3 space-y-2">
+        <button
+          onClick={generateBrochurePdf}
+          className={cn(
+            "flex items-center gap-2 h-10 w-full rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+            isCollapsed ? "justify-center" : "px-3"
+          )}
+          title="Download Software Brochure"
+        >
+          <Download className="h-4 w-4 shrink-0" />
+          {!isCollapsed && <span className="text-sm font-medium">Download Brochure</span>}
+        </button>
+        
         {user && (
           <div className={cn(
             "flex items-center gap-2 px-2 py-1.5 rounded-lg bg-sidebar-accent/50",
