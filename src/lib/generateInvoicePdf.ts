@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { Invoice, Company } from "@/types";
 
 const formatCurrency = (amount: number): string => {
-  return `BDT ${new Intl.NumberFormat("en-BD", {
+  return `৳${new Intl.NumberFormat("en-BD", {
     style: "decimal",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -106,8 +106,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "bold");
   doc.text("INVOICE", pageWidth - margin, yPos + 6, { align: "right" });
 
-  // Invoice number in accent color
-  doc.setTextColor(...accentColor);
+  // Invoice number in orange color (matching web view)
+  doc.setTextColor(...orangeColor);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 13, { align: "right" });
