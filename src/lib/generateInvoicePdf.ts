@@ -27,6 +27,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   const margin = 15;
   const contentWidth = pageWidth - margin * 2;
 
+  // Use Times font for professional serif look (similar to Noto Serif/MoolBoran)
+  const serifFont = "times";
+
   // Colors matching reference design
   const navyColor: [number, number, number] = [30, 58, 90];
   const orangeColor: [number, number, number] = [245, 158, 11];
@@ -54,7 +57,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
       doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
+      doc.setFont(serifFont, "bold");
       if (company?.name) {
         doc.text(company.name.substring(0, 2).toUpperCase(), margin + logoSize / 2, yPos + logoSize / 2 + 3, { align: "center" });
       }
@@ -64,7 +67,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(serifFont, "bold");
     if (company?.name) {
       doc.text(company.name.substring(0, 2).toUpperCase(), margin + logoSize / 2, yPos + logoSize / 2 + 3, { align: "center" });
     }
@@ -73,24 +76,24 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Company Name and Tagline
   doc.setTextColor(...navyColor);
   doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text(company?.name || "Your Company", margin + logoSize + 5, yPos + 8);
 
   doc.setTextColor(...grayColor);
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "italic");
   doc.text(company?.tagline || "Excellence in Every Step", margin + logoSize + 5, yPos + 14);
 
   // INVOICE title on right
   doc.setTextColor(...navyColor);
   doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("INVOICE", pageWidth - margin, yPos + 8, { align: "right" });
 
   // Invoice number in orange
   doc.setTextColor(...orangeColor);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 16, { align: "right" });
 
   yPos += 28;
@@ -109,15 +112,15 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // BILL TO label
   doc.setFontSize(9);
   doc.setTextColor(...orangeColor);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("BILL TO", leftColX, yPos);
 
   // Invoice Date on right
   doc.setTextColor(...grayColor);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("INVOICE DATE:", rightColX, yPos);
   doc.setTextColor(...textColor);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.text(formatDate(invoice.date), pageWidth - margin, yPos, { align: "right" });
 
   yPos += 7;
@@ -125,23 +128,23 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Client Name (bold)
   doc.setTextColor(...textColor);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text(invoice.clientName, leftColX, yPos);
 
   // Due Date on right
   doc.setFontSize(9);
   doc.setTextColor(...grayColor);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("DUE DATE:", rightColX, yPos);
   doc.setTextColor(...textColor);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.text(formatDate(invoice.dueDate), pageWidth - margin, yPos, { align: "right" });
 
   yPos += 5;
 
   // Client details
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.setTextColor(...grayColor);
 
   if (invoice.clientEmail) {
@@ -173,7 +176,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
 
   let headerX = tableX + 4;
   doc.text(tableHeaders[0], headerX, yPos + 7);
@@ -187,7 +190,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   yPos += headerHeight;
 
   // Table Rows
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.setFontSize(9);
 
   invoice.items.forEach((item, index) => {
@@ -215,13 +218,13 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
     // Unit Price
     rowX += colWidths[1];
-    doc.text(`৳${formatCurrency(item.amount)}`, rowX + colWidths[2] - 4, yPos + 7, { align: "right" });
+    doc.text(`BDT ${formatCurrency(item.amount)}`, rowX + colWidths[2] - 4, yPos + 7, { align: "right" });
 
     // Total
     rowX += colWidths[2];
-    doc.setFont("helvetica", "bold");
-    doc.text(`৳${formatCurrency(item.amount)}`, rowX + colWidths[3] - 4, yPos + 7, { align: "right" });
-    doc.setFont("helvetica", "normal");
+    doc.setFont(serifFont, "bold");
+    doc.text(`BDT ${formatCurrency(item.amount)}`, rowX + colWidths[3] - 4, yPos + 7, { align: "right" });
+    doc.setFont(serifFont, "normal");
 
     yPos += rowHeight;
   });
@@ -241,10 +244,10 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Subtotal
   doc.setFontSize(9);
   doc.setTextColor(...grayColor);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.text("Subtotal", totalsX, yPos);
   doc.setTextColor(...textColor);
-  doc.text(`৳${formatCurrency(subtotal)}`, totalsValueX, yPos, { align: "right" });
+  doc.text(`BDT ${formatCurrency(subtotal)}`, totalsValueX, yPos, { align: "right" });
 
   yPos += 6;
 
@@ -252,23 +255,23 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setTextColor(...grayColor);
   doc.text("Tax", totalsX, yPos);
   doc.setTextColor(...textColor);
-  doc.text(`৳${formatCurrency(vatAmount)}`, totalsValueX, yPos, { align: "right" });
+  doc.text(`BDT ${formatCurrency(vatAmount)}`, totalsValueX, yPos, { align: "right" });
 
   yPos += 6;
 
   // Total
   doc.setTextColor(...textColor);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("Total", totalsX, yPos);
-  doc.text(`৳${formatCurrency(totalWithVat)}`, totalsValueX, yPos, { align: "right" });
+  doc.text(`BDT ${formatCurrency(totalWithVat)}`, totalsValueX, yPos, { align: "right" });
 
   yPos += 6;
 
   // Total Paid (green)
   doc.setTextColor(...greenColor);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "normal");
   doc.text("Total Paid", totalsX, yPos);
-  doc.text(`৳${formatCurrency(invoice.paidAmount)}`, totalsValueX, yPos, { align: "right" });
+  doc.text(`BDT ${formatCurrency(invoice.paidAmount)}`, totalsValueX, yPos, { align: "right" });
 
   yPos += 10;
 
@@ -289,12 +292,12 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Balance label
   doc.setTextColor(...redColor);
   doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(serifFont, "bold");
   doc.text("Balance", balanceBoxX + 8, yPos + 8);
 
   // Balance amount
   doc.setFontSize(11);
-  doc.text(`৳${formatCurrency(invoice.dueAmount)}`, pageWidth - margin - 5, yPos + 8, { align: "right" });
+  doc.text(`BDT ${formatCurrency(invoice.dueAmount)}`, pageWidth - margin - 5, yPos + 8, { align: "right" });
 
   yPos += balanceBoxHeight + 15;
 
@@ -306,7 +309,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
     doc.setTextColor(...navyColor);
     doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(serifFont, "bold");
     doc.text("PAYMENT HISTORY", margin + 8, yPos + 6);
 
     yPos += 14;
@@ -317,7 +320,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
     doc.setTextColor(...grayColor);
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(serifFont, "bold");
     doc.text("DATE", margin + 4, yPos + 5.5);
     doc.text("TYPE", margin + 45, yPos + 5.5);
     doc.text("DESCRIPTION", margin + 85, yPos + 5.5);
@@ -326,7 +329,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     yPos += 8;
 
     // Payment rows
-    doc.setFont("helvetica", "normal");
+    doc.setFont(serifFont, "normal");
     doc.setFontSize(9);
 
     invoice.installments.forEach((inst, index) => {
@@ -339,9 +342,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
       doc.text(`Payment #${index + 1}`, margin + 85, yPos + 6);
 
       doc.setTextColor(...greenColor);
-      doc.setFont("helvetica", "bold");
-      doc.text(`৳${formatCurrency(inst.amount)}`, pageWidth - margin - 4, yPos + 6, { align: "right" });
-      doc.setFont("helvetica", "normal");
+      doc.setFont(serifFont, "bold");
+      doc.text(`BDT ${formatCurrency(inst.amount)}`, pageWidth - margin - 4, yPos + 6, { align: "right" });
+      doc.setFont(serifFont, "normal");
 
       yPos += 10;
     });
@@ -357,7 +360,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Thank you message
   doc.setTextColor(...grayColor);
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(serifFont, "italic");
   doc.text("Thank you for staying with us.", margin, footerY + 5);
 
   // Generate QR code
@@ -373,6 +376,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     // Scan for details label
     doc.setFontSize(7);
     doc.setTextColor(...lightGrayColor);
+    doc.setFont(serifFont, "normal");
     doc.text("Scan for details", pageWidth - margin - 14, footerY + 28, { align: "center" });
   } catch (error) {
     console.error("Failed to generate QR code:", error);
