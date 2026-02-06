@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 interface LocalItem {
   id: string;
   title: string;
+  qty: number;
+  unitPrice: number;
   amount: number;
 }
 
@@ -61,7 +63,7 @@ export default function InvoiceDetail() {
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
   const [vatRate, setVatRate] = useState(0);
-  const [items, setItems] = useState<LocalItem[]>([{ id: "1", title: "", amount: 0 }]);
+  const [items, setItems] = useState<LocalItem[]>([{ id: "1", title: "", qty: 1, unitPrice: 0, amount: 0 }]);
   const [installments, setInstallments] = useState<LocalInstallment[]>([]);
 
   // Calculated values
@@ -101,6 +103,8 @@ export default function InvoiceDetail() {
         setItems(existingInvoice.items.map((item) => ({
           id: item.id,
           title: item.title,
+          qty: 1,
+          unitPrice: Number(item.amount),
           amount: Number(item.amount),
         })));
       }
@@ -116,7 +120,7 @@ export default function InvoiceDetail() {
   }, [existingInvoice]);
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now().toString(), title: "", amount: 0 }]);
+    setItems([...items, { id: Date.now().toString(), title: "", qty: 1, unitPrice: 0, amount: 0 }]);
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -126,9 +130,18 @@ export default function InvoiceDetail() {
   };
 
   const handleUpdateItem = (itemId: string, field: keyof LocalItem, value: string | number) => {
-    setItems(items.map((item) =>
-      item.id === itemId ? { ...item, [field]: value } : item
-    ));
+    setItems(items.map((item) => {
+      if (item.id !== itemId) return item;
+      
+      const updatedItem = { ...item, [field]: value };
+      
+      // Auto-calculate amount when qty or unitPrice changes
+      if (field === "qty" || field === "unitPrice") {
+        updatedItem.amount = updatedItem.qty * updatedItem.unitPrice;
+      }
+      
+      return updatedItem;
+    }));
   };
 
   const handleAddInstallment = () => {
@@ -398,42 +411,70 @@ export default function InvoiceDetail() {
                   Add Item
                 </Button>
               </div>
-              <div className="space-y-3">
+            {/* Table Header */}
+              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                <div className="col-span-1">#</div>
+                <div className="col-span-5">Description</div>
+                <div className="col-span-1 text-center">Qty</div>
+                <div className="col-span-2 text-right">Unit Price</div>
+                <div className="col-span-2 text-right">Total</div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              <div className="space-y-2 mt-2">
                 {items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                    className="grid grid-cols-12 gap-2 items-center p-3 rounded-lg bg-muted/50"
                   >
-                    <span className="text-sm text-muted-foreground w-6">
+                    <span className="col-span-1 text-sm text-muted-foreground">
                       {index + 1}.
                     </span>
-                    <Input
-                      value={item.title}
-                      onChange={(e) => handleUpdateItem(item.id, "title", e.target.value)}
-                      placeholder="Item description"
-                      className="flex-1"
-                    />
-                    <div className="relative w-32">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        ৳
-                      </span>
+                    <div className="col-span-5">
                       <Input
-                        type="number"
-                        value={item.amount || ""}
-                        onChange={(e) => handleUpdateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="pl-7"
+                        value={item.title}
+                        onChange={(e) => handleUpdateItem(item.id, "title", e.target.value)}
+                        placeholder="Item description"
                       />
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
-                      onClick={() => handleRemoveItem(item.id)}
-                      disabled={items.length === 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="col-span-1">
+                      <Input
+                        type="number"
+                        value={item.qty || ""}
+                        onChange={(e) => handleUpdateItem(item.id, "qty", parseInt(e.target.value) || 1)}
+                        placeholder="1"
+                        className="text-center"
+                        min={1}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                          ৳
+                        </span>
+                        <Input
+                          type="number"
+                          value={item.unitPrice || ""}
+                          onChange={(e) => handleUpdateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
+                          placeholder="0"
+                          className="pl-7 text-right"
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-2 text-right font-semibold text-foreground pr-2">
+                      {formatCurrency(item.amount)}
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => handleRemoveItem(item.id)}
+                        disabled={items.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
