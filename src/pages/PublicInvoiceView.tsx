@@ -178,10 +178,10 @@ import { Invoice, Company } from "@/types";
                 <img
                   src={company.logo_url}
                   alt={company.name}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
+                  className="w-16 h-16 rounded-full object-cover border border-primary"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold border border-primary">
                   {company?.name?.charAt(0) || "C"}
                 </div>
               )}
