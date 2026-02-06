@@ -319,7 +319,7 @@ export default function InvoiceView() {
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-gray-200">
-                    <td className="py-4 font-medium text-foreground">
+                    <td className="py-4 font-medium text-black">
                       {item.title || "—"}
                     </td>
                     <td className="py-4 text-center text-muted-foreground">1</td>

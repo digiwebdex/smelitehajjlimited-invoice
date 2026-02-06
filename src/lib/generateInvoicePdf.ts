@@ -228,8 +228,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   // Table Rows
   invoice.items.forEach((item) => {
-    // Description (foreground color - matching web view)
-    doc.setTextColor(...textColor);
+    // Description (black color - matching web view)
+    doc.setTextColor(0, 0, 0); // Black color for description
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     const title = item.title || "—";
