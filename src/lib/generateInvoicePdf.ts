@@ -113,6 +113,29 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "bold");
   doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 13, { align: "right" });
 
+  // Status badge - positioned below invoice number
+  const statusColors: Record<string, [number, number, number]> = {
+    paid: [22, 163, 74], // Green-600
+    partial: [202, 138, 4], // Yellow-600
+    unpaid: [220, 38, 38], // Red-600
+  };
+  const statusBgColors: Record<string, [number, number, number]> = {
+    paid: [220, 252, 231], // Green-100
+    partial: [254, 249, 195], // Yellow-100
+    unpaid: [254, 226, 226], // Red-100
+  };
+  const statusColor = statusColors[invoice.status] || statusColors.unpaid;
+  const statusBgColor = statusBgColors[invoice.status] || statusBgColors.unpaid;
+  const statusText = invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1);
+  const statusWidth = doc.getTextWidth(statusText) + 8;
+  
+  doc.setFillColor(...statusBgColor);
+  doc.roundedRect(pageWidth - margin - statusWidth, yPos + 16, statusWidth, 6, 2, 2, "F");
+  doc.setTextColor(...statusColor);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.text(statusText, pageWidth - margin - statusWidth / 2, yPos + 20.5, { align: "center" });
+
   yPos += 22;
 
   // ===================== BILL TO & DATES SECTION =====================
