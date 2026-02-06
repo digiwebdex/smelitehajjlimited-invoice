@@ -56,8 +56,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   const drawCircularLogo = (imageData: string) => {
     // Draw blue circular border first (behind the logo)
     doc.setDrawColor(...primaryColor); // Blue border matching primary color
-    doc.setLineWidth(1.2);
-    doc.circle(logoCenterX, logoCenterY, logoSize / 2 + 1, "S");
+    doc.setLineWidth(0.4);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2 + 0.5, "S");
     
     // Create a circular clip effect by drawing white circle as background
     doc.setFillColor(255, 255, 255);
@@ -71,7 +71,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     
     // Draw blue border on top to create clean circular edge
     doc.setDrawColor(...primaryColor);
-    doc.setLineWidth(1.2);
+    doc.setLineWidth(0.4);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
   };
   
@@ -106,7 +106,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   if (!logoDrawn) {
     // Draw blue border
     doc.setDrawColor(...primaryColor);
-    doc.setLineWidth(1.2);
+    doc.setLineWidth(0.4);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
     
     // Fill with primary color
