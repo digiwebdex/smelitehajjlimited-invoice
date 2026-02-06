@@ -457,23 +457,23 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setFont("helvetica", "normal");
   doc.text("Thank you for staying with us.", margin, footerY);
 
-  // Company contact info (muted) - left side, below thank you
-  let footerDetailY = footerY + 5;
+  // Company contact info (muted) - single line format
   doc.setTextColor(...mutedColor);
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   
-  if (company?.email) {
-    doc.text(company.email, margin, footerDetailY);
-    footerDetailY += 4;
+  // Build contact line: email • phone
+  const contactParts: string[] = [];
+  if (company?.email) contactParts.push(company.email);
+  if (company?.phone) contactParts.push(company.phone);
+  
+  if (contactParts.length > 0) {
+    doc.text(contactParts.join("  •  "), margin, footerY + 5);
   }
-  if (company?.phone) {
-    doc.text(company.phone, margin, footerDetailY);
-    footerDetailY += 4;
-  }
+  
+  // Address on single line
   if (company?.address) {
-    const addressLines = doc.splitTextToSize(company.address, 80);
-    doc.text(addressLines, margin, footerDetailY);
+    doc.text(company.address, margin, footerY + 9);
   }
 
   // Save the PDF
