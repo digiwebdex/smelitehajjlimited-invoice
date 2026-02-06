@@ -265,11 +265,11 @@ import { Invoice, Company } from "@/types";
                     <td className="py-4 font-medium text-black">
                       {item.title || "—"}
                     </td>
-                    <td className="py-4 text-center text-muted-foreground">1</td>
-                    <td className="py-4 text-right text-foreground">
+                    <td className="py-4 text-center text-black">1</td>
+                    <td className="py-4 text-right text-black">
                       {formatCurrency(Number(item.amount))}
                     </td>
-                    <td className="py-4 text-right font-semibold text-foreground">
+                    <td className="py-4 text-right font-semibold text-black">
                       {formatCurrency(Number(item.amount))}
                     </td>
                   </tr>

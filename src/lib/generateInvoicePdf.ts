@@ -242,22 +242,23 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   // Table Rows
   invoice.items.forEach((item) => {
-    // Description (black color - matching web view)
+    // Description (black color)
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     const title = item.title || "—";
     doc.text(title, col1X, yPos);
 
-    // Qty - centered
-    doc.setTextColor(...mutedColor);
+    // Qty - black color, centered
+    doc.setTextColor(0, 0, 0);
     doc.text("1", col2X, yPos, { align: "center" });
 
-    // Unit Price - right aligned
-    doc.setTextColor(...textColor);
+    // Unit Price - black color, right aligned
+    doc.setTextColor(0, 0, 0);
     doc.text(formatCurrency(item.amount), col3X, yPos, { align: "right" });
 
-    // Total - right aligned, bold
+    // Total - black color, right aligned, bold
+    doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.text(formatCurrency(item.amount), col4X, yPos, { align: "right" });
 
