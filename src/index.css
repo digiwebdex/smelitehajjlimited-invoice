@@ -372,6 +372,19 @@
     outline: none !important;
   }
 
+  /* ===== CIRCULAR LOGO - Keep rounded-full for company logos ===== */
+  .rounded-full {
+    border-radius: 9999px !important;
+  }
+  
+  img.rounded-full,
+  div.rounded-full {
+    border-radius: 9999px !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   /* ===== BALANCE BOX COLORS - CRITICAL ===== */
   .bg-red-500 {
     background-color: #ef4444 !important;
