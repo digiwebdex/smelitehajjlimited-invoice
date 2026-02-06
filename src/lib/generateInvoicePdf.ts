@@ -46,21 +46,33 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   let yPos = margin;
 
   // ===================== HEADER SECTION =====================
-  // Company Logo - circular with clipping
-  const logoSize = 16;
+  // Company Logo - circular with blue border
+  const logoSize = 18;
   const logoCenterX = margin + logoSize / 2;
   const logoCenterY = yPos + logoSize / 2;
   let logoDrawn = false;
   
-  // Helper function to draw circular logo
+  // Helper function to draw circular logo with blue border
   const drawCircularLogo = (imageData: string) => {
-    // Draw circular border/background first
-    doc.setDrawColor(229, 231, 235); // Gray border
-    doc.setLineWidth(0.5);
-    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
+    // Draw blue circular border first (behind the logo)
+    doc.setDrawColor(...primaryColor); // Blue border matching primary color
+    doc.setLineWidth(1.2);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2 + 1, "S");
     
-    // Add the image (it will be square, but we create visual circular effect)
-    doc.addImage(imageData, "PNG", margin, yPos, logoSize, logoSize);
+    // Create a circular clip effect by drawing white circle as background
+    doc.setFillColor(255, 255, 255);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "F");
+    
+    // Add the image centered within the circle
+    // Make image slightly smaller to fit within the circle
+    const imageSize = logoSize * 0.85;
+    const imageOffset = (logoSize - imageSize) / 2;
+    doc.addImage(imageData, "PNG", margin + imageOffset, yPos + imageOffset, imageSize, imageSize);
+    
+    // Draw blue border on top to create clean circular edge
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(1.2);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
   };
   
   if (company?.logo) {
@@ -90,14 +102,22 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     }
   }
   
-  // Fallback circular logo with company initial
+  // Fallback circular logo with company initial and blue border
   if (!logoDrawn) {
+    // Draw blue border
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(1.2);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
+    
+    // Fill with primary color
     doc.setFillColor(...primaryColor);
-    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "F");
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2 - 0.6, "F");
+    
+    // Add initial text
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(company?.name?.charAt(0) || "C", logoCenterX, logoCenterY + 3, { align: "center" });
+    doc.text(company?.name?.charAt(0) || "C", logoCenterX, logoCenterY + 3.5, { align: "center" });
   }
 
   // Company Name and Tagline
