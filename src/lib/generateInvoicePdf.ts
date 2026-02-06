@@ -46,9 +46,22 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   let yPos = margin;
 
   // ===================== HEADER SECTION =====================
-  // Company Logo - handle both base64 and URL
-  const logoSize = 14;
+  // Company Logo - circular with clipping
+  const logoSize = 16;
+  const logoCenterX = margin + logoSize / 2;
+  const logoCenterY = yPos + logoSize / 2;
   let logoDrawn = false;
+  
+  // Helper function to draw circular logo
+  const drawCircularLogo = (imageData: string) => {
+    // Draw circular border/background first
+    doc.setDrawColor(229, 231, 235); // Gray border
+    doc.setLineWidth(0.5);
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
+    
+    // Add the image (it will be square, but we create visual circular effect)
+    doc.addImage(imageData, "PNG", margin, yPos, logoSize, logoSize);
+  };
   
   if (company?.logo) {
     try {
@@ -63,13 +76,13 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
             reader.onerror = reject;
             reader.readAsDataURL(blob);
           });
-          doc.addImage(dataUrl, "JPEG", margin, yPos, logoSize, logoSize);
+          drawCircularLogo(dataUrl);
           logoDrawn = true;
         } catch (e) {
           console.error("Failed to fetch logo:", e);
         }
       } else if (company.logo.startsWith("data:image")) {
-        doc.addImage(company.logo, "JPEG", margin, yPos, logoSize, logoSize);
+        drawCircularLogo(company.logo);
         logoDrawn = true;
       }
     } catch (e) {
@@ -80,11 +93,11 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Fallback circular logo with company initial
   if (!logoDrawn) {
     doc.setFillColor(...primaryColor);
-    doc.circle(margin + logoSize / 2, yPos + logoSize / 2, logoSize / 2, "F");
+    doc.circle(logoCenterX, logoCenterY, logoSize / 2, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(company?.name?.charAt(0) || "C", margin + logoSize / 2, yPos + logoSize / 2 + 3, { align: "center" });
+    doc.text(company?.name?.charAt(0) || "C", logoCenterX, logoCenterY + 3, { align: "center" });
   }
 
   // Company Name and Tagline
@@ -206,19 +219,20 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   // ===================== ITEMS TABLE =====================
   const tableX = margin;
-  const descWidth = contentWidth * 0.50;
-  const qtyWidth = contentWidth * 0.12;
-  const priceWidth = contentWidth * 0.20;
-  const totalWidth = contentWidth * 0.18;
+  // Fixed column positions for proper alignment
+  const col1X = tableX; // Description - left aligned
+  const col2X = tableX + contentWidth * 0.55; // Qty - center aligned
+  const col3X = tableX + contentWidth * 0.75; // Unit Price - right aligned
+  const col4X = tableX + contentWidth; // Total - right aligned
 
   // Table Header with underline
   doc.setTextColor(...mutedColor);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("DESCRIPTION", tableX, yPos);
-  doc.text("QTY", tableX + descWidth + qtyWidth / 2, yPos, { align: "center" });
-  doc.text("UNIT PRICE", tableX + descWidth + qtyWidth + priceWidth, yPos, { align: "right" });
-  doc.text("TOTAL", tableX + contentWidth, yPos, { align: "right" });
+  doc.text("DESCRIPTION", col1X, yPos);
+  doc.text("QTY", col2X, yPos, { align: "center" });
+  doc.text("UNIT PRICE", col3X, yPos, { align: "right" });
+  doc.text("TOTAL", col4X, yPos, { align: "right" });
 
   yPos += 3;
   doc.setDrawColor(...borderColor);
@@ -229,23 +243,23 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   // Table Rows
   invoice.items.forEach((item) => {
     // Description (black color - matching web view)
-    doc.setTextColor(0, 0, 0); // Black color for description
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     const title = item.title || "—";
-    doc.text(title, tableX, yPos);
+    doc.text(title, col1X, yPos);
 
-    // Qty
+    // Qty - centered
     doc.setTextColor(...mutedColor);
-    doc.text("1", tableX + descWidth + qtyWidth / 2, yPos, { align: "center" });
+    doc.text("1", col2X, yPos, { align: "center" });
 
-    // Unit Price
+    // Unit Price - right aligned
     doc.setTextColor(...textColor);
-    doc.text(formatCurrency(item.amount), tableX + descWidth + qtyWidth + priceWidth, yPos, { align: "right" });
+    doc.text(formatCurrency(item.amount), col3X, yPos, { align: "right" });
 
-    // Total
+    // Total - right aligned, bold
     doc.setFont("helvetica", "bold");
-    doc.text(formatCurrency(item.amount), tableX + contentWidth, yPos, { align: "right" });
+    doc.text(formatCurrency(item.amount), col4X, yPos, { align: "right" });
 
     yPos += 8;
     
