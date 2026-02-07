@@ -465,9 +465,13 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     doc.text(contactParts.join("  •  "), margin, footerY + 5);
   }
   
-  // Address on single line
+  // Address on single line - remove all line breaks and extra spaces
   if (company?.address) {
-    doc.text(company.address, margin, footerY + 9);
+    const cleanAddress = company.address
+      .replace(/\r?\n/g, " ")  // Replace newlines with space
+      .replace(/\s+/g, " ")    // Replace multiple spaces with single space
+      .trim();
+    doc.text(cleanAddress, margin, footerY + 9);
   }
 
   // Save the PDF
