@@ -411,73 +411,98 @@ export default function InvoiceDetail() {
                   Add Item
                 </Button>
               </div>
-            {/* Table Header */}
-              <div className="grid grid-cols-12 gap-3 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
-                <div className="col-span-1">#</div>
-                <div className="col-span-4">Description</div>
-                <div className="col-span-2 text-center">Qty</div>
-                <div className="col-span-2 text-right">Unit Price</div>
-                <div className="col-span-2 text-right">Total</div>
-                <div className="col-span-1"></div>
-              </div>
-              
-              <div className="space-y-2 mt-2">
-                {items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-muted/50"
-                  >
-                    <span className="col-span-1 text-sm text-muted-foreground">
-                      {index + 1}.
-                    </span>
-                    <div className="col-span-4">
-                      <Input
-                        value={item.title}
-                        onChange={(e) => handleUpdateItem(item.id, "title", e.target.value)}
-                        placeholder="Item description"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        value={item.qty || ""}
-                        onChange={(e) => handleUpdateItem(item.id, "qty", parseInt(e.target.value) || 1)}
-                        placeholder="1"
-                        className="text-center"
-                        min={1}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                          ৳
-                        </span>
+            {/* Table Header + Rows (scroll on small screens so numbers stay readable) */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[44rem]">
+                <div className="grid grid-cols-[2.25rem_minmax(14rem,1fr)_7rem_10rem_7rem_2.5rem] gap-4 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+                  <div>#</div>
+                  <div>Description</div>
+                  <div className="text-center">Qty</div>
+                  <div className="text-right">Unit Price</div>
+                  <div className="text-right">Total</div>
+                  <div />
+                </div>
+
+                <div className="space-y-2 mt-2">
+                  {items.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-[2.25rem_minmax(14rem,1fr)_7rem_10rem_7rem_2.5rem] gap-4 items-center p-3 rounded-lg bg-muted/50"
+                    >
+                      <span className="text-sm text-muted-foreground">
+                        {index + 1}.
+                      </span>
+
+                      <div>
                         <Input
-                          type="number"
-                          value={item.unitPrice || ""}
-                          onChange={(e) => handleUpdateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                          placeholder="0"
-                          className="pl-6 text-right"
+                          value={item.title}
+                          onChange={(e) =>
+                            handleUpdateItem(item.id, "title", e.target.value)
+                          }
+                          placeholder="Item description"
                         />
                       </div>
+
+                      <div>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          value={item.qty || ""}
+                          onChange={(e) =>
+                            handleUpdateItem(
+                              item.id,
+                              "qty",
+                              parseInt(e.target.value) || 1
+                            )
+                          }
+                          placeholder="1"
+                          className="text-right tabular-nums"
+                          min={1}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                            ৳
+                          </span>
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            value={item.unitPrice || ""}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.id,
+                                "unitPrice",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            placeholder="0"
+                            className="pl-7 text-right tabular-nums"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-right font-semibold text-foreground pr-2 tabular-nums">
+                        {formatCurrency(item.amount)}
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => handleRemoveItem(item.id)}
+                          disabled={items.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="col-span-2 text-right font-semibold text-foreground pr-2">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => handleRemoveItem(item.id)}
-                        disabled={items.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+            </div>
             </div>
 
             {/* Installments */}
