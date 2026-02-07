@@ -94,8 +94,8 @@ export default function InvoiceDetail() {
         existingInvoice.items.map((it) => ({
           id: it.id,
           title: it.title,
-          qty: 1,
-          unitPrice: Number(it.amount),
+          qty: it.qty ?? 1,
+          unitPrice: it.unit_price ?? Number(it.amount),
           amount: Number(it.amount),
         }))
       );
@@ -241,7 +241,7 @@ export default function InvoiceDetail() {
       status,
       items: items
         .filter((i) => i.title.trim())
-        .map((i) => ({ title: i.title, amount: i.amount })),
+        .map((i) => ({ title: i.title, qty: i.qty, unit_price: i.unitPrice, amount: i.amount })),
       installments: installments.map((inst) => ({
         amount: inst.amount,
         paid_date: inst.paid_date,

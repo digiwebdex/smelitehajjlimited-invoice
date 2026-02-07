@@ -7,6 +7,8 @@ export interface InvoiceItem {
   id: string;
   invoice_id: string;
   title: string;
+  qty: number;
+  unit_price: number;
   amount: number;
   created_at: string;
 }
@@ -61,7 +63,7 @@ export interface InvoiceInput {
   paid_amount: number;
   due_amount: number;
   status: "unpaid" | "partial" | "paid";
-  items: { title: string; amount: number }[];
+  items: { title: string; qty: number; unit_price: number; amount: number }[];
   installments: { amount: number; paid_date: string }[];
 }
 
@@ -155,6 +157,8 @@ export function useCreateInvoice() {
             invoice.items.map((item) => ({
               invoice_id: invoiceData.id,
               title: item.title,
+              qty: item.qty,
+              unit_price: item.unit_price,
               amount: item.amount,
             }))
           );
@@ -241,6 +245,8 @@ export function useUpdateInvoice() {
             invoice.items.map((item) => ({
               invoice_id: id,
               title: item.title,
+              qty: item.qty,
+              unit_price: item.unit_price,
               amount: item.amount,
             }))
           );
