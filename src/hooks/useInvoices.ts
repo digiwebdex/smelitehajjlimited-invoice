@@ -28,6 +28,7 @@ export interface Invoice {
   client_email: string | null;
   client_phone: string | null;
   client_address: string | null;
+  notes: string | null;
   invoice_date: string;
   due_date: string | null;
   subtotal: number;
@@ -50,6 +51,7 @@ export interface InvoiceInput {
   client_email?: string;
   client_phone?: string;
   client_address?: string;
+  notes?: string;
   invoice_date: string;
   due_date?: string;
   subtotal: number;
@@ -129,6 +131,7 @@ export function useCreateInvoice() {
           client_email: invoice.client_email,
           client_phone: invoice.client_phone,
           client_address: invoice.client_address,
+          notes: invoice.notes,
           invoice_date: invoice.invoice_date,
           due_date: invoice.due_date,
           subtotal: invoice.subtotal,
@@ -209,6 +212,7 @@ export function useUpdateInvoice() {
           client_email: invoice.client_email,
           client_phone: invoice.client_phone,
           client_address: invoice.client_address,
+          notes: invoice.notes,
           invoice_date: invoice.invoice_date,
           due_date: invoice.due_date,
           subtotal: invoice.subtotal,

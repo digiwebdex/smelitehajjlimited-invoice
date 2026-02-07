@@ -353,6 +353,33 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   yPos += 16;
 
+  // ===================== NOTES SECTION =====================
+  if (invoice.notes) {
+    // Notes section box
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.3);
+    
+    const notesLines = doc.splitTextToSize(invoice.notes, contentWidth - 10);
+    const notesBoxHeight = 10 + notesLines.length * 4;
+    doc.roundedRect(margin, yPos, contentWidth, notesBoxHeight, 2, 2, "S");
+    
+    yPos += 6;
+    
+    // Notes header
+    doc.setTextColor(...textColor);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("NOTES / PAYMENT TERMS", margin + 5, yPos);
+    yPos += 6;
+    
+    // Notes content
+    doc.setFontSize(8);
+    doc.setTextColor(...mutedColor);
+    doc.setFont("helvetica", "normal");
+    doc.text(notesLines, margin + 5, yPos);
+    yPos += notesLines.length * 4 + 4;
+  }
+
   // ===================== PAYMENT HISTORY =====================
   if (invoice.installments.length > 0) {
     // Payment History section box

@@ -1,6 +1,7 @@
 import { FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ interface Props {
   clientEmail: string;
   clientPhone: string;
   clientAddress: string;
+  notes: string;
   companies: Company[];
   errors: Record<string, string | undefined>;
   onChange: (field: string, value: string) => void;
@@ -35,6 +37,7 @@ export function InvoiceDetailsCard({
   clientEmail,
   clientPhone,
   clientAddress,
+  notes,
   companies,
   errors,
   onChange,
@@ -141,6 +144,25 @@ export function InvoiceDetailsCard({
             placeholder="Enter address"
           />
         </div>
+      </div>
+
+      {/* Notes section */}
+      <h3 className="text-sm font-medium text-foreground pt-4 border-t border-border">
+        Notes / Payment Terms
+      </h3>
+      <div className="space-y-1.5">
+        <Label htmlFor="notes">Notes (optional)</Label>
+        <Textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => onChange("notes", e.target.value)}
+          placeholder="Add any notes or payment terms for this invoice..."
+          rows={3}
+          className={errors.notes ? "border-destructive" : ""}
+        />
+        {errors.notes && (
+          <p className="text-xs text-destructive">{errors.notes}</p>
+        )}
       </div>
     </div>
   );

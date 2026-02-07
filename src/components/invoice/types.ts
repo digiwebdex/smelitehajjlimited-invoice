@@ -36,6 +36,7 @@ export const invoiceFormSchema = z.object({
   clientAddress: z.string(),
   invoiceDate: z.string().min(1, "Invoice date is required"),
   vatRate: z.number().min(0).max(100),
+  notes: z.string().max(1000, "Notes must be less than 1000 characters").optional(),
 });
 
 export type InvoiceFormData = z.infer<typeof invoiceFormSchema>;

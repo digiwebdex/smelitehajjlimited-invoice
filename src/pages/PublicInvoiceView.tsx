@@ -119,34 +119,35 @@ import { Invoice, Company } from "@/types";
           <Button
             variant="outline"
             onClick={async () => {
-              const pdfInvoice: Invoice = {
-                id: invoice.id,
-                invoiceNumber: invoice.invoice_number,
-                companyId: invoice.company_id,
-                clientName: invoice.client_name,
-                clientAddress: invoice.client_address || undefined,
-                clientEmail: invoice.client_email || undefined,
-                clientPhone: invoice.client_phone || undefined,
-                date: new Date(invoice.invoice_date),
-                dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
-                items: items.map(item => ({
-                  id: item.id,
-                  title: item.title,
-                  amount: Number(item.amount),
-                })),
-                installments: installments.map(inst => ({
-                  id: inst.id,
-                  amount: Number(inst.amount),
-                  paidDate: new Date(inst.paid_date),
-                })),
-                status: invoice.status as "unpaid" | "partial" | "paid",
-                totalAmount: Number(invoice.total_amount),
-                vatRate: Number(invoice.vat_rate) || 0,
-                vatAmount: Number(invoice.vat_amount) || 0,
-                subtotal: Number(invoice.subtotal) || 0,
-                paidAmount: Number(invoice.paid_amount),
-                dueAmount: Number(invoice.due_amount),
-              };
+               const pdfInvoice: Invoice = {
+                 id: invoice.id,
+                 invoiceNumber: invoice.invoice_number,
+                 companyId: invoice.company_id,
+                 clientName: invoice.client_name,
+                 clientAddress: invoice.client_address || undefined,
+                 clientEmail: invoice.client_email || undefined,
+                 clientPhone: invoice.client_phone || undefined,
+                 date: new Date(invoice.invoice_date),
+                 dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
+                 items: items.map(item => ({
+                   id: item.id,
+                   title: item.title,
+                   amount: Number(item.amount),
+                 })),
+                 installments: installments.map(inst => ({
+                   id: inst.id,
+                   amount: Number(inst.amount),
+                   paidDate: new Date(inst.paid_date),
+                 })),
+                 status: invoice.status as "unpaid" | "partial" | "paid",
+                 totalAmount: Number(invoice.total_amount),
+                 vatRate: Number(invoice.vat_rate) || 0,
+                 vatAmount: Number(invoice.vat_amount) || 0,
+                 subtotal: Number(invoice.subtotal) || 0,
+                 paidAmount: Number(invoice.paid_amount),
+                 dueAmount: Number(invoice.due_amount),
+                 notes: invoice.notes || undefined,
+               };
               const pdfCompany: Company | undefined = company ? {
                 id: company.id,
                 name: company.name,
@@ -318,6 +319,18 @@ import { Invoice, Company } from "@/types";
               </div>
             </div>
           </div>
+
+          {/* NOTES */}
+          {invoice.notes && (
+            <div className="mt-10 border border-gray-200 rounded-lg p-6">
+              <h4 className="font-semibold text-foreground mb-3 uppercase tracking-wide text-sm">
+                Notes / Payment Terms
+              </h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {invoice.notes}
+              </p>
+            </div>
+          )}
 
           {/* PAYMENT HISTORY */}
           {installments.length > 0 && (

@@ -143,6 +143,7 @@ export default function InvoiceView() {
                   subtotal: Number(invoice.subtotal) || 0,
                   paidAmount: Number(invoice.paid_amount),
                   dueAmount: Number(invoice.due_amount),
+                  notes: invoice.notes || undefined,
                 };
                 const pdfCompany: Company | undefined = company ? {
                   id: company.id,
@@ -375,6 +376,18 @@ export default function InvoiceView() {
               </div>
             </div>
           </div>
+
+          {/* NOTES */}
+          {invoice.notes && (
+            <div className="mt-10 border border-gray-200 rounded-lg p-6">
+              <h4 className="font-semibold text-foreground mb-3 uppercase tracking-wide text-sm">
+                Notes / Payment Terms
+              </h4>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {invoice.notes}
+              </p>
+            </div>
+          )}
 
           {/* PAYMENT HISTORY */}
           {installments.length > 0 && (

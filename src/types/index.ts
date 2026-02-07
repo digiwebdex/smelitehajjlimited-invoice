@@ -44,6 +44,7 @@ export interface Invoice {
   subtotal?: number;
   paidAmount: number;
   dueAmount: number;
+  notes?: string;
 }
 
 export interface RevenueStats {

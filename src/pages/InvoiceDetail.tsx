@@ -49,6 +49,7 @@ export default function InvoiceDetail() {
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [notes, setNotes] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -85,6 +86,7 @@ export default function InvoiceDetail() {
     setClientEmail(existingInvoice.client_email || "");
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
+    setNotes(existingInvoice.notes || "");
     setInvoiceDate(existingInvoice.invoice_date);
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
@@ -119,6 +121,7 @@ export default function InvoiceDetail() {
       clientPhone: setClientPhone,
       clientAddress: setClientAddress,
       invoiceDate: setInvoiceDate,
+      notes: setNotes,
     };
     map[field]?.(value);
     setErrors((e) => ({ ...e, [field]: undefined }));
@@ -189,6 +192,7 @@ export default function InvoiceDetail() {
       clientAddress,
       invoiceDate,
       vatRate,
+      notes,
     });
     if (!formResult.success) {
       formResult.error.issues.forEach((issue) => {
@@ -226,6 +230,7 @@ export default function InvoiceDetail() {
       client_email: clientEmail || undefined,
       client_phone: clientPhone || undefined,
       client_address: clientAddress || undefined,
+      notes: notes || undefined,
       invoice_date: invoiceDate,
       subtotal,
       vat_rate: vatRate,
@@ -311,6 +316,7 @@ export default function InvoiceDetail() {
               clientEmail={clientEmail}
               clientPhone={clientPhone}
               clientAddress={clientAddress}
+              notes={notes}
               companies={companies}
               errors={errors}
               onChange={handleFieldChange}
