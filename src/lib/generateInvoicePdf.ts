@@ -52,26 +52,20 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   const logoCenterY = yPos + logoSize / 2;
   let logoDrawn = false;
   
-  // Helper function to draw circular logo with blue border
+  // Helper function to draw circular logo with clean blue border
   const drawCircularLogo = (imageData: string) => {
-    // Draw blue circular border first (behind the logo)
-    doc.setDrawColor(...primaryColor); // Blue border matching primary color
-    doc.setLineWidth(0.4);
-    doc.circle(logoCenterX, logoCenterY, logoSize / 2 + 0.5, "S");
-    
-    // Create a circular clip effect by drawing white circle as background
+    // Draw white filled circle as background
     doc.setFillColor(255, 255, 255);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "F");
     
-    // Add the image centered within the circle
-    // Make image slightly smaller to fit within the circle
-    const imageSize = logoSize * 0.85;
+    // Add the image centered within the circle (slightly smaller to fit)
+    const imageSize = logoSize * 0.82;
     const imageOffset = (logoSize - imageSize) / 2;
     doc.addImage(imageData, "PNG", margin + imageOffset, yPos + imageOffset, imageSize, imageSize);
     
-    // Draw blue border on top to create clean circular edge
+    // Draw single clean blue border on top
     doc.setDrawColor(...primaryColor);
-    doc.setLineWidth(0.4);
+    doc.setLineWidth(0.6);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
   };
   
