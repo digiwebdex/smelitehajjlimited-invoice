@@ -213,7 +213,7 @@ import { Invoice, Company } from "@/types";
               <p className="text-muted-foreground text-sm uppercase tracking-wide mb-2">
                 Bill To
               </p>
-              <h3 className="font-bold text-lg text-foreground">
+              <h3 className="font-bold text-lg text-black">
                 {invoice.client_name}
               </h3>
               {invoice.client_email && (
@@ -283,25 +283,25 @@ import { Invoice, Company } from "@/types";
             <div className="w-80 text-sm">
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-muted-foreground font-medium">Subtotal</span>
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-black">
                   {formatCurrency(Number(invoice.subtotal) || 0)}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-muted-foreground font-medium">Tax</span>
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-black">
                   {formatCurrency(Number(invoice.vat_amount) || 0)}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-foreground font-bold">Total</span>
-                <span className="font-bold text-foreground">
+                <span className="text-black font-bold">Total</span>
+                <span className="font-bold text-black">
                   {formatCurrency(Number(invoice.total_amount))}
                 </span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-100">
-                <span className="text-orange-500 font-bold">Total Paid</span>
-                <span className="font-bold text-orange-500">
+                <span className="text-success font-bold">Total Paid</span>
+                <span className="font-bold text-success">
                   {formatCurrency(Number(invoice.paid_amount))}
                 </span>
               </div>
@@ -357,21 +357,21 @@ import { Invoice, Company } from "@/types";
           {/* FOOTER */}
           <div className="flex justify-between items-end mt-12 pt-6 border-t border-gray-200">
             <div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Thank you for staying with us.
               </p>
               {company?.email && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-gray-500 mt-2">
                   {company.email}
                 </p>
               )}
               {company?.phone && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   {company.phone}
                 </p>
               )}
               {company?.address && (
-                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                <p className="text-xs text-gray-500 mt-1 max-w-xs">
                   {company.address}
                 </p>
               )}

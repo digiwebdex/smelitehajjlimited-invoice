@@ -205,8 +205,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   yPos += 8;
 
-  // Client Name (bold, larger)
-  doc.setTextColor(...textColor);
+  // Client Name (bold, larger, black)
+  doc.setTextColor(0, 0, 0); // Black
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(invoice.clientName, margin + 5, yPos + 1);
@@ -301,7 +301,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   doc.text("Subtotal", summaryX, yPos);
-  doc.setTextColor(...textColor);
+  doc.setTextColor(0, 0, 0); // Black
   doc.setFont("helvetica", "bold");
   const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
   doc.text(formatCurrency(subtotal), pageWidth - margin, yPos, { align: "right" });
@@ -317,7 +317,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   doc.text("Tax", summaryX, yPos);
-  doc.setTextColor(...textColor);
+  doc.setTextColor(0, 0, 0); // Black
   doc.setFont("helvetica", "bold");
   doc.text(formatCurrency(vatAmount), pageWidth - margin, yPos, { align: "right" });
 
@@ -326,7 +326,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
 
   // Total (bold, larger)
   doc.setFontSize(10);
-  doc.setTextColor(...textColor);
+  doc.setTextColor(0, 0, 0); // Black
   doc.setFont("helvetica", "bold");
   doc.text("Total", summaryX, yPos);
   const totalWithVat = subtotal + vatAmount;
@@ -335,9 +335,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Total Paid (orange color - matching web view)
+  // Total Paid (green color)
   doc.setFontSize(9);
-  doc.setTextColor(...orangeColor);
+  doc.setTextColor(...greenColor);
   doc.setFont("helvetica", "bold");
   doc.text("Total Paid", summaryX, yPos);
   doc.text(formatCurrency(invoice.paidAmount), pageWidth - margin, yPos, { align: "right" });
@@ -451,14 +451,14 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     console.error("Failed to generate QR code:", error);
   }
 
-  // Thank you message (accent/teal color like web view)
-  doc.setTextColor(...accentColor);
+  // Thank you message (gray color)
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("Thank you for staying with us.", margin, footerY);
 
-  // Company contact info (muted) - single line format
-  doc.setTextColor(...mutedColor);
+  // Company contact info (gray) - single line format
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   

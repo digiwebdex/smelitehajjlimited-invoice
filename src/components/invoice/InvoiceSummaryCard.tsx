@@ -29,7 +29,7 @@ export function InvoiceSummaryCard({
       <div className="space-y-3 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-medium tabular-nums">{formatCurrency(subtotal)}</span>
+          <span className="font-medium tabular-nums text-black">{formatCurrency(subtotal)}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -47,19 +47,19 @@ export function InvoiceSummaryCard({
             min={0}
             max={100}
           />
-          <span className="ml-auto font-medium tabular-nums">
+          <span className="ml-auto font-medium tabular-nums text-black">
             {formatCurrency(vatAmount)}
           </span>
         </div>
 
         <div className="flex justify-between border-t border-border pt-3">
-          <span className="font-semibold">Total</span>
-          <span className="font-bold text-lg tabular-nums">
+          <span className="font-semibold text-black">Total</span>
+          <span className="font-bold text-lg tabular-nums text-black">
             {formatCurrency(totalAmount)}
           </span>
         </div>
 
-        <div className="flex justify-between text-green-600">
+        <div className="flex justify-between text-success">
           <span>Paid</span>
           <span className="font-semibold tabular-nums">{formatCurrency(paidAmount)}</span>
         </div>
