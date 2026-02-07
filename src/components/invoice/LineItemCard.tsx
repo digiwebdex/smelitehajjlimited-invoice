@@ -55,10 +55,14 @@ export function LineItemCard({
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Qty</Label>
           <Input
-            type="number"
+            type="text"
             inputMode="numeric"
-            value={item.qty || ""}
-            onChange={(e) => onUpdate("qty", parseInt(e.target.value) || 1)}
+            pattern="[0-9]*"
+            value={item.qty}
+            onChange={(e) => {
+              const val = parseInt(e.target.value) || 0;
+              onUpdate("qty", val < 1 ? 1 : val);
+            }}
             min={1}
             className="text-right tabular-nums"
           />
@@ -70,10 +74,14 @@ export function LineItemCard({
               ৳
             </span>
             <Input
-              type="number"
+              type="text"
               inputMode="decimal"
-              value={item.unitPrice || ""}
-              onChange={(e) => onUpdate("unitPrice", parseFloat(e.target.value) || 0)}
+              pattern="[0-9]*\.?[0-9]*"
+              value={item.unitPrice}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value) || 0;
+                onUpdate("unitPrice", val < 0 ? 0 : val);
+              }}
               className="pl-7 text-right tabular-nums"
             />
           </div>
