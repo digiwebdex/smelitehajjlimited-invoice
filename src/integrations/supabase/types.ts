@@ -91,21 +91,27 @@ export type Database = {
           created_at: string
           id: string
           invoice_id: string
+          qty: number
           title: string
+          unit_price: number
         }
         Insert: {
           amount?: number
           created_at?: string
           id?: string
           invoice_id: string
+          qty?: number
           title: string
+          unit_price?: number
         }
         Update: {
           amount?: number
           created_at?: string
           id?: string
           invoice_id?: string
+          qty?: number
           title?: string
+          unit_price?: number
         }
         Relationships: [
           {
