@@ -412,10 +412,10 @@ export default function InvoiceDetail() {
                 </Button>
               </div>
             {/* Table Header */}
-              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+              <div className="grid grid-cols-12 gap-3 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                 <div className="col-span-1">#</div>
-                <div className="col-span-5">Description</div>
-                <div className="col-span-1 text-center">Qty</div>
+                <div className="col-span-4">Description</div>
+                <div className="col-span-2 text-center">Qty</div>
                 <div className="col-span-2 text-right">Unit Price</div>
                 <div className="col-span-2 text-right">Total</div>
                 <div className="col-span-1"></div>
@@ -425,19 +425,19 @@ export default function InvoiceDetail() {
                 {items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="grid grid-cols-12 gap-2 items-center p-3 rounded-lg bg-muted/50"
+                    className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-muted/50"
                   >
                     <span className="col-span-1 text-sm text-muted-foreground">
                       {index + 1}.
                     </span>
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <Input
                         value={item.title}
                         onChange={(e) => handleUpdateItem(item.id, "title", e.target.value)}
                         placeholder="Item description"
                       />
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-2">
                       <Input
                         type="number"
                         value={item.qty || ""}
@@ -449,7 +449,7 @@ export default function InvoiceDetail() {
                     </div>
                     <div className="col-span-2">
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                           ৳
                         </span>
                         <Input
@@ -457,7 +457,7 @@ export default function InvoiceDetail() {
                           value={item.unitPrice || ""}
                           onChange={(e) => handleUpdateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
                           placeholder="0"
-                          className="pl-7 text-right"
+                          className="pl-6 text-right"
                         />
                       </div>
                     </div>
