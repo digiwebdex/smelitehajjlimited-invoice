@@ -411,7 +411,7 @@
     print-color-adjust: exact !important;
   }
 
-  /* ===== ORANGE COLORS - Total Paid ===== */
+  /* ===== ORANGE COLORS ===== */
   .text-orange-500 {
     color: #f97316 !important;
     -webkit-print-color-adjust: exact !important;
@@ -419,6 +419,18 @@
   }
   .bg-orange-500 {
     background-color: #f97316 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ===== SUCCESS/GREEN COLORS - Total Paid ===== */
+  .text-success {
+    color: #16a34a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-success {
+    background-color: #16a34a !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
