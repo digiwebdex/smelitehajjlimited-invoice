@@ -339,12 +339,14 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Balance Box (red for due, green for paid - matching web view exactly)
-  const balanceColor = invoice.dueAmount > 0 ? redColor : greenColor;
-  doc.setFillColor(...balanceColor);
+  // Balance Box (red for due, light green #dcfce7 for paid - matching web view exactly)
+  const paidBoxColor: [number, number, number] = [220, 252, 231]; // #dcfce7
+  const balanceBoxColor = invoice.dueAmount > 0 ? redColor : paidBoxColor;
+  const balanceTextColor: [number, number, number] = invoice.dueAmount > 0 ? [255, 255, 255] : [22, 101, 52]; // white or green-800
+  doc.setFillColor(...balanceBoxColor);
   doc.rect(summaryX, yPos - 3, summaryWidth, 9, "F");
 
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(...balanceTextColor);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   const balanceLabel = invoice.dueAmount > 0 ? "Balance" : "Paid in Full";
