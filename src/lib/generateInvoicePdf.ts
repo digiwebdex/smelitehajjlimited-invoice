@@ -474,13 +474,13 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
     console.error("Failed to generate QR code:", error);
   }
 
-  // Thank you message (gray color)
+  // Thank you message (gray color) - centered, below contact info
   doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("Thank you for staying with us.", margin, footerY);
+  doc.text("Thank you for staying with us.", pageWidth / 2, footerY + 14, { align: "center" });
 
-  // Company contact info (gray) - single line format
+  // Company contact info (gray) - centered, no padding
   doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -491,16 +491,16 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   if (company?.phone) contactParts.push(company.phone);
   
   if (contactParts.length > 0) {
-    doc.text(contactParts.join("  •  "), margin, footerY + 5);
+    doc.text(contactParts.join("  •  "), pageWidth / 2, footerY, { align: "center" });
   }
   
-  // Address on single line - remove all line breaks and extra spaces
+  // Address on single line - centered
   if (company?.address) {
     const cleanAddress = company.address
-      .replace(/\r?\n/g, " ")  // Replace newlines with space
-      .replace(/\s+/g, " ")    // Replace multiple spaces with single space
+      .replace(/\r?\n/g, " ")
+      .replace(/\s+/g, " ")
       .trim();
-    doc.text(cleanAddress, margin, footerY + 9);
+    doc.text(cleanAddress, pageWidth / 2, footerY + 4, { align: "center" });
   }
 
   // Save the PDF
