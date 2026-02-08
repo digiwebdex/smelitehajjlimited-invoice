@@ -311,7 +311,7 @@ import { Invoice, Company } from "@/types";
                   "flex justify-between px-4 py-3 mt-2 font-bold",
                   Number(invoice.due_amount) > 0
                     ? "bg-red-500 text-white"
-                    : "bg-[#dcfce7] text-green-800"
+                    : "bg-[#166534] text-white"
                 )}
               >
                 <span>{Number(invoice.due_amount) > 0 ? "Balance" : "Paid in Full"}</span>
