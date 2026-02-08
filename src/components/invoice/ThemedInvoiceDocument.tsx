@@ -381,7 +381,7 @@ export const ThemedInvoiceDocument = ({
         style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
         {/* THANK YOU CENTER (TOP) */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-2">
           <p className="text-sm" style={{ color: t.footer_text_color }}>
             {footerThankYou}
           </p>
@@ -390,18 +390,12 @@ export const ThemedInvoiceDocument = ({
         {/* BOTTOM ROW - Address Left, QR Right */}
         <div className="flex justify-between items-end">
           {/* LEFT SIDE - ADDRESS */}
-          <div className="text-xs space-y-0.5" style={{ color: t.footer_text_color }}>
-            {addressLine1 && (
-              <p>{addressLine1}</p>
+          <div className="text-xs" style={{ color: t.footer_text_color }}>
+            {footerAddress && (
+              <p>{footerAddress}</p>
             )}
-            {addressLine2 && (
-              <p>{addressLine2}</p>
-            )}
-            {footerPhone && (
-              <p>{footerPhone}</p>
-            )}
-            {footerEmail && (
-              <p>{footerEmail}</p>
+            {(footerPhone || footerEmail) && (
+              <p>{[footerPhone, footerEmail].filter(Boolean).join(", ")}</p>
             )}
             {footerWebsite && (
               <p style={{ color: t.primary_color }}>{footerWebsite}</p>
@@ -413,9 +407,6 @@ export const ThemedInvoiceDocument = ({
             <div className="flex flex-col items-center">
               <InvoiceQRCode invoiceId={invoice.id} size={70} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
-                Scan to view invoice
-              </p>
-              <p className="text-xs" style={{ color: t.footer_text_color }}>
                 Scan for details
               </p>
             </div>
