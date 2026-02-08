@@ -466,21 +466,55 @@ export const generateInvoicePdf = async (
 
   // ===================== FOOTER =====================
   // Position footer at bottom
-  const footerY = pageHeight - 28;
+  const footerY = pageHeight - 32;
 
   // Divider line
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+  doc.line(margin, footerY - 6, pageWidth - margin, footerY - 6);
 
-  // QR Code - positioned based on alignment and visibility
-  const qrSize = 22;
-  let contentCenterX = pageWidth / 2;
+  // THANK YOU MESSAGE - Centered at top of footer
+  doc.setTextColor(...footerTextColor);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(thankYouText, pageWidth / 2, footerY, { align: "center" });
+
+  // BOTTOM ROW - Address on left, QR on right
+  const bottomRowY = footerY + 6;
   
+  // LEFT SIDE - Address details
+  doc.setTextColor(...footerTextColor);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  
+  let addressY = bottomRowY;
+  if (b.address_line1) {
+    doc.text(b.address_line1, margin, addressY);
+    addressY += 3.5;
+  }
+  if (b.address_line2) {
+    doc.text(b.address_line2, margin, addressY);
+    addressY += 3.5;
+  }
+  if (footerPhone) {
+    doc.text(footerPhone, margin, addressY);
+    addressY += 3.5;
+  }
+  if (footerEmail) {
+    doc.text(footerEmail, margin, addressY);
+    addressY += 3.5;
+  }
+  if (b.website) {
+    doc.setTextColor(...primaryColor);
+    doc.text(b.website, margin, addressY);
+  }
+
+  // RIGHT SIDE - QR Code
   if (showQRCode) {
+    const qrSize = 22;
     const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
     const qrX = pageWidth - margin - qrSize;
-    const qrY = footerY - 4;
+    const qrY = bottomRowY - 2;
     
     try {
       const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
@@ -490,57 +524,14 @@ export const generateInvoicePdf = async (
       });
       doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-      // QR Label - centered below QR code
-      doc.setFontSize(6);
-      doc.setTextColor(...mutedColor);
-      doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
+      // QR Labels - centered below QR code
+      doc.setFontSize(5);
+      doc.setTextColor(...footerTextColor);
+      doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 2.5, { align: "center" });
+      doc.text("Scan for details", qrX + qrSize / 2, qrY + qrSize + 5, { align: "center" });
     } catch (error) {
       console.error("Failed to generate QR code:", error);
     }
-    
-    // Adjust content center when QR is shown
-    contentCenterX = margin + (pageWidth - margin * 2 - qrSize - 10) / 2;
-  }
-
-  // Footer text alignment
-  const textAlign = footerAlignment === "center" ? "center" : footerAlignment === "right" ? "right" : "left";
-  let textX = contentCenterX;
-  if (footerAlignment === "left") textX = margin;
-  if (footerAlignment === "right") textX = showQRCode ? pageWidth - margin - qrSize - 15 : pageWidth - margin;
-
-  // Thank you message (gray color) - positioned based on alignment
-  doc.setTextColor(...footerTextColor);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(thankYouText, textX, footerY + 14, { align: textAlign as "left" | "center" | "right" });
-
-  // Company contact info (gray) - positioned based on alignment
-  doc.setTextColor(...footerTextColor);
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  
-  // Build contact line: email • phone
-  const contactParts: string[] = [];
-  if (footerEmail) contactParts.push(footerEmail);
-  if (footerPhone) contactParts.push(footerPhone);
-  
-  if (contactParts.length > 0) {
-    doc.text(contactParts.join("  •  "), textX, footerY, { align: textAlign as "left" | "center" | "right" });
-  }
-  
-  // Address on single line - positioned based on alignment
-  if (footerAddress) {
-    const cleanAddress = footerAddress
-      .replace(/\r?\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    doc.text(cleanAddress, textX, footerY + 4, { align: textAlign as "left" | "center" | "right" });
-  }
-
-  // Website if available
-  if (b.website) {
-    doc.setTextColor(...primaryColor);
-    doc.text(b.website, textX, footerY + 8, { align: textAlign as "left" | "center" | "right" });
   }
 
   // Save the PDF

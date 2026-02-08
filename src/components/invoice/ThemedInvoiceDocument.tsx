@@ -371,36 +371,44 @@ export const ThemedInvoiceDocument = ({
         className="mt-12 pt-6"
         style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
-        <div className={cn("flex", {
-          "justify-between": showQR,
-          "justify-center": !showQR && footerAlign === "center",
-          "justify-start": !showQR && footerAlign === "left",
-          "justify-end": !showQR && footerAlign === "right",
-        })}>
-          <div className={cn("flex-1 flex flex-col", footerAlignClass)}>
-            {footerEmail && footerPhone && (
-              <p className="text-xs" style={{ color: t.footer_text_color }}>
-                {footerEmail} • {footerPhone}
-              </p>
+        {/* THANK YOU CENTER (TOP) */}
+        <div className="text-center mb-4">
+          <p className="text-sm" style={{ color: t.footer_text_color }}>
+            {footerThankYou}
+          </p>
+        </div>
+
+        {/* BOTTOM ROW - Address Left, QR Right */}
+        <div className="flex justify-between items-end">
+          {/* LEFT SIDE - ADDRESS */}
+          <div className="text-xs space-y-0.5" style={{ color: t.footer_text_color }}>
+            {b.address_line1 && (
+              <p>{b.address_line1}</p>
             )}
-            {footerAddress && (
-              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
-                {footerAddress}
-              </p>
+            {b.address_line2 && (
+              <p>{b.address_line2}</p>
+            )}
+            {(footerPhone) && (
+              <p>{footerPhone}</p>
+            )}
+            {footerEmail && (
+              <p>{footerEmail}</p>
             )}
             {b.website && (
-              <p className="text-xs mt-1" style={{ color: t.primary_color }}>
-                {b.website}
-              </p>
+              <p style={{ color: t.primary_color }}>{b.website}</p>
             )}
-            <p className="text-sm mt-2" style={{ color: t.footer_text_color }}>
-              {footerThankYou}
-            </p>
           </div>
+
+          {/* RIGHT SIDE - QR */}
           {showQR && (
             <div className="flex flex-col items-center">
               <InvoiceQRCode invoiceId={invoice.id} size={70} />
-              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>Scan for details</p>
+              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
+                Scan to view invoice
+              </p>
+              <p className="text-xs" style={{ color: t.footer_text_color }}>
+                Scan for details
+              </p>
             </div>
           )}
         </div>
