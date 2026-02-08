@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Invoice, Company } from "@/types";
+import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
 
 const formatCurrency = (amount: number): string => {
   // Use "Tk" instead of "৳" because jsPDF doesn't support Bengali Unicode with default fonts
@@ -21,27 +22,37 @@ const formatDate = (date: Date | undefined): string => {
   });
 };
 
-export const generateInvoicePdf = async (invoice: Invoice, company?: Company) => {
+export const generateInvoicePdf = async (invoice: Invoice, company?: Company, theme?: ThemeSettings) => {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
   
+  const t = theme || defaultTheme;
+  
   const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
   const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
 
-  // Colors matching the invoice view page exactly
-  const primaryColor: [number, number, number] = [46, 65, 158]; // Primary/Mid-blue
-  const accentColor: [number, number, number] = [20, 184, 166]; // Accent/Teal
-  const mutedColor: [number, number, number] = [100, 116, 139]; // Muted gray
-  const textColor: [number, number, number] = [40, 56, 138]; // Foreground/Dark blue
-  const greenColor: [number, number, number] = [22, 163, 74]; // Green-600
-  const redColor: [number, number, number] = [220, 38, 38]; // Red-600
-  const orangeColor: [number, number, number] = [249, 115, 22]; // Orange-500
-  const borderColor: [number, number, number] = [229, 231, 235]; // Gray-200
+  // Dynamic colors from theme
+  const primaryColor = hexToRgb(t.primary_color);
+  const accentColor = hexToRgb(t.accent_color);
+  const mutedColor = hexToRgb(t.subtotal_text_color);
+  const textColor = hexToRgb(t.header_text_color);
+  const paidTextColor = hexToRgb(t.paid_text_color);
+  const redColor = hexToRgb(t.badge_unpaid_color);
+  const orangeColor: [number, number, number] = [249, 115, 22]; // Orange-500 for invoice number
+  const borderColor = hexToRgb(t.border_color);
+  const tableHeaderBg = hexToRgb(t.table_header_bg);
+  const tableHeaderText = hexToRgb(t.table_header_text);
+  const badgePaidColor = hexToRgb(t.badge_paid_color);
+  const badgePartialColor = hexToRgb(t.badge_partial_color);
+  const badgeUnpaidColor = hexToRgb(t.badge_unpaid_color);
+  const footerTextColor = hexToRgb(t.footer_text_color);
+  const balanceBgColor = hexToRgb(t.balance_bg_color);
+  const balanceTextColor = hexToRgb(t.balance_text_color);
 
   let yPos = margin;
 
@@ -329,9 +340,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Total Paid (green color)
+  // Total Paid (themed color)
   doc.setFontSize(9);
-  doc.setTextColor(...greenColor);
+  doc.setTextColor(...paidTextColor);
   doc.setFont("helvetica", "bold");
   doc.text("Total Paid", summaryX, yPos);
   doc.text(formatCurrency(invoice.paidAmount), pageWidth - margin, yPos, { align: "right" });
@@ -339,11 +350,9 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company) =>
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Balance Box (red for due, dark green #166534 for paid - matching web view exactly)
-  const paidBoxColor: [number, number, number] = [22, 101, 52]; // #166534
-  const balanceBoxColor = invoice.dueAmount > 0 ? redColor : paidBoxColor;
-  const balanceTextColor: [number, number, number] = [255, 255, 255]; // white for both
-  doc.setFillColor(...balanceBoxColor);
+  // Balance Box (themed colors)
+  const balanceBoxBg = invoice.dueAmount > 0 ? redColor : balanceBgColor;
+  doc.setFillColor(...balanceBoxBg);
   doc.rect(summaryX, yPos - 3, summaryWidth, 9, "F");
 
   doc.setTextColor(...balanceTextColor);

@@ -1,5 +1,5 @@
  import { useState } from "react";
- import { Navigate } from "react-router-dom";
+ import { Navigate, useNavigate } from "react-router-dom";
  import { useAdmin } from "@/hooks/useAdmin";
  import { useAuth } from "@/contexts/AuthContext";
  import { AppLayout } from "@/components/layout/AppLayout";
@@ -8,7 +8,7 @@
  import { Badge } from "@/components/ui/badge";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
- import { Loader2, UserCheck, UserX, Users, Clock, CheckCircle, Trash2 } from "lucide-react";
+ import { Loader2, UserCheck, UserX, Users, Clock, CheckCircle, Trash2, Palette } from "lucide-react";
  import { format } from "date-fns";
  import {
    AlertDialog,
@@ -22,7 +22,8 @@
    AlertDialogTrigger,
  } from "@/components/ui/alert-dialog";
  
- export default function AdminPanel() {
+export default function AdminPanel() {
+   const navigate = useNavigate();
    const { user } = useAuth();
    const {
      isAdmin,
@@ -73,9 +74,15 @@
      <AppLayout>
        <div className="space-y-6">
          {/* Header */}
-         <div>
-           <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-           <p className="text-muted-foreground">Manage user access and approvals</p>
+         <div className="flex items-center justify-between">
+           <div>
+             <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
+             <p className="text-muted-foreground">Manage user access and approvals</p>
+           </div>
+           <Button onClick={() => navigate("/admin/theme")} variant="outline">
+             <Palette className="h-4 w-4 mr-2" />
+             Theme Settings
+           </Button>
          </div>
  
          {/* Stats */}

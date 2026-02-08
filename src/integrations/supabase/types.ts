@@ -227,6 +227,72 @@ export type Database = {
         }
         Relationships: []
       }
+      theme_settings: {
+        Row: {
+          accent_color: string
+          badge_paid_color: string
+          badge_partial_color: string
+          badge_unpaid_color: string
+          balance_bg_color: string
+          balance_text_color: string
+          border_color: string
+          created_at: string
+          footer_text_color: string
+          header_text_color: string
+          id: string
+          invoice_title_color: string
+          paid_text_color: string
+          primary_color: string
+          secondary_color: string
+          subtotal_text_color: string
+          table_header_bg: string
+          table_header_text: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          badge_paid_color?: string
+          badge_partial_color?: string
+          badge_unpaid_color?: string
+          balance_bg_color?: string
+          balance_text_color?: string
+          border_color?: string
+          created_at?: string
+          footer_text_color?: string
+          header_text_color?: string
+          id?: string
+          invoice_title_color?: string
+          paid_text_color?: string
+          primary_color?: string
+          secondary_color?: string
+          subtotal_text_color?: string
+          table_header_bg?: string
+          table_header_text?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          badge_paid_color?: string
+          badge_partial_color?: string
+          badge_unpaid_color?: string
+          balance_bg_color?: string
+          balance_text_color?: string
+          border_color?: string
+          created_at?: string
+          footer_text_color?: string
+          header_text_color?: string
+          id?: string
+          invoice_title_color?: string
+          paid_text_color?: string
+          primary_color?: string
+          secondary_color?: string
+          subtotal_text_color?: string
+          table_header_bg?: string
+          table_header_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
