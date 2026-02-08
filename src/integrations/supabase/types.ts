@@ -53,6 +53,57 @@ export type Database = {
         }
         Relationships: []
       }
+      global_brand_settings: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          company_logo: string | null
+          company_name: string
+          created_at: string
+          email: string | null
+          footer_alignment: string
+          id: string
+          phone: string | null
+          show_qr_code: boolean
+          tagline: string | null
+          thank_you_text: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          company_logo?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          footer_alignment?: string
+          id?: string
+          phone?: string | null
+          show_qr_code?: boolean
+          tagline?: string | null
+          thank_you_text?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          company_logo?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          footer_alignment?: string
+          id?: string
+          phone?: string | null
+          show_qr_code?: boolean
+          tagline?: string | null
+          thank_you_text?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       installments: {
         Row: {
           amount: number

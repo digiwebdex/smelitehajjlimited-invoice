@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { ThemeSettings, defaultTheme } from "@/types/theme";
+import { BrandSettings, defaultBranding } from "@/types/branding";
 
 interface InvoiceItemData {
   id: string;
@@ -48,6 +49,7 @@ interface ThemedInvoiceDocumentProps {
   installments: InstallmentData[];
   company?: CompanyData | null;
   theme: ThemeSettings;
+  branding?: BrandSettings | null;
 }
 
 export const ThemedInvoiceDocument = ({
@@ -56,7 +58,11 @@ export const ThemedInvoiceDocument = ({
   installments,
   company,
   theme,
+  branding,
 }: ThemedInvoiceDocumentProps) => {
+  const t = theme || defaultTheme;
+  const b = branding || defaultBranding;
+
   const formatCurrency = (amount: number) => {
     return `৳${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
@@ -76,45 +82,64 @@ export const ThemedInvoiceDocument = ({
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "paid":
-        return { backgroundColor: theme.badge_paid_color, color: "#ffffff" };
+        return { backgroundColor: t.badge_paid_color, color: "#ffffff" };
       case "partial":
-        return { backgroundColor: theme.badge_partial_color, color: "#ffffff" };
+        return { backgroundColor: t.badge_partial_color, color: "#ffffff" };
       case "unpaid":
       default:
-        return { backgroundColor: theme.badge_unpaid_color, color: "#ffffff" };
+        return { backgroundColor: t.badge_unpaid_color, color: "#ffffff" };
     }
   };
+
+  // Use branding settings for header, fallback to company data
+  const headerLogo = b.company_logo || company?.logo_url;
+  const headerName = b.company_name || company?.name || "Company Name";
+  const headerTagline = b.tagline || company?.tagline;
+
+  // Footer settings from branding
+  const footerEmail = b.email || company?.email;
+  const footerPhone = b.phone || company?.phone;
+  const footerAddress = [b.address_line1, b.address_line2].filter(Boolean).join(", ") || company?.address;
+  const footerThankYou = b.thank_you_text || "Thank you for staying with us.";
+  const showQR = b.show_qr_code ?? true;
+  const footerAlign = b.footer_alignment || "center";
+
+  const footerAlignClass = {
+    left: "text-left items-start",
+    center: "text-center items-center",
+    right: "text-right items-end",
+  }[footerAlign];
 
   return (
     <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
       {/* HEADER */}
       <div className="flex justify-between items-start pb-6">
         <div className="flex items-center gap-4">
-          {company?.logo_url ? (
+          {headerLogo ? (
             <img
-              src={company.logo_url}
-              alt={company.name}
+              src={headerLogo}
+              alt={headerName}
               className="w-16 h-16 rounded-full object-cover"
-              style={{ borderColor: theme.primary_color, borderWidth: '2px' }}
+              style={{ borderColor: t.primary_color, borderWidth: '2px' }}
             />
           ) : (
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
-              style={{ backgroundColor: theme.primary_color, borderColor: theme.primary_color, borderWidth: '2px' }}
+              style={{ backgroundColor: t.primary_color, borderColor: t.primary_color, borderWidth: '2px' }}
             >
-              {company?.name?.charAt(0) || "C"}
+              {headerName?.charAt(0) || "C"}
             </div>
           )}
           <div>
             <h2
               className="text-xl font-bold"
-              style={{ color: theme.header_text_color }}
+              style={{ color: t.header_text_color }}
             >
-              {company?.name || "Company Name"}
+              {headerName}
             </h2>
-            {company?.tagline && (
-              <p className="text-sm italic" style={{ color: theme.header_text_color, opacity: 0.7 }}>
-                {company.tagline}
+            {headerTagline && (
+              <p className="text-sm italic" style={{ color: t.header_text_color, opacity: 0.7 }}>
+                {headerTagline}
               </p>
             )}
           </div>
@@ -122,7 +147,7 @@ export const ThemedInvoiceDocument = ({
         <div className="text-right">
           <h1
             className="text-3xl font-bold"
-            style={{ color: theme.invoice_title_color }}
+            style={{ color: t.invoice_title_color }}
           >
             INVOICE
           </h1>
@@ -143,37 +168,37 @@ export const ThemedInvoiceDocument = ({
       {/* BILL TO + DATES */}
       <div
         className="flex justify-between mt-6 pt-6"
-        style={{ borderTopWidth: '1px', borderTopColor: theme.border_color }}
+        style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
         <div
           className="pl-4"
-          style={{ borderLeftWidth: '4px', borderLeftColor: theme.accent_color }}
+          style={{ borderLeftWidth: '4px', borderLeftColor: t.accent_color }}
         >
-          <p className="text-sm uppercase tracking-wide mb-2" style={{ color: theme.subtotal_text_color }}>
+          <p className="text-sm uppercase tracking-wide mb-2" style={{ color: t.subtotal_text_color }}>
             Bill To
           </p>
           <h3 className="font-bold text-lg text-black">
             {invoice.client_name}
           </h3>
           {invoice.client_email && (
-            <p className="text-sm" style={{ color: theme.subtotal_text_color }}>
+            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
               {invoice.client_email}
             </p>
           )}
           {invoice.client_phone && (
-            <p className="text-sm" style={{ color: theme.subtotal_text_color }}>
+            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
               {invoice.client_phone}
             </p>
           )}
           {invoice.client_address && (
-            <p className="text-sm" style={{ color: theme.subtotal_text_color }}>
+            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
               {invoice.client_address}
             </p>
           )}
         </div>
         <div className="text-right text-sm">
           <p>
-            <span className="font-medium" style={{ color: theme.subtotal_text_color }}>INVOICE DATE :</span>{" "}
+            <span className="font-medium" style={{ color: t.subtotal_text_color }}>INVOICE DATE :</span>{" "}
             <span className="font-semibold text-black">{formatDate(invoice.invoice_date)}</span>
           </p>
         </div>
@@ -183,28 +208,28 @@ export const ThemedInvoiceDocument = ({
       <div className="mt-10">
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ borderBottomWidth: '2px', borderBottomColor: theme.border_color }}>
+            <tr style={{ borderBottomWidth: '2px', borderBottomColor: t.border_color }}>
               <th
                 className="text-left py-3 font-semibold uppercase tracking-wide"
-                style={{ color: theme.table_header_text, backgroundColor: theme.table_header_bg }}
+                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Description
               </th>
               <th
                 className="text-center py-3 font-semibold uppercase tracking-wide w-20"
-                style={{ color: theme.table_header_text, backgroundColor: theme.table_header_bg }}
+                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Qty
               </th>
               <th
                 className="text-right py-3 font-semibold uppercase tracking-wide"
-                style={{ color: theme.table_header_text, backgroundColor: theme.table_header_bg }}
+                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Unit Price
               </th>
               <th
                 className="text-right py-3 font-semibold uppercase tracking-wide"
-                style={{ color: theme.table_header_text, backgroundColor: theme.table_header_bg }}
+                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Total
               </th>
@@ -212,7 +237,7 @@ export const ThemedInvoiceDocument = ({
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: theme.border_color }}>
+              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
                 <td className="py-4 font-medium text-black">
                   {item.title || "—"}
                 </td>
@@ -234,25 +259,25 @@ export const ThemedInvoiceDocument = ({
         <div className="w-80 text-sm">
           <div
             className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: theme.border_color }}
+            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
           >
-            <span className="font-medium" style={{ color: theme.subtotal_text_color }}>Subtotal</span>
+            <span className="font-medium" style={{ color: t.subtotal_text_color }}>Subtotal</span>
             <span className="font-semibold text-black">
               {formatCurrency(invoice.subtotal)}
             </span>
           </div>
           <div
             className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: theme.border_color }}
+            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
           >
-            <span className="font-medium" style={{ color: theme.subtotal_text_color }}>Tax</span>
+            <span className="font-medium" style={{ color: t.subtotal_text_color }}>Tax</span>
             <span className="font-semibold text-black">
               {formatCurrency(invoice.vat_amount)}
             </span>
           </div>
           <div
             className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: theme.border_color }}
+            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
           >
             <span className="font-bold text-black">Total</span>
             <span className="font-bold text-black">
@@ -261,18 +286,18 @@ export const ThemedInvoiceDocument = ({
           </div>
           <div
             className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: theme.border_color }}
+            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
           >
-            <span className="font-bold" style={{ color: theme.paid_text_color }}>Total Paid</span>
-            <span className="font-bold" style={{ color: theme.paid_text_color }}>
+            <span className="font-bold" style={{ color: t.paid_text_color }}>Total Paid</span>
+            <span className="font-bold" style={{ color: t.paid_text_color }}>
               {formatCurrency(invoice.paid_amount)}
             </span>
           </div>
           <div
             className="flex justify-between px-4 py-3 mt-2 font-bold"
             style={{
-              backgroundColor: invoice.due_amount > 0 ? theme.badge_unpaid_color : theme.balance_bg_color,
-              color: theme.balance_text_color,
+              backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
+              color: t.balance_text_color,
             }}
           >
             <span>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
@@ -285,12 +310,12 @@ export const ThemedInvoiceDocument = ({
       {invoice.notes && (
         <div
           className="mt-10 rounded-lg p-6"
-          style={{ borderWidth: '1px', borderColor: theme.border_color }}
+          style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
-          <h4 className="font-semibold mb-3 uppercase tracking-wide text-sm" style={{ color: theme.primary_color }}>
+          <h4 className="font-semibold mb-3 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
             Notes / Payment Terms
           </h4>
-          <p className="text-sm whitespace-pre-wrap" style={{ color: theme.subtotal_text_color }}>
+          <p className="text-sm whitespace-pre-wrap" style={{ color: t.subtotal_text_color }}>
             {invoice.notes}
           </p>
         </div>
@@ -300,9 +325,9 @@ export const ThemedInvoiceDocument = ({
       {installments.length > 0 && (
         <div
           className="mt-10 rounded-lg p-6"
-          style={{ borderWidth: '1px', borderColor: theme.border_color }}
+          style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
-          <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm" style={{ color: theme.primary_color }}>
+          <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
             Payment History
           </h4>
           <div className="space-y-3">
@@ -310,29 +335,29 @@ export const ThemedInvoiceDocument = ({
               <div
                 key={pay.id}
                 className="flex justify-between items-center pl-4 py-2"
-                style={{ borderLeftWidth: '4px', borderLeftColor: theme.border_color }}
+                style={{ borderLeftWidth: '4px', borderLeftColor: t.border_color }}
               >
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-sm font-medium" style={{ color: theme.primary_color }}>
+                  <span className="text-sm font-medium" style={{ color: t.primary_color }}>
                     {formatDate(pay.paid_date)}
                   </span>
                   <span
                     className="px-2 py-1 text-white text-xs rounded font-medium"
-                    style={{ backgroundColor: theme.subtotal_text_color }}
+                    style={{ backgroundColor: t.subtotal_text_color }}
                   >
                     Bank Transfer
                   </span>
                   <span
                     className="px-2 py-1 text-white text-xs rounded font-medium"
-                    style={{ backgroundColor: theme.accent_color }}
+                    style={{ backgroundColor: t.accent_color }}
                   >
                     Advance
                   </span>
-                  <span className="text-sm" style={{ color: theme.subtotal_text_color }}>
+                  <span className="text-sm" style={{ color: t.subtotal_text_color }}>
                     — Advance Payment
                   </span>
                 </div>
-                <div className="font-bold text-lg" style={{ color: theme.accent_color }}>
+                <div className="font-bold text-lg" style={{ color: t.accent_color }}>
                   {formatCurrency(pay.amount)}
                 </div>
               </div>
@@ -341,29 +366,43 @@ export const ThemedInvoiceDocument = ({
         </div>
       )}
 
-      {/* FOOTER */}
+      {/* FOOTER - Using branding settings */}
       <div
-        className="flex justify-between items-end mt-12 pt-6"
-        style={{ borderTopWidth: '1px', borderTopColor: theme.border_color }}
+        className="mt-12 pt-6"
+        style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
-        <div className="text-center flex-1">
-          {company?.email && (
-            <p className="text-xs" style={{ color: theme.footer_text_color }}>
-              {company.email} • {company.phone}
+        <div className={cn("flex", {
+          "justify-between": showQR,
+          "justify-center": !showQR && footerAlign === "center",
+          "justify-start": !showQR && footerAlign === "left",
+          "justify-end": !showQR && footerAlign === "right",
+        })}>
+          <div className={cn("flex-1 flex flex-col", footerAlignClass)}>
+            {footerEmail && footerPhone && (
+              <p className="text-xs" style={{ color: t.footer_text_color }}>
+                {footerEmail} • {footerPhone}
+              </p>
+            )}
+            {footerAddress && (
+              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
+                {footerAddress}
+              </p>
+            )}
+            {b.website && (
+              <p className="text-xs mt-1" style={{ color: t.primary_color }}>
+                {b.website}
+              </p>
+            )}
+            <p className="text-sm mt-2" style={{ color: t.footer_text_color }}>
+              {footerThankYou}
             </p>
+          </div>
+          {showQR && (
+            <div className="flex flex-col items-center">
+              <InvoiceQRCode invoiceId={invoice.id} size={70} />
+              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>Scan for details</p>
+            </div>
           )}
-          {company?.address && (
-            <p className="text-xs mt-1" style={{ color: theme.footer_text_color }}>
-              {company.address}
-            </p>
-          )}
-          <p className="text-sm mt-2" style={{ color: theme.footer_text_color }}>
-            Thank you for staying with us.
-          </p>
-        </div>
-        <div className="text-center">
-          <InvoiceQRCode invoiceId={invoice.id} size={70} />
-          <p className="text-xs mt-1" style={{ color: theme.footer_text_color }}>Scan for details</p>
         </div>
       </div>
     </div>

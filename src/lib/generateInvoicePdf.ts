@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Invoice, Company } from "@/types";
 import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
+import { BrandSettings, defaultBranding } from "@/types/branding";
 
 const formatCurrency = (amount: number): string => {
   // Use "Tk" instead of "৳" because jsPDF doesn't support Bengali Unicode with default fonts
@@ -22,7 +23,12 @@ const formatDate = (date: Date | undefined): string => {
   });
 };
 
-export const generateInvoicePdf = async (invoice: Invoice, company?: Company, theme?: ThemeSettings) => {
+export const generateInvoicePdf = async (
+  invoice: Invoice,
+  company?: Company,
+  theme?: ThemeSettings,
+  branding?: BrandSettings | null
+) => {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -30,6 +36,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
   });
   
   const t = theme || defaultTheme;
+  const b = branding || defaultBranding;
   
   const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
   const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
@@ -45,14 +52,20 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
   const redColor = hexToRgb(t.badge_unpaid_color);
   const orangeColor: [number, number, number] = [249, 115, 22]; // Orange-500 for invoice number
   const borderColor = hexToRgb(t.border_color);
-  const tableHeaderBg = hexToRgb(t.table_header_bg);
-  const tableHeaderText = hexToRgb(t.table_header_text);
-  const badgePaidColor = hexToRgb(t.badge_paid_color);
-  const badgePartialColor = hexToRgb(t.badge_partial_color);
-  const badgeUnpaidColor = hexToRgb(t.badge_unpaid_color);
   const footerTextColor = hexToRgb(t.footer_text_color);
   const balanceBgColor = hexToRgb(t.balance_bg_color);
   const balanceTextColor = hexToRgb(t.balance_text_color);
+
+  // Branding settings
+  const headerName = b.company_name || company?.name || "Company Name";
+  const headerTagline = b.tagline || company?.tagline;
+  const headerLogo = b.company_logo || company?.logo;
+  const footerEmail = b.email || company?.email;
+  const footerPhone = b.phone || company?.phone;
+  const footerAddress = [b.address_line1, b.address_line2].filter(Boolean).join(", ") || company?.address;
+  const thankYouText = b.thank_you_text || "Thank you for staying with us.";
+  const showQRCode = b.show_qr_code ?? true;
+  const footerAlignment = b.footer_alignment || "center";
 
   let yPos = margin;
 
@@ -80,12 +93,12 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
   };
   
-  if (company?.logo) {
+  if (headerLogo) {
     try {
       // For URLs, fetch the image as blob to avoid CORS issues
-      if (company.logo.startsWith("http") || company.logo.startsWith("https")) {
+      if (headerLogo.startsWith("http") || headerLogo.startsWith("https")) {
         try {
-          const response = await fetch(company.logo);
+          const response = await fetch(headerLogo);
           const blob = await response.blob();
           const dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -98,8 +111,8 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
         } catch (e) {
           console.error("Failed to fetch logo:", e);
         }
-      } else if (company.logo.startsWith("data:image")) {
-        drawCircularLogo(company.logo);
+      } else if (headerLogo.startsWith("data:image")) {
+        drawCircularLogo(headerLogo);
         logoDrawn = true;
       }
     } catch (e) {
@@ -122,7 +135,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(company?.name?.charAt(0) || "C", logoCenterX, logoCenterY + 3.5, { align: "center" });
+    doc.text(headerName?.charAt(0) || "C", logoCenterX, logoCenterY + 3.5, { align: "center" });
   }
 
   // Company Name and Tagline
@@ -130,13 +143,13 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
   doc.setTextColor(...primaryColor);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(company?.name || "Company Name", companyInfoX, yPos + 6);
+  doc.text(headerName, companyInfoX, yPos + 6);
 
-  if (company?.tagline) {
+  if (headerTagline) {
     doc.setTextColor(...mutedColor);
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
-    doc.text(company.tagline, companyInfoX, yPos + 11);
+    doc.text(headerTagline, companyInfoX, yPos + 11);
   }
 
   // INVOICE title on right
@@ -215,7 +228,6 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(invoice.clientName, margin + 5, yPos + 1);
-
 
   yPos += 6;
 
@@ -409,7 +421,7 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
     yPos += 6;
 
     // Payment entries
-    invoice.installments.forEach((inst, index) => {
+    invoice.installments.forEach((inst) => {
       // Left accent bar (gray)
       doc.setFillColor(209, 213, 219); // Gray-300
       doc.rect(margin + 5, yPos, 1.5, 8, "F");
@@ -461,55 +473,74 @@ export const generateInvoicePdf = async (invoice: Invoice, company?: Company, th
   doc.setLineWidth(0.3);
   doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
 
-  // QR Code - positioned on the right side
-  const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
+  // QR Code - positioned based on alignment and visibility
   const qrSize = 22;
-  const qrX = pageWidth - margin - qrSize;
-  const qrY = footerY - 4;
+  let contentCenterX = pageWidth / 2;
   
-  try {
-    const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
-      width: 110,
-      margin: 1,
-      errorCorrectionLevel: "M",
-    });
-    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+  if (showQRCode) {
+    const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
+    const qrX = pageWidth - margin - qrSize;
+    const qrY = footerY - 4;
+    
+    try {
+      const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
+        width: 110,
+        margin: 1,
+        errorCorrectionLevel: "M",
+      });
+      doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-    // QR Label - centered below QR code
-    doc.setFontSize(6);
-    doc.setTextColor(...mutedColor);
-    doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
-  } catch (error) {
-    console.error("Failed to generate QR code:", error);
+      // QR Label - centered below QR code
+      doc.setFontSize(6);
+      doc.setTextColor(...mutedColor);
+      doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
+    } catch (error) {
+      console.error("Failed to generate QR code:", error);
+    }
+    
+    // Adjust content center when QR is shown
+    contentCenterX = margin + (pageWidth - margin * 2 - qrSize - 10) / 2;
   }
 
-  // Thank you message (gray color) - centered, below contact info
-  doc.setTextColor(107, 114, 128); // Gray-500
+  // Footer text alignment
+  const textAlign = footerAlignment === "center" ? "center" : footerAlignment === "right" ? "right" : "left";
+  let textX = contentCenterX;
+  if (footerAlignment === "left") textX = margin;
+  if (footerAlignment === "right") textX = showQRCode ? pageWidth - margin - qrSize - 15 : pageWidth - margin;
+
+  // Thank you message (gray color) - positioned based on alignment
+  doc.setTextColor(...footerTextColor);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("Thank you for staying with us.", pageWidth / 2, footerY + 14, { align: "center" });
+  doc.text(thankYouText, textX, footerY + 14, { align: textAlign as "left" | "center" | "right" });
 
-  // Company contact info (gray) - centered, no padding
-  doc.setTextColor(107, 114, 128); // Gray-500
+  // Company contact info (gray) - positioned based on alignment
+  doc.setTextColor(...footerTextColor);
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   
   // Build contact line: email • phone
   const contactParts: string[] = [];
-  if (company?.email) contactParts.push(company.email);
-  if (company?.phone) contactParts.push(company.phone);
+  if (footerEmail) contactParts.push(footerEmail);
+  if (footerPhone) contactParts.push(footerPhone);
   
   if (contactParts.length > 0) {
-    doc.text(contactParts.join("  •  "), pageWidth / 2, footerY, { align: "center" });
+    doc.text(contactParts.join("  •  "), textX, footerY, { align: textAlign as "left" | "center" | "right" });
   }
   
-  // Address on single line - centered
-  if (company?.address) {
-    const cleanAddress = company.address
+  // Address on single line - positioned based on alignment
+  if (footerAddress) {
+    const cleanAddress = footerAddress
       .replace(/\r?\n/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-    doc.text(cleanAddress, pageWidth / 2, footerY + 4, { align: "center" });
+    doc.text(cleanAddress, textX, footerY + 4, { align: textAlign as "left" | "center" | "right" });
+  }
+
+  // Website if available
+  if (b.website) {
+    doc.setTextColor(...primaryColor);
+    doc.text(b.website, textX, footerY + 8, { align: textAlign as "left" | "center" | "right" });
   }
 
   // Save the PDF

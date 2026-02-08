@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
+import { useBranding } from "@/hooks/useBranding";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { Invoice, Company } from "@/types";
@@ -55,7 +56,10 @@ export default function PublicInvoiceView() {
   // Fetch theme
   const { data: theme, isLoading: themeLoading } = useTheme();
 
-  const isLoading = invoiceLoading || companyLoading || themeLoading;
+  // Fetch branding
+  const { data: branding, isLoading: brandingLoading } = useBranding();
+
+  const isLoading = invoiceLoading || companyLoading || themeLoading || brandingLoading;
   const activeTheme = theme || defaultTheme;
 
   if (isLoading) {
@@ -163,7 +167,7 @@ export default function PublicInvoiceView() {
       createdAt: new Date(company.created_at),
     } : undefined;
     
-    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme);
+    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme, branding);
   };
 
   return (
@@ -188,6 +192,7 @@ export default function PublicInvoiceView() {
           installments={installments}
           company={companyData}
           theme={activeTheme}
+          branding={branding}
         />
       </div>
 

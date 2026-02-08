@@ -11,6 +11,7 @@ import {
 import { useInvoice } from "@/hooks/useInvoices";
 import { useCompany } from "@/hooks/useCompanies";
 import { useTheme } from "@/hooks/useTheme";
+import { useBranding } from "@/hooks/useBranding";
 import { useToast } from "@/hooks/use-toast";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
@@ -25,8 +26,9 @@ export default function InvoiceView() {
   const { data: invoice, isLoading: invoiceLoading } = useInvoice(id);
   const { data: company, isLoading: companyLoading } = useCompany(invoice?.company_id);
   const { data: theme, isLoading: themeLoading } = useTheme();
+  const { data: branding, isLoading: brandingLoading } = useBranding();
 
-  const isLoading = invoiceLoading || companyLoading || themeLoading;
+  const isLoading = invoiceLoading || companyLoading || themeLoading || brandingLoading;
   const activeTheme = theme || defaultTheme;
 
   const getStatusBadgeStyle = (status: string) => {
@@ -152,7 +154,7 @@ export default function InvoiceView() {
       createdAt: new Date(company.created_at),
     } : undefined;
     
-    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme);
+    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme, branding);
     toast({
       title: "PDF Downloaded",
       description: `Invoice ${invoice.invoice_number} has been downloaded.`,
@@ -218,8 +220,10 @@ export default function InvoiceView() {
                 <DropdownMenuItem
                   onClick={() => {
                     const url = `${window.location.origin}/view/${id}`;
+                    const companyName = branding?.company_name || company?.name || "Our Company";
+                    const thankYou = branding?.thank_you_text || "Thank you for your business!";
                     const message = encodeURIComponent(
-                      `Invoice ${invoice.invoice_number} - ${invoice.client_name}\nTotal: ৳${invoice.total_amount}\nDue: ৳${invoice.due_amount}\n\nView: ${url}`
+                      `${companyName}\n\nInvoice ${invoice.invoice_number} - ${invoice.client_name}\nTotal: ৳${invoice.total_amount}\nDue: ৳${invoice.due_amount}\n\nView: ${url}\n\n${thankYou}`
                     );
                     window.open(`https://wa.me/?text=${message}`, "_blank");
                   }}
@@ -230,9 +234,12 @@ export default function InvoiceView() {
                 <DropdownMenuItem
                   onClick={() => {
                     const url = `${window.location.origin}/view/${id}`;
-                    const subject = encodeURIComponent(`Invoice ${invoice.invoice_number}`);
+                    const companyName = branding?.company_name || company?.name || "Our Company";
+                    const thankYou = branding?.thank_you_text || "Thank you for your business!";
+                    const contactInfo = [branding?.email, branding?.phone].filter(Boolean).join(" | ");
+                    const subject = encodeURIComponent(`Invoice ${invoice.invoice_number} - ${companyName}`);
                     const body = encodeURIComponent(
-                      `Dear ${invoice.client_name},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoice_number}\nTotal Amount: ৳${invoice.total_amount}\nPaid: ৳${invoice.paid_amount}\nDue: ৳${invoice.due_amount}\n\nView Invoice: ${url}\n\nThank you for your business!`
+                      `Dear ${invoice.client_name},\n\nPlease find the invoice details below:\n\nInvoice #: ${invoice.invoice_number}\nTotal Amount: ৳${invoice.total_amount}\nPaid: ৳${invoice.paid_amount}\nDue: ৳${invoice.due_amount}\n\nView Invoice: ${url}\n\n${thankYou}\n\n${companyName}\n${contactInfo}`
                     );
                     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
                   }}
@@ -260,6 +267,7 @@ export default function InvoiceView() {
             installments={installments}
             company={companyData}
             theme={activeTheme}
+            branding={branding}
           />
         </div>
       </div>
