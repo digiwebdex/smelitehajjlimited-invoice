@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,11 @@ interface Props {
 
 const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
 
-function normalizeNumericInput(raw: string) {
-  // Supports Bangla digits (০-৯) and common separators.
-  // Keeps '.' for decimals.
+function normalizeNumericInput(raw: string): string {
   return raw
     .trim()
     .replace(/[০-৯]/g, (d) => String(BN_DIGITS.indexOf(d)))
-    .replace(/[,\s৳]/g, "");
+    .replace(/[,\s৳]/g, "");
 }
 
 export function LineItemCard({
@@ -32,6 +31,35 @@ export function LineItemCard({
   onUpdate,
   onRemove,
 }: Props) {
+  // Local string state allows free typing; synced from props and committed on blur
+  const [qtyStr, setQtyStr] = useState(String(item.qty));
+  const [priceStr, setPriceStr] = useState(String(item.unitPrice));
+
+  // Sync local state when props change from outside (e.g., loading existing invoice)
+  useEffect(() => {
+    setQtyStr(String(item.qty));
+  }, [item.qty]);
+
+  useEffect(() => {
+    setPriceStr(String(item.unitPrice));
+  }, [item.unitPrice]);
+
+  const commitQty = useCallback(() => {
+    const normalized = normalizeNumericInput(qtyStr);
+    const val = parseInt(normalized, 10) || 0;
+    const finalVal = val < 1 ? 1 : val;
+    onUpdate("qty", finalVal);
+    setQtyStr(String(finalVal));
+  }, [qtyStr, onUpdate]);
+
+  const commitPrice = useCallback(() => {
+    const normalized = normalizeNumericInput(priceStr);
+    const val = parseFloat(normalized) || 0;
+    const finalVal = val < 0 ? 0 : val;
+    onUpdate("unitPrice", finalVal);
+    setPriceStr(String(finalVal));
+  }, [priceStr, onUpdate]);
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
       {/* Row 1: index + description */}
@@ -69,13 +97,15 @@ export function LineItemCard({
             type="text"
             inputMode="numeric"
             pattern="[0-9০-৯]*"
-            value={item.qty}
-            onChange={(e) => {
-              const normalized = normalizeNumericInput(e.target.value);
-              const val = parseInt(normalized, 10) || 0;
-              onUpdate("qty", val < 1 ? 1 : val);
+            value={qtyStr}
+            onChange={(e) => setQtyStr(e.target.value)}
+            onBlur={commitQty}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitQty();
+              }
             }}
-            min={1}
             className="text-right tabular-nums"
           />
         </div>
@@ -88,12 +118,15 @@ export function LineItemCard({
             <Input
               type="text"
               inputMode="decimal"
-              pattern="[0-9০-৯]*\\.?[0-9০-৯]*"
-              value={item.unitPrice}
-              onChange={(e) => {
-                const normalized = normalizeNumericInput(e.target.value);
-                const val = parseFloat(normalized) || 0;
-                onUpdate("unitPrice", val < 0 ? 0 : val);
+              pattern="[0-9০-৯]*\.?[0-9০-৯]*"
+              value={priceStr}
+              onChange={(e) => setPriceStr(e.target.value)}
+              onBlur={commitPrice}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitPrice();
+                }
               }}
               className="pl-7 text-right tabular-nums"
             />
