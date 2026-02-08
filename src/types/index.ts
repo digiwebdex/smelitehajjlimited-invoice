@@ -20,6 +20,8 @@ export interface Company {
 export interface InvoiceItem {
   id: string;
   title: string;
+  qty?: number;
+  unitPrice?: number;
   amount: number;
 }
 

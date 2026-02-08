@@ -288,15 +288,17 @@ export const generateInvoicePdf = async (
     const title = item.title || "—";
     doc.text(title, col1X, yPos);
 
-    // Qty - black color, centered
+    // Qty - black color, centered (use actual qty from item)
+    const qty = item.qty || 1;
     doc.setTextColor(0, 0, 0);
-    doc.text("1", col2X, yPos, { align: "center" });
+    doc.text(qty.toString(), col2X, yPos, { align: "center" });
 
-    // Unit Price - black color, right aligned
+    // Unit Price - black color, right aligned (use actual unit_price)
+    const unitPrice = item.unitPrice || item.amount;
     doc.setTextColor(0, 0, 0);
-    doc.text(formatCurrency(item.amount), col3X, yPos, { align: "right" });
+    doc.text(formatCurrency(unitPrice), col3X, yPos, { align: "right" });
 
-    // Total - black color, right aligned, bold
+    // Total - black color, right aligned, bold (amount is the total)
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.text(formatCurrency(item.amount), col4X, yPos, { align: "right" });

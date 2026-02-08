@@ -145,6 +145,8 @@ export default function PublicInvoiceView() {
       items: items.map((item: any) => ({
         id: item.id,
         title: item.title,
+        qty: item.qty,
+        unitPrice: item.unit_price,
         amount: item.amount,
       })),
       installments: installments.map((inst: any) => ({

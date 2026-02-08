@@ -132,6 +132,8 @@ export default function InvoiceView() {
       items: items.map(item => ({
         id: item.id,
         title: item.title,
+        qty: item.qty,
+        unitPrice: item.unit_price,
         amount: item.amount,
       })),
       installments: installments.map(inst => ({
