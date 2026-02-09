@@ -259,14 +259,14 @@ export const generateInvoicePdf = async (
   // ===================== ITEMS TABLE =====================
   const tableX = margin;
 
-  // Column widths (match web layout: Qty center, Unit Price right, Total right)
-  const descColWidth = contentWidth * 0.56;
-  const qtyColWidth = contentWidth * 0.12;
-  const unitColWidth = contentWidth * 0.16;
+  // Column widths (match web layout: Qty left, Unit Price left, Total right)
+  const descColWidth = contentWidth * 0.50;
+  const qtyColWidth = contentWidth * 0.10;
+  const unitColWidth = contentWidth * 0.20;
 
   const descX = tableX;
-  const qtyCenterX = tableX + descColWidth + qtyColWidth / 2;
-  const unitRightX = tableX + descColWidth + qtyColWidth + unitColWidth;
+  const qtyX = tableX + descColWidth;
+  const unitX = tableX + descColWidth + qtyColWidth;
   const totalRightX = tableX + contentWidth;
 
   // Table Header with underline
@@ -274,8 +274,8 @@ export const generateInvoicePdf = async (
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.text("DESCRIPTION", descX, yPos);
-  doc.text("QTY", qtyCenterX, yPos, { align: "center" });
-  doc.text("UNIT PRICE", unitRightX, yPos, { align: "right" });
+  doc.text("QTY", qtyX, yPos);
+  doc.text("UNIT PRICE", unitX, yPos);
   doc.text("TOTAL", totalRightX, yPos, { align: "right" });
 
   yPos += 3;
@@ -301,15 +301,15 @@ export const generateInvoicePdf = async (
     const rowHeight = Math.max(titleLines.length * lineHeight, lineHeight);
     const yMid = rowStartY + ((titleLines.length - 1) * lineHeight) / 2;
 
-    // Qty (center)
+    // Qty (left aligned)
     const qty = item.qty || 1;
     doc.setTextColor(0, 0, 0);
-    doc.text(qty.toString(), qtyCenterX, yMid, { align: "center" });
+    doc.text(qty.toString(), qtyX, yMid);
 
-    // Unit Price (right)
+    // Unit Price (left aligned)
     const unitPrice = item.unitPrice || item.amount;
     doc.setTextColor(0, 0, 0);
-    doc.text(formatCurrency(unitPrice), unitRightX, yMid, { align: "right" });
+    doc.text(formatCurrency(unitPrice), unitX, yMid);
 
     // Total (right, bold)
     doc.setTextColor(0, 0, 0);
