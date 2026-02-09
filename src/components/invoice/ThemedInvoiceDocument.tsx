@@ -225,13 +225,13 @@ export const ThemedInvoiceDocument = ({
                 Description
               </th>
               <th
-                className="text-center py-3 font-semibold uppercase tracking-wide w-20"
+                className="text-left py-3 font-semibold uppercase tracking-wide w-16"
                 style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Qty
               </th>
               <th
-                className="text-right py-3 font-semibold uppercase tracking-wide"
+                className="text-left py-3 font-semibold uppercase tracking-wide"
                 style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
               >
                 Unit Price
@@ -250,8 +250,8 @@ export const ThemedInvoiceDocument = ({
                 <td className="py-4 font-medium text-black">
                   {item.title || "—"}
                 </td>
-                <td className="py-4 text-center text-black">{item.qty || 1}</td>
-                <td className="py-4 text-right text-black">
+                <td className="py-4 text-left text-black">{item.qty || 1}</td>
+                <td className="py-4 text-left text-black">
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
                 <td className="py-4 text-right font-semibold text-black">
@@ -389,13 +389,16 @@ export const ThemedInvoiceDocument = ({
 
         {/* BOTTOM ROW - Address Left, QR Right */}
         <div className="flex justify-between items-end">
-          {/* LEFT SIDE - ADDRESS */}
+          {/* LEFT SIDE - ADDRESS (Two lines) */}
           <div className="text-xs" style={{ color: t.footer_text_color }}>
-            {footerAddress && (
-              <p>{footerAddress}</p>
+            {addressLine1 && (
+              <p>{addressLine1}</p>
+            )}
+            {addressLine2 && (
+              <p>{addressLine2}</p>
             )}
             {(footerPhone || footerEmail) && (
-              <p>{[footerPhone, footerEmail].filter(Boolean).join(", ")}</p>
+              <p>{[footerPhone, footerEmail].filter(Boolean).join(" | ")}</p>
             )}
             {footerWebsite && (
               <p style={{ color: t.primary_color }}>{footerWebsite}</p>
