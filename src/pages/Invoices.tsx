@@ -19,10 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useInvoices, Invoice } from "@/hooks/useInvoices";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useInvoices, Invoice, useInvoice } from "@/hooks/useInvoices";
+import { useCompanies, useCompany } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/hooks/useTheme";
+import { useBranding } from "@/hooks/useBranding";
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { Invoice as InvoiceType, Company } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Invoices() {
   const navigate = useNavigate();
@@ -30,6 +35,8 @@ export default function Invoices() {
   const { toast } = useToast();
   const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
   const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  const { data: theme } = useTheme();
+  const { data: branding } = useBranding();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -37,6 +44,7 @@ export default function Invoices() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   // Read company filter from URL query params
   useEffect(() => {
@@ -61,6 +69,107 @@ export default function Invoices() {
     const matchesEndDate = !endDate || invoiceDate <= endDate;
     return matchesSearch && matchesStatus && matchesCompany && matchesStartDate && matchesEndDate;
   });
+
+  // Download PDF for a specific invoice
+  const handleDownloadPdf = async (invoiceId: string) => {
+    setDownloadingId(invoiceId);
+    try {
+      // Fetch full invoice data with items and installments
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", invoiceId)
+        .single();
+      
+      if (invoiceError || !invoiceData) throw new Error("Invoice not found");
+
+      // Fetch items
+      const { data: itemsData } = await supabase
+        .from("invoice_items")
+        .select("*")
+        .eq("invoice_id", invoiceId);
+
+      // Fetch installments
+      const { data: installmentsData } = await supabase
+        .from("installments")
+        .select("*")
+        .eq("invoice_id", invoiceId);
+
+      // Fetch company
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("id", invoiceData.company_id)
+        .single();
+
+      // Build PDF invoice object
+      const pdfInvoice: InvoiceType = {
+        id: invoiceData.id,
+        invoiceNumber: invoiceData.invoice_number,
+        companyId: invoiceData.company_id,
+        clientName: invoiceData.client_name,
+        clientAddress: invoiceData.client_address || undefined,
+        clientEmail: invoiceData.client_email || undefined,
+        clientPhone: invoiceData.client_phone || undefined,
+        date: new Date(invoiceData.invoice_date),
+        dueDate: invoiceData.due_date ? new Date(invoiceData.due_date) : undefined,
+        items: (itemsData || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          qty: item.qty || 1,
+          unitPrice: Number(item.unit_price) || Number(item.amount),
+          amount: Number(item.amount),
+        })),
+        installments: (installmentsData || []).map(inst => ({
+          id: inst.id,
+          amount: Number(inst.amount),
+          paidDate: new Date(inst.paid_date),
+        })),
+        status: invoiceData.status as "unpaid" | "partial" | "paid",
+        totalAmount: Number(invoiceData.total_amount),
+        vatRate: Number(invoiceData.vat_rate) || 0,
+        vatAmount: Number(invoiceData.vat_amount) || 0,
+        subtotal: Number(invoiceData.subtotal) || 0,
+        paidAmount: Number(invoiceData.paid_amount),
+        dueAmount: Number(invoiceData.due_amount),
+        notes: invoiceData.notes || undefined,
+      };
+
+      // Build PDF company object
+      const pdfCompany: Company | undefined = companyData ? {
+        id: companyData.id,
+        name: companyData.name,
+        tagline: companyData.tagline || undefined,
+        logo: companyData.logo_url || undefined,
+        email: companyData.email || "",
+        phone: companyData.phone || "",
+        address: companyData.address || "",
+        address_line1: companyData.address_line1 || undefined,
+        address_line2: companyData.address_line2 || undefined,
+        website: companyData.website || undefined,
+        thank_you_text: companyData.thank_you_text || undefined,
+        show_qr_code: companyData.show_qr_code ?? true,
+        footer_alignment: companyData.footer_alignment || undefined,
+        createdAt: new Date(companyData.created_at),
+      } : undefined;
+
+      await generateInvoicePdf(pdfInvoice, pdfCompany, theme, branding);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: `Invoice ${invoiceData.invoice_number} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error("Failed to download PDF:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not generate the invoice PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const clearDateFilters = () => {
     setStartDate(undefined);
@@ -388,6 +497,20 @@ export default function Invoices() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => handleDownloadPdf(invoice.id)}
+                        disabled={downloadingId === invoice.id}
+                        title="Download PDF"
+                      >
+                        {downloadingId === invoice.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-accent"
                         onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
                         title="Edit Invoice"
@@ -433,14 +556,30 @@ export default function Invoices() {
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-primary"
                           onClick={() => navigate(`/invoices/${invoice.id}`)}
+                          title="View Invoice"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => handleDownloadPdf(invoice.id)}
+                          disabled={downloadingId === invoice.id}
+                          title="Download PDF"
+                        >
+                          {downloadingId === invoice.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-accent"
                           onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
+                          title="Edit Invoice"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
