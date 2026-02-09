@@ -14,6 +14,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { useToast } from "@/hooks/use-toast";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
+import { A4PrintTemplate } from "@/components/invoice/A4PrintTemplate";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { Invoice, Company } from "@/types";
 import { defaultTheme } from "@/types/theme";
@@ -273,9 +274,21 @@ export default function InvoiceView() {
           </div>
         </div>
 
-        {/* Invoice Document */}
-        <div className="max-w-4xl mx-auto">
+        {/* Invoice Document - Screen View */}
+        <div className="max-w-4xl mx-auto print:hidden">
           <ThemedInvoiceDocument
+            invoice={invoiceData}
+            items={items}
+            installments={installments}
+            company={companyData}
+            theme={activeTheme}
+            branding={branding}
+          />
+        </div>
+
+        {/* A4 Print Template - Only visible when printing */}
+        <div className="hidden print:block">
+          <A4PrintTemplate
             invoice={invoiceData}
             items={items}
             installments={installments}

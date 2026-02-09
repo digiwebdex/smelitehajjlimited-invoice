@@ -280,13 +280,35 @@
   @apply bg-muted-foreground/30;
 }
 
-/* Print styles - Match PDF design exactly */
+/* Print styles - Fixed A4 Layout (210mm width) */
 @media print {
   /* Reset everything first */
   *, *::before, *::after {
     box-shadow: none !important;
-    border: none !important;
     outline: none !important;
+  }
+
+  /* A4 Page Setup */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Remove browser default margins */
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   /* Hide ALL navigation, sidebar, and non-essential elements */
@@ -306,23 +328,15 @@
     overflow: hidden !important;
   }
 
-  /* Reset page margins - smaller for fitting content */
-  @page {
-    margin: 10mm;
-    size: A4;
-  }
-
-  /* Reset background and colors for print */
-  html, body {
+  /* ===== A4 PRINT TEMPLATE STYLES ===== */
+  .a4-print-template {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 20mm !important;
     background: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
   }
 
   /* Make main content full width - remove all constraints */
@@ -332,8 +346,8 @@
   [class*="peer-data"] {
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
     min-height: auto !important;
     transform: none !important;
     position: static !important;
@@ -343,12 +357,12 @@
 
   /* Invoice document styling for print */
   .max-w-4xl {
-    max-width: 100% !important;
+    max-width: 210mm !important;
     margin: 0 !important;
-    padding: 16px !important;
+    padding: 0 !important;
   }
 
-  /* Remove shadows and borders from cards */
+  /* Remove shadows and borders from cards (except where needed) */
   .card-elevated,
   .shadow-lg,
   .shadow-md,
@@ -359,17 +373,13 @@
     box-shadow: none !important;
   }
 
-  .rounded-xl,
-  .rounded-lg,
-  .rounded-md,
-  .border,
-  [class*="border-"],
-  .card,
-  .bg-card,
-  .max-w-4xl > div {
+  /* Remove rounded corners except for logos */
+  .rounded-xl:not(.rounded-full),
+  .rounded-lg:not(.rounded-full),
+  .rounded-md:not(.rounded-full),
+  .card:not(.rounded-full),
+  .bg-card:not(.rounded-full) {
     border-radius: 0 !important;
-    border: none !important;
-    outline: none !important;
   }
 
   /* ===== CIRCULAR LOGO - Keep rounded-full for company logos ===== */
