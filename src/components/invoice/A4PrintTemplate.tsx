@@ -4,9 +4,9 @@ import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { numberToWords } from "@/lib/numberToWords";
 
 const getOrdinal = (n: number): string => {
-  const s = ["th", "st", "nd", "rd"];
+  const suffixes = ["th", "st", "nd", "rd"];
   const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
 };
 
 interface InvoiceItemData {
