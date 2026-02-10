@@ -121,7 +121,7 @@ export const ThemedInvoiceDocument = ({
   }[footerAlign];
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
+    <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none flex flex-col" style={{ minHeight: "297mm" }}>
       {/* HEADER */}
       <div className="flex justify-between items-start pb-6">
         <div className="flex items-center gap-4">
@@ -381,8 +381,10 @@ export const ThemedInvoiceDocument = ({
         </div>
       )}
 
+      {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
+      <div style={{ marginTop: "auto" }}>
       {/* SIGNATURE SECTION */}
-      <div className="mt-16" style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
         <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
           <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
             <span className="text-xs" style={{ color: t.subtotal_text_color }}>Received by</span>
@@ -402,7 +404,7 @@ export const ThemedInvoiceDocument = ({
 
       {/* FOOTER - Using branding settings */}
       <div
-        className="mt-12 pt-6"
+        className="pt-6"
         style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
         {/* THANK YOU CENTER (TOP) */}
@@ -441,6 +443,7 @@ export const ThemedInvoiceDocument = ({
           )}
         </div>
       </div>
+      </div> {/* end signature+footer wrapper */}
     </div>
   );
 };
