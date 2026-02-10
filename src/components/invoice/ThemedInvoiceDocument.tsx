@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { ThemeSettings, defaultTheme } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
+import { numberToWords } from "@/lib/numberToWords";
 
 interface InvoiceItemData {
   id: string;
@@ -312,6 +313,11 @@ export const ThemedInvoiceDocument = ({
             <span>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
             <span>{formatCurrency(invoice.due_amount)}</span>
           </div>
+          {/* In Word */}
+          <div className="mt-2 text-xs" style={{ color: t.subtotal_text_color }}>
+            <span className="font-semibold">In Word : </span>
+            <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
+          </div>
         </div>
       </div>
 
@@ -374,6 +380,25 @@ export const ThemedInvoiceDocument = ({
           </div>
         </div>
       )}
+
+      {/* SIGNATURE SECTION */}
+      <div className="mt-16" style={{ textAlign: "center" }}>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
+            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Received by</span>
+          </div>
+        </div>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
+            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Prepared by</span>
+          </div>
+        </div>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
+            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Authorize by</span>
+          </div>
+        </div>
+      </div>
 
       {/* FOOTER - Using branding settings */}
       <div

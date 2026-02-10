@@ -1,6 +1,7 @@
 import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
+import { numberToWords } from "@/lib/numberToWords";
 
 interface InvoiceItemData {
   id: string;
@@ -346,6 +347,11 @@ export const A4PrintTemplate = ({
             <span>{formatCurrency(invoice.due_amount)}</span>
             <div style={{ clear: "both" }} />
           </div>
+          {/* In Word */}
+          <div style={{ marginTop: "2mm", fontSize: "8pt", color: t.subtotal_text_color }}>
+            <span style={{ fontWeight: "bold" }}>In Word : </span>
+            <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
+          </div>
         </div>
       </div>
 
@@ -405,6 +411,25 @@ export const A4PrintTemplate = ({
           ))}
         </div>
       )}
+
+      {/* ===== SIGNATURE SECTION ===== */}
+      <div style={{ marginTop: "16mm", textAlign: "center" }}>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
+            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Received by</span>
+          </div>
+        </div>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
+            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Prepared by</span>
+          </div>
+        </div>
+        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
+            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Authorize by</span>
+          </div>
+        </div>
+      </div>
 
       {/* ===== FOOTER ===== */}
       <div

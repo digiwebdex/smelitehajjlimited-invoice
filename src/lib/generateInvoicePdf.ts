@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { Invoice, Company } from "@/types";
 import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
+import { numberToWords } from "@/lib/numberToWords";
 
 const formatCurrency = (amount: number): string => {
   // Use "Tk" instead of "৳" because jsPDF doesn't support Bengali Unicode with default fonts
@@ -390,7 +391,19 @@ export const generateInvoicePdf = async (
   doc.text(balanceLabel, summaryX + 3, yPos + 2);
   doc.text(formatCurrency(invoice.dueAmount), pageWidth - margin - 3, yPos + 2, { align: "right" });
 
-  yPos += 16;
+  yPos += 10;
+
+  // In Word
+  const inWordAmount = invoice.dueAmount > 0 ? invoice.dueAmount : totalWithVat;
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedColor);
+  doc.setFont("helvetica", "bold");
+  doc.text("In Word : ", summaryX, yPos);
+  const inWordLabelWidth = doc.getTextWidth("In Word : ");
+  doc.setFont("helvetica", "normal");
+  doc.text(numberToWords(inWordAmount) + " Taka Only", summaryX + inWordLabelWidth, yPos);
+
+  yPos += 10;
 
   // ===================== NOTES SECTION =====================
   if (invoice.notes) {
@@ -478,6 +491,28 @@ export const generateInvoicePdf = async (
     });
 
     yPos += 4;
+  }
+
+  // ===================== SIGNATURE SECTION =====================
+  const sigY = yPos + 10;
+  const sigColWidth = contentWidth / 3;
+  doc.setDrawColor(...borderColor);
+  doc.setLineWidth(0.3);
+
+  for (let i = 0; i < 3; i++) {
+    const colX = margin + i * sigColWidth;
+    const lineX1 = colX + 8;
+    const lineX2 = colX + sigColWidth - 8;
+    doc.line(lineX1, sigY, lineX2, sigY);
+  }
+
+  const labels = ["Received by", "Prepared by", "Authorize by"];
+  doc.setFontSize(8);
+  doc.setTextColor(...mutedColor);
+  doc.setFont("helvetica", "normal");
+  for (let i = 0; i < 3; i++) {
+    const colCenter = margin + i * sigColWidth + sigColWidth / 2;
+    doc.text(labels[i], colCenter, sigY + 5, { align: "center" });
   }
 
   // ===================== FOOTER =====================
