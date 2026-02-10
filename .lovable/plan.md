@@ -1,49 +1,33 @@
 
 
-## Invoice Template Enhancements
+## Fix: Move Signature Section to Bottom (Near Footer)
 
-Based on your annotated image, here are the changes to be made across all three outputs (screen view, print, and PDF):
+The signature section is currently placed right after the invoice content (notes/payment history) with a small top margin, leaving a large empty gap between it and the footer. It needs to be anchored near the bottom of the page, just above the footer.
 
-### 1. Fix Summary Section Divider Line
-The horizontal line between the items table and the summary section currently stretches too wide. It will be adjusted to align with the summary block only (right-aligned, matching the summary width).
+### Changes Across All 3 Templates
 
-### 2. Add "In Word" Line (Amount in Words)
-A new line will appear below the Balance box showing the total due amount written out in words. For example:
-- "In Word : Twenty Three Thousand"
+**1. Web View (`ThemedInvoiceDocument.tsx`)**
+- Remove `mt-16` from the signature section
+- Position the signature section at the bottom of the invoice container, just above the footer, using `margin-top: auto` on a wrapper or a large enough top margin to push it down
+- Since the container doesn't use flex column, use a fixed `mt-auto` approach by wrapping the signature + footer in a bottom-anchored group
 
-This requires a number-to-words converter function that handles BDT amounts.
+**2. A4 Print Template (`A4PrintTemplate.tsx`)**
+- Move the signature section to use absolute positioning near the footer (similar to how the footer itself is positioned)
+- Place it approximately 20mm above the footer divider line
 
-### 3. Add Signature Section
-Three signature blocks will be added below the payment history (and before the footer):
-- **Received by** (left)
-- **Prepared by** (center)
-- **Authorize by** (right)
-
-Each will have a horizontal line above the label for the actual signature.
-
----
+**3. PDF Export (`generateInvoicePdf.ts`)**
+- Change `sigY` from `yPos + 10` (relative to content) to a fixed position relative to the footer (e.g., `footerY - 30`), so signatures always appear just above the footer regardless of content length
 
 ### Technical Details
 
-**Files to modify:**
-1. `src/components/invoice/ThemedInvoiceDocument.tsx` -- Web/screen view
-2. `src/components/invoice/A4PrintTemplate.tsx` -- Print view
-3. `src/lib/generateInvoicePdf.ts` -- PDF export
+**`ThemedInvoiceDocument.tsx` (line 385)**
+- Change the outer div wrapper to use `min-height` on the main container and position signature+footer at the bottom
+- Or simply increase the signature margin to push it closer to footer area
 
-**New utility to create:**
-- A `numberToWords` helper function to convert numeric amounts to English words (e.g., 23000 to "Twenty Three Thousand")
+**`A4PrintTemplate.tsx` (line ~265)**
+- Move signature section to absolute positioning: `bottom: 52mm` (above the footer at `bottom: 20mm`)
 
-**Changes per file:**
+**`generateInvoicePdf.ts` (line 497)**
+- Change `const sigY = yPos + 10;` to `const sigY = footerY - 25;` so the signature lines appear at a fixed position just above the footer
 
-**All three templates:**
-- After the Balance box, add an "In Word" row displaying the due/total amount in English words
-- Add a signature section with three equally-spaced columns showing signature lines and labels
-- Adjust the item-to-summary divider line to be right-aligned and match the summary block width
-
-**Layout for signature section (using inline-block, no flex/grid for print/PDF parity):**
-
-```text
-____________________    ____________________    ____________________
-   Received by             Prepared by            Authorize by
-```
-
+This ensures the signature section sits consistently near the bottom of the page across screen, print, and PDF outputs.
