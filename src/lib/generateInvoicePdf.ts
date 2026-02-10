@@ -285,10 +285,12 @@ export const generateInvoicePdf = async (
   doc.line(tableX, yPos, tableX + contentWidth, yPos);
   yPos += 6;
 
-  // Table Rows (wrap description; vertically center other columns to the row)
+  // Table Rows (wrap description; vertically center all columns within the row)
   const lineHeight = 4.2;
+  const rowPaddingTop = 3;
+  const rowPaddingBottom = 3;
   invoice.items.forEach((item) => {
-    const rowStartY = yPos;
+    const rowTopY = yPos;
 
     // Description (wrap within description column)
     doc.setTextColor(0, 0, 0);
@@ -297,31 +299,39 @@ export const generateInvoicePdf = async (
 
     const title = item.title || "—";
     const titleLines = doc.splitTextToSize(title, descColWidth - 2);
-    doc.text(titleLines, descX, rowStartY);
 
-    const rowHeight = Math.max(titleLines.length * lineHeight, lineHeight);
-    const yMid = rowStartY + ((titleLines.length - 1) * lineHeight) / 2;
+    const textBlockHeight = titleLines.length * lineHeight;
+    const rowContentHeight = Math.max(textBlockHeight, lineHeight);
+    const totalRowHeight = rowPaddingTop + rowContentHeight + rowPaddingBottom;
 
-    // Qty (left aligned)
+    // Vertical center Y for single-line columns (baseline)
+    const yCenter = rowTopY + rowPaddingTop + rowContentHeight / 2 + 1;
+
+    // Description text - vertically centered
+    const descStartY = rowTopY + rowPaddingTop + (rowContentHeight - textBlockHeight) / 2 + lineHeight * 0.7;
+    doc.text(titleLines, descX, descStartY);
+
+    // Qty (left aligned, vertically centered)
     const qty = item.qty || 1;
     doc.setTextColor(0, 0, 0);
-    doc.text(qty.toString(), qtyX, yMid);
+    doc.text(qty.toString(), qtyX, yCenter);
 
-    // Unit Price (left aligned)
+    // Unit Price (left aligned, vertically centered)
     const unitPrice = item.unitPrice || item.amount;
     doc.setTextColor(0, 0, 0);
-    doc.text(formatCurrency(unitPrice), unitX, yMid);
+    doc.text(formatCurrency(unitPrice), unitX, yCenter);
 
-    // Total (right, bold)
+    // Total (right, bold, vertically centered)
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
-    doc.text(formatCurrency(item.amount), totalRightX, yMid, { align: "right" });
+    doc.text(formatCurrency(item.amount), totalRightX, yCenter, { align: "right" });
 
     // Advance cursor + divider
-    yPos = rowStartY + rowHeight + 6;
+    yPos = rowTopY + totalRowHeight;
     doc.setDrawColor(...borderColor);
     doc.setLineWidth(0.2);
-    doc.line(tableX, yPos - 3, tableX + contentWidth, yPos - 3);
+    doc.line(tableX, yPos, tableX + contentWidth, yPos);
+    yPos += 3;
   });
 
   yPos += 2;
