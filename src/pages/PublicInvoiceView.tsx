@@ -98,6 +98,7 @@ export default function PublicInvoiceView() {
     id: inst.id,
     amount: Number(inst.amount),
     paid_date: inst.paid_date,
+    payment_method: inst.payment_method || "Bank Transfer",
   }));
 
   const invoiceData = {

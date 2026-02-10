@@ -20,6 +20,7 @@ export const installmentSchema = z.object({
   id: z.string(),
   amount: z.number().min(0, "Amount cannot be negative"),
   paid_date: z.string().min(1, "Date is required"),
+  payment_method: z.string().default("Bank Transfer"),
 });
 
 export type LocalInstallment = z.infer<typeof installmentSchema>;

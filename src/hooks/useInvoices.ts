@@ -18,6 +18,7 @@ export interface Installment {
   invoice_id: string;
   amount: number;
   paid_date: string;
+  payment_method: string;
   created_at: string;
 }
 
@@ -64,7 +65,7 @@ export interface InvoiceInput {
   due_amount: number;
   status: "unpaid" | "partial" | "paid";
   items: { title: string; qty: number; unit_price: number; amount: number }[];
-  installments: { amount: number; paid_date: string }[];
+  installments: { amount: number; paid_date: string; payment_method: string }[];
 }
 
 export function useInvoices() {
@@ -175,6 +176,7 @@ export function useCreateInvoice() {
               invoice_id: invoiceData.id,
               amount: inst.amount,
               paid_date: inst.paid_date,
+              payment_method: inst.payment_method,
             }))
           );
 
@@ -263,6 +265,7 @@ export function useUpdateInvoice() {
               invoice_id: id,
               amount: inst.amount,
               paid_date: inst.paid_date,
+              payment_method: inst.payment_method,
             }))
           );
 

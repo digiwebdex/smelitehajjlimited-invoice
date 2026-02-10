@@ -22,6 +22,7 @@ interface InstallmentData {
   id: string;
   amount: number;
   paid_date: string;
+  payment_method?: string;
 }
 
 interface CompanyData {
@@ -366,13 +367,7 @@ export const ThemedInvoiceDocument = ({
                     className="px-2 py-1 text-white text-xs rounded font-medium"
                     style={{ backgroundColor: t.subtotal_text_color }}
                   >
-                    Bank Transfer
-                  </span>
-                  <span
-                    className="px-2 py-1 text-white text-xs rounded font-medium"
-                    style={{ backgroundColor: t.accent_color }}
-                  >
-                    Advance
+                    {pay.payment_method || "Bank Transfer"}
                   </span>
                   <span className="text-sm" style={{ color: t.subtotal_text_color }}>
                     — {getOrdinal(idx + 1)} Payment

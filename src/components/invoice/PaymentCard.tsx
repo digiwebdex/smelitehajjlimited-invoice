@@ -2,7 +2,22 @@ import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { LocalInstallment } from "./types";
+
+const PAYMENT_METHODS = [
+  "Bank Transfer",
+  "Cash",
+  "bKash",
+  "Nagad",
+  "Others",
+];
 
 interface Props {
   inst: LocalInstallment;
@@ -28,7 +43,7 @@ export function PaymentCard({ inst, index, onUpdate, onRemove }: Props) {
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Amount</Label>
           <div className="relative">
@@ -51,6 +66,24 @@ export function PaymentCard({ inst, index, onUpdate, onRemove }: Props) {
             value={inst.paid_date}
             onChange={(e) => onUpdate("paid_date", e.target.value)}
           />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Method</Label>
+          <Select
+            value={inst.payment_method || "Bank Transfer"}
+            onValueChange={(value) => onUpdate("payment_method", value)}
+          >
+            <SelectTrigger className="bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_METHODS.map((method) => (
+                <SelectItem key={method} value={method}>
+                  {method}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

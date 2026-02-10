@@ -1,0 +1,1 @@
+ALTER TABLE public.installments ADD COLUMN payment_method text NOT NULL DEFAULT 'Bank Transfer';

@@ -29,6 +29,7 @@ export interface Installment {
   id: string;
   amount: number;
   paidDate: Date;
+  paymentMethod?: string;
 }
 
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid';

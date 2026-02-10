@@ -477,25 +477,21 @@ export const generateInvoicePdf = async (
       doc.setFont("helvetica", "normal");
       doc.text(formatDate(inst.paidDate), margin + 10, yPos + 5);
 
-      // Bank Transfer badge (gray)
+      // Payment method badge (gray)
+      const methodText = inst.paymentMethod || "Bank Transfer";
+      const methodWidth = Math.max(doc.getTextWidth(methodText) + 4, 22);
       doc.setFillColor(156, 163, 175); // Gray-400
-      doc.roundedRect(margin + 50, yPos + 1, 22, 5, 1, 1, "F");
+      doc.roundedRect(margin + 50, yPos + 1, methodWidth, 5, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(6);
       doc.setFont("helvetica", "bold");
-      doc.text("Bank Transfer", margin + 61, yPos + 4.5, { align: "center" });
-
-      // Advance badge (teal/accent)
-      doc.setFillColor(...accentColor);
-      doc.roundedRect(margin + 74, yPos + 1, 14, 5, 1, 1, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.text("Advance", margin + 81, yPos + 4.5, { align: "center" });
+      doc.text(methodText, margin + 50 + methodWidth / 2, yPos + 4.5, { align: "center" });
 
       // Description
       doc.setTextColor(...mutedColor);
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.text(`— ${getOrdinal(idx + 1)} Payment`, margin + 90, yPos + 5);
+      doc.text(`— ${getOrdinal(idx + 1)} Payment`, margin + 50 + methodWidth + 3, yPos + 5);
 
       // Amount (teal color, bold)
       doc.setTextColor(...accentColor);

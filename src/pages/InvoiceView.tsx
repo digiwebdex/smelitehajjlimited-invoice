@@ -85,6 +85,7 @@ export default function InvoiceView() {
     id: inst.id,
     amount: Number(inst.amount),
     paid_date: inst.paid_date,
+    payment_method: (inst as any).payment_method || "Bank Transfer",
   }));
 
   const invoiceData = {
@@ -141,6 +142,7 @@ export default function InvoiceView() {
         id: inst.id,
         amount: inst.amount,
         paidDate: new Date(inst.paid_date),
+        paymentMethod: inst.payment_method || "Bank Transfer",
       })),
       status: invoice.status as "unpaid" | "partial" | "paid",
       totalAmount: Number(invoice.total_amount),

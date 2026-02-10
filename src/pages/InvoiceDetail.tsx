@@ -106,6 +106,7 @@ export default function InvoiceDetail() {
           id: inst.id,
           amount: Number(inst.amount),
           paid_date: inst.paid_date,
+          payment_method: inst.payment_method || "Bank Transfer",
         }))
       );
     }
@@ -161,6 +162,7 @@ export default function InvoiceDetail() {
         id: Date.now().toString(),
         amount: 0,
         paid_date: new Date().toISOString().split("T")[0],
+        payment_method: "Bank Transfer",
       },
     ]);
   }, []);
@@ -245,6 +247,7 @@ export default function InvoiceDetail() {
       installments: installments.map((inst) => ({
         amount: inst.amount,
         paid_date: inst.paid_date,
+        payment_method: inst.payment_method || "Bank Transfer",
       })),
     };
 

@@ -21,6 +21,7 @@ interface InstallmentData {
   id: string;
   amount: number;
   paid_date: string;
+  payment_method?: string;
 }
 
 interface CompanyData {
@@ -394,19 +395,7 @@ export const A4PrintTemplate = ({
                   marginRight: "2mm",
                 }}
               >
-                Bank Transfer
-              </span>
-              <span
-                style={{
-                  backgroundColor: t.accent_color,
-                  color: "#ffffff",
-                  padding: "1mm 2mm",
-                  fontSize: "6pt",
-                  fontWeight: "bold",
-                  marginRight: "2mm",
-                }}
-              >
-                Advance
+                {pay.payment_method || "Bank Transfer"}
               </span>
               <span style={{ color: t.subtotal_text_color, fontSize: "7pt" }}>— {getOrdinal(idx + 1)} Payment</span>
               <span style={{ float: "right", color: t.accent_color, fontSize: "10pt", fontWeight: "bold" }}>
