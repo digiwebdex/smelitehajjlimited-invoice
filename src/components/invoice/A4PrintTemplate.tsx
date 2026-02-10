@@ -267,16 +267,16 @@ export const A4PrintTemplate = ({
       >
         <thead>
           <tr style={{ borderBottom: `0.5pt solid ${t.border_color}` }}>
-            <th style={{ width: "50%", textAlign: "left", padding: "3mm 0", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ width: "50%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
               Description
             </th>
-            <th style={{ width: "10%", textAlign: "left", padding: "3mm 0", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ width: "10%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
               Qty
             </th>
-            <th style={{ width: "20%", textAlign: "left", padding: "3mm 0", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ width: "20%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
               Unit Price
             </th>
-            <th style={{ width: "20%", textAlign: "right", padding: "3mm 0", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ width: "20%", textAlign: "right", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
               Total
             </th>
           </tr>
@@ -284,16 +284,16 @@ export const A4PrintTemplate = ({
         <tbody>
           {items.map((item) => (
             <tr key={item.id} style={{ borderBottom: `0.2pt solid ${t.border_color}` }}>
-              <td style={{ padding: "3mm 0", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", color: "#000000", fontSize: "9pt" }}>
                 {item.title || "—"}
               </td>
-              <td style={{ padding: "3mm 0", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {item.qty || 1}
               </td>
-              <td style={{ padding: "3mm 0", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {formatCurrency(item.unit_price || item.amount)}
               </td>
-              <td style={{ padding: "3mm 0", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
                 {formatCurrency(item.amount)}
               </td>
             </tr>
