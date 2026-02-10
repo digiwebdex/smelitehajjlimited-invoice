@@ -413,7 +413,7 @@ export const A4PrintTemplate = ({
       )}
 
       {/* ===== SIGNATURE SECTION ===== */}
-      <div style={{ position: "absolute", bottom: "52mm", left: "20mm", right: "20mm", textAlign: "center" }}>
+      <div style={{ position: "absolute", bottom: "42mm", left: "20mm", right: "20mm", textAlign: "center" }}>
         <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
           <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
             <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Received by</span>

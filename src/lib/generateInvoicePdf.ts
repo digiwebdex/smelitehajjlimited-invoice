@@ -495,7 +495,7 @@ export const generateInvoicePdf = async (
 
   // ===================== SIGNATURE SECTION =====================
   const footerYRef = pageHeight - 32;
-  const sigY = footerYRef - 25;
+  const sigY = footerYRef - 18;
   const sigColWidth = contentWidth / 3;
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
