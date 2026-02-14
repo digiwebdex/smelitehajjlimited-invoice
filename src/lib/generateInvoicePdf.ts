@@ -302,7 +302,7 @@ export const generateInvoicePdf = async (
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.5);
   doc.line(tableX, yPos, tableX + contentWidth, yPos);
-  yPos += 6;
+  yPos += 2;
 
   // Table Rows (wrap description; vertically center all columns within the row)
   const lineHeight = 4.2;
