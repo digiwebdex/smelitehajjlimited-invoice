@@ -321,7 +321,7 @@ export const generateInvoicePdf = async (
 
     const textBlockHeight = titleLines.length * lineHeight;
     const rowContentHeight = Math.max(textBlockHeight, lineHeight);
-    const minRowHeight = 12;
+    const minRowHeight = 6;
     const totalRowHeight = Math.max(rowPaddingTop + rowContentHeight + rowPaddingBottom, minRowHeight);
 
     // Vertical center Y for single-line columns (baseline)
