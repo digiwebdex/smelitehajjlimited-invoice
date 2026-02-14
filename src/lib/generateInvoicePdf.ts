@@ -306,8 +306,8 @@ export const generateInvoicePdf = async (
 
   // Table Rows (wrap description; vertically center all columns within the row)
   const lineHeight = 4.2;
-  const rowPaddingTop = 3;
-  const rowPaddingBottom = 3;
+  const rowPaddingTop = 4;
+  const rowPaddingBottom = 4;
   invoice.items.forEach((item) => {
     const rowTopY = yPos;
 
@@ -321,7 +321,7 @@ export const generateInvoicePdf = async (
 
     const textBlockHeight = titleLines.length * lineHeight;
     const rowContentHeight = Math.max(textBlockHeight, lineHeight);
-    const minRowHeight = 6;
+    const minRowHeight = 14;
     const totalRowHeight = Math.max(rowPaddingTop + rowContentHeight + rowPaddingBottom, minRowHeight);
 
     // Vertical center Y for single-line columns (baseline)
@@ -351,7 +351,7 @@ export const generateInvoicePdf = async (
     doc.setDrawColor(...borderColor);
     doc.setLineWidth(0.2);
     doc.line(tableX, yPos, tableX + contentWidth, yPos);
-    yPos += 3;
+    yPos += 4;
   });
 
   yPos += 2;
