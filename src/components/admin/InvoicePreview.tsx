@@ -87,19 +87,19 @@ export const InvoicePreview = ({ theme }: InvoicePreviewProps) => {
       {/* Status Badges Preview */}
       <div className="flex gap-2 mb-4">
         <span 
-          className="px-2 py-0.5 text-xs font-semibold rounded text-white"
+          className="px-2 py-0.5 text-xs font-semibold rounded-full text-white"
           style={{ backgroundColor: theme.badge_paid_color }}
         >
           Paid
         </span>
         <span 
-          className="px-2 py-0.5 text-xs font-semibold rounded text-white"
+          className="px-2 py-0.5 text-xs font-semibold rounded-full text-white"
           style={{ backgroundColor: theme.badge_partial_color }}
         >
           Partial
         </span>
         <span 
-          className="px-2 py-0.5 text-xs font-semibold rounded text-white"
+          className="px-2 py-0.5 text-xs font-semibold rounded-full text-white"
           style={{ backgroundColor: theme.badge_unpaid_color }}
         >
           Unpaid
