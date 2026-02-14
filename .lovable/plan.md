@@ -1,33 +1,48 @@
 
 
-## Fix: Move Signature Section to Bottom (Near Footer)
+## Plan: Invoice Layout Fixes (3 Issues)
 
-The signature section is currently placed right after the invoice content (notes/payment history) with a small top margin, leaving a large empty gap between it and the footer. It needs to be anchored near the bottom of the page, just above the footer.
+### Issue 1: Equal Table Row Heights
+All item rows in the table should have consistent, equal heights regardless of content length.
 
-### Changes Across All 3 Templates
+**Changes needed in:**
+- `A4PrintTemplate.tsx` - Add fixed minimum height to table row cells
+- `ThemedInvoiceDocument.tsx` - Add consistent vertical padding to table cells
+- `generateInvoicePdf.ts` - Already uses `rowPaddingTop`/`rowPaddingBottom` but ensure minimum row height is enforced uniformly
 
-**1. Web View (`ThemedInvoiceDocument.tsx`)**
-- Remove `mt-16` from the signature section
-- Position the signature section at the bottom of the invoice container, just above the footer, using `margin-top: auto` on a wrapper or a large enough top margin to push it down
-- Since the container doesn't use flex column, use a fixed `mt-auto` approach by wrapping the signature + footer in a bottom-anchored group
+### Issue 2: "In Word" Line Wrapping
+When the amount-in-words text is long (e.g., "One Hundred Fifty Seven Thousand Five Hundred"), it overflows past the right margin. The text should wrap to a second line and stay within the summary block width.
 
-**2. A4 Print Template (`A4PrintTemplate.tsx`)**
-- Move the signature section to use absolute positioning near the footer (similar to how the footer itself is positioned)
-- Place it approximately 20mm above the footer divider line
+**Changes needed in:**
+- `A4PrintTemplate.tsx` - Add `maxWidth` and `wordBreak`/`overflowWrap` to the "In Word" div so text wraps within the 75mm summary block
+- `ThemedInvoiceDocument.tsx` - Ensure the "In Word" text wraps within the w-80 summary container
+- `generateInvoicePdf.ts` - Use `doc.splitTextToSize()` for the "In Word" text to wrap within the summary width (75mm)
 
-**3. PDF Export (`generateInvoicePdf.ts`)**
-- Change `sigY` from `yPos + 10` (relative to content) to a fixed position relative to the footer (e.g., `footerY - 30`), so signatures always appear just above the footer regardless of content length
+### Issue 3: Signature Section Alignment
+"Received by" should be aligned to the left margin, "Prepared by" stays centered, and "Authorize by" should be at the right margin. Currently all three are equally spaced in the center.
+
+**Changes needed in:**
+- `A4PrintTemplate.tsx` - Change the three signature columns: first aligns left (starting at left margin), last aligns right (ending at right margin), middle stays centered
+- `ThemedInvoiceDocument.tsx` - Same alignment: left, center, right using `justify-between` layout
+- `generateInvoicePdf.ts` - Adjust signature line and label positions: first at left margin, last ending at right margin
+
+---
 
 ### Technical Details
 
-**`ThemedInvoiceDocument.tsx` (line 385)**
-- Change the outer div wrapper to use `min-height` on the main container and position signature+footer at the bottom
-- Or simply increase the signature margin to push it closer to footer area
+**Files to modify (3 files, all changes synchronized for visual parity):**
 
-**`A4PrintTemplate.tsx` (line ~265)**
-- Move signature section to absolute positioning: `bottom: 52mm` (above the footer at `bottom: 20mm`)
+1. **`src/components/invoice/A4PrintTemplate.tsx`**
+   - Table rows: add `height: "8mm"` to each `<td>` for uniform sizing
+   - "In Word" div: constrain width to `75mm` and add `overflowWrap: "break-word"`
+   - Signature: change from three equal `33%` centered blocks to `justify-between` layout with left/center/right alignment
 
-**`generateInvoicePdf.ts` (line 497)**
-- Change `const sigY = yPos + 10;` to `const sigY = footerY - 25;` so the signature lines appear at a fixed position just above the footer
+2. **`src/components/invoice/ThemedInvoiceDocument.tsx`**
+   - Table rows: ensure consistent `py-4` and add `min-h` if needed
+   - "In Word": add `break-words` class or constrain max-width
+   - Signature: use `flex justify-between` with left-aligned first, centered middle, right-aligned last
 
-This ensures the signature section sits consistently near the bottom of the page across screen, print, and PDF outputs.
+3. **`src/lib/generateInvoicePdf.ts`**
+   - Table rows: enforce a fixed minimum `totalRowHeight` (e.g., 10mm) regardless of content
+   - "In Word": use `splitTextToSize(text, summaryWidth)` and render multi-line
+   - Signature: position "Received by" line starting at `margin`, "Authorize by" line ending at `pageWidth - margin`
