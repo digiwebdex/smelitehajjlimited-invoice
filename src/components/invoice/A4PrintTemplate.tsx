@@ -291,16 +291,16 @@ export const A4PrintTemplate = ({
         <tbody>
           {items.map((item) => (
             <tr key={item.id} style={{ borderBottom: `0.2pt solid ${t.border_color}` }}>
-              <td style={{ padding: "3mm 0", verticalAlign: "middle", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", height: "8mm", color: "#000000", fontSize: "9pt" }}>
                 {item.title || "—"}
               </td>
-              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", height: "8mm", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {item.qty || 1}
               </td>
-              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", height: "8mm", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {formatCurrency(item.unit_price || item.amount)}
               </td>
-              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", height: "8mm", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
                 {formatCurrency(item.amount)}
               </td>
             </tr>
@@ -355,7 +355,7 @@ export const A4PrintTemplate = ({
             <div style={{ clear: "both" }} />
           </div>
           {/* In Word */}
-          <div style={{ marginTop: "2mm", fontSize: "8pt", color: t.subtotal_text_color }}>
+          <div style={{ marginTop: "2mm", fontSize: "8pt", color: t.subtotal_text_color, maxWidth: "75mm", overflowWrap: "break-word", wordBreak: "break-word" }}>
             <span style={{ fontWeight: "bold" }}>In Word : </span>
             <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
           </div>
@@ -408,18 +408,18 @@ export const A4PrintTemplate = ({
       )}
 
       {/* ===== SIGNATURE SECTION ===== */}
-      <div style={{ position: "absolute", bottom: "42mm", left: "20mm", right: "20mm", textAlign: "center" }}>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+      <div style={{ position: "absolute", bottom: "42mm", left: "20mm", right: "20mm", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ width: "40mm", textAlign: "center" }}>
           <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
             <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Received by</span>
           </div>
         </div>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+        <div style={{ width: "40mm", textAlign: "center" }}>
           <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
             <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Prepared by</span>
           </div>
         </div>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 3mm" }}>
+        <div style={{ width: "40mm", textAlign: "center" }}>
           <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
             <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Authorize by</span>
           </div>

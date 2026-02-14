@@ -254,15 +254,15 @@ export const ThemedInvoiceDocument = ({
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="py-4 font-medium text-black">
+              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color, height: '48px' }}>
+                <td className="py-4 font-medium text-black align-middle">
                   {item.title || "—"}
                 </td>
-                <td className="py-4 text-left text-black">{item.qty || 1}</td>
-                <td className="py-4 text-left text-black">
+                <td className="py-4 text-left text-black align-middle">{item.qty || 1}</td>
+                <td className="py-4 text-left text-black align-middle">
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="py-4 text-right font-semibold text-black">
+                <td className="py-4 text-right font-semibold text-black align-middle">
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
@@ -321,7 +321,7 @@ export const ThemedInvoiceDocument = ({
             <span>{formatCurrency(invoice.due_amount)}</span>
           </div>
           {/* In Word */}
-          <div className="mt-2 text-xs" style={{ color: t.subtotal_text_color }}>
+          <div className="mt-2 text-xs break-words" style={{ color: t.subtotal_text_color, maxWidth: '320px', overflowWrap: 'break-word' }}>
             <span className="font-semibold">In Word : </span>
             <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
           </div>
@@ -385,18 +385,18 @@ export const ThemedInvoiceDocument = ({
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
       <div style={{ marginTop: "auto" }}>
       {/* SIGNATURE SECTION */}
-      <div style={{ textAlign: "center", marginBottom: "48px" }}>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
+        <div style={{ width: "150px", textAlign: "center" }}>
           <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
             <span className="text-xs" style={{ color: t.subtotal_text_color }}>Received by</span>
           </div>
         </div>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+        <div style={{ width: "150px", textAlign: "center" }}>
           <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
             <span className="text-xs" style={{ color: t.subtotal_text_color }}>Prepared by</span>
           </div>
         </div>
-        <div style={{ display: "inline-block", width: "33%", verticalAlign: "bottom", textAlign: "center", padding: "0 8px" }}>
+        <div style={{ width: "150px", textAlign: "center" }}>
           <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
             <span className="text-xs" style={{ color: t.subtotal_text_color }}>Authorize by</span>
           </div>

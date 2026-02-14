@@ -308,7 +308,8 @@ export const generateInvoicePdf = async (
 
     const textBlockHeight = titleLines.length * lineHeight;
     const rowContentHeight = Math.max(textBlockHeight, lineHeight);
-    const totalRowHeight = rowPaddingTop + rowContentHeight + rowPaddingBottom;
+    const minRowHeight = 10;
+    const totalRowHeight = Math.max(rowPaddingTop + rowContentHeight + rowPaddingBottom, minRowHeight);
 
     // Vertical center Y for single-line columns (baseline)
     const yCenter = rowTopY + rowPaddingTop + rowContentHeight / 2 + 1;
@@ -414,10 +415,22 @@ export const generateInvoicePdf = async (
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "bold");
-  doc.text("In Word : ", summaryX, yPos);
-  const inWordLabelWidth = doc.getTextWidth("In Word : ");
+  const inWordLabel = "In Word : ";
+  const inWordLabelWidth = doc.getTextWidth(inWordLabel);
+  doc.text(inWordLabel, summaryX, yPos);
   doc.setFont("helvetica", "normal");
-  doc.text(numberToWords(inWordAmount) + " Taka Only", summaryX + inWordLabelWidth, yPos);
+  const inWordText = numberToWords(inWordAmount) + " Taka Only";
+  const inWordLines = doc.splitTextToSize(inWordText, summaryWidth - inWordLabelWidth - 2);
+  if (inWordLines.length === 1) {
+    doc.text(inWordLines[0], summaryX + inWordLabelWidth, yPos);
+  } else {
+    // First line after label, rest lines aligned to label start
+    doc.text(inWordLines[0], summaryX + inWordLabelWidth, yPos);
+    for (let i = 1; i < inWordLines.length; i++) {
+      yPos += 3.5;
+      doc.text(inWordLines[i], summaryX, yPos);
+    }
+  }
 
   yPos += 10;
 
@@ -508,24 +521,29 @@ export const generateInvoicePdf = async (
   // ===================== SIGNATURE SECTION =====================
   const footerYRef = pageHeight - 32;
   const sigY = footerYRef - 18;
-  const sigColWidth = contentWidth / 3;
+  const signLineWidth = 40;
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
 
-  for (let i = 0; i < 3; i++) {
-    const colX = margin + i * sigColWidth;
-    const lineX1 = colX + 8;
-    const lineX2 = colX + sigColWidth - 8;
-    doc.line(lineX1, sigY, lineX2, sigY);
-  }
+  // Left: Received by (starts at left margin)
+  const leftSignX = margin;
+  doc.line(leftSignX, sigY, leftSignX + signLineWidth, sigY);
+
+  // Center: Prepared by
+  const centerSignX = pageWidth / 2 - signLineWidth / 2;
+  doc.line(centerSignX, sigY, centerSignX + signLineWidth, sigY);
+
+  // Right: Authorize by (ends at right margin)
+  const rightSignX = pageWidth - margin - signLineWidth;
+  doc.line(rightSignX, sigY, rightSignX + signLineWidth, sigY);
 
   const labels = ["Received by", "Prepared by", "Authorize by"];
+  const labelXPositions = [leftSignX + signLineWidth / 2, pageWidth / 2, rightSignX + signLineWidth / 2];
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   for (let i = 0; i < 3; i++) {
-    const colCenter = margin + i * sigColWidth + sigColWidth / 2;
-    doc.text(labels[i], colCenter, sigY + 5, { align: "center" });
+    doc.text(labels[i], labelXPositions[i], sigY + 5, { align: "center" });
   }
 
   // ===================== FOOTER =====================
