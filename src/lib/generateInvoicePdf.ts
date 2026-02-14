@@ -306,7 +306,7 @@ export const generateInvoicePdf = async (
 
   // Table Rows (wrap description; vertically center all columns within the row)
   const lineHeight = 4.2;
-  const minRowHeight = 8;
+  const minRowHeight = 7;
   invoice.items.forEach((item) => {
     const rowTopY = yPos;
 
