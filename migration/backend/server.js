@@ -250,7 +250,7 @@ app.put('/api/companies/:id', authenticate, async (req, res) => {
       `UPDATE companies SET ${sets} WHERE id = $1 AND user_id = $${keys.length + 2} RETURNING *`,
       [req.params.id, ...vals, req.user.id]
     );
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
