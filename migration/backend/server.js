@@ -375,7 +375,7 @@ app.post('/api/invoices', authenticate, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json(invoice);
+    res.json({ data: invoice });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
