@@ -27,7 +27,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { Invoice as InvoiceType, Company } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 
 export default function Invoices() {
   const navigate = useNavigate();
