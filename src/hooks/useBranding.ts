@@ -1,27 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 import { BrandSettings, defaultBranding } from "@/types/branding";
-
-const BRANDING_ID = "00000000-0000-0000-0000-000000000002";
 
 export const useBranding = () => {
   return useQuery({
     queryKey: ["brand-settings"],
     queryFn: async (): Promise<BrandSettings> => {
-      const { data, error } = await supabase
-        .from("global_brand_settings")
-        .select("*")
-        .eq("id", BRANDING_ID)
-        .maybeSingle();
-
+      const { data, error } = await api.get<BrandSettings>("/branding");
       if (error) {
         console.error("Error fetching branding:", error);
         return defaultBranding;
       }
-
       return (data as BrandSettings) || defaultBranding;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -30,14 +22,8 @@ export const useUpdateBranding = () => {
 
   return useMutation({
     mutationFn: async (branding: Partial<BrandSettings>) => {
-      const { data, error } = await supabase
-        .from("global_brand_settings")
-        .update(branding)
-        .eq("id", BRANDING_ID)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { data, error } = await api.put("/branding", branding);
+      if (error) throw new Error(error);
       return data;
     },
     onSuccess: () => {
@@ -51,39 +37,8 @@ export const useResetBranding = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const {
-        company_name,
-        tagline,
-        address_line1,
-        address_line2,
-        phone,
-        email,
-        website,
-        thank_you_text,
-        show_qr_code,
-        footer_alignment,
-      } = defaultBranding;
-
-      const { data, error } = await supabase
-        .from("global_brand_settings")
-        .update({
-          company_name,
-          tagline,
-          address_line1,
-          address_line2,
-          phone,
-          email,
-          website,
-          thank_you_text,
-          show_qr_code,
-          footer_alignment,
-          company_logo: null,
-        })
-        .eq("id", BRANDING_ID)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { data, error } = await api.post("/branding/reset", {});
+      if (error) throw new Error(error);
       return data;
     },
     onSuccess: () => {

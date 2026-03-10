@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -74,16 +74,8 @@ export function useInvoices() {
   return useQuery({
     queryKey: ["invoices", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          items:invoice_items(*),
-          installments:installments(*)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const { data, error } = await api.get<Invoice[]>("/invoices");
+      if (error) throw new Error(error);
       return data as Invoice[];
     },
     enabled: !!user,
@@ -97,17 +89,8 @@ export function useInvoice(id: string | undefined) {
     queryKey: ["invoice", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          items:invoice_items(*),
-          installments:installments(*)
-        `)
-        .eq("id", id)
-        .maybeSingle();
-
-      if (error) throw error;
+      const { data, error } = await api.get<Invoice>(`/invoices/${id}`);
+      if (error) throw new Error(error);
       return data as Invoice | null;
     },
     enabled: !!user && !!id,
@@ -122,68 +105,9 @@ export function useCreateInvoice() {
   return useMutation({
     mutationFn: async (invoice: InvoiceInput) => {
       if (!user) throw new Error("Not authenticated");
-
-      // Create the invoice first
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from("invoices")
-        .insert({
-          user_id: user.id,
-          company_id: invoice.company_id,
-          invoice_number: invoice.invoice_number,
-          client_name: invoice.client_name,
-          client_email: invoice.client_email,
-          client_phone: invoice.client_phone,
-          client_address: invoice.client_address,
-          notes: invoice.notes,
-          invoice_date: invoice.invoice_date,
-          due_date: invoice.due_date,
-          subtotal: invoice.subtotal,
-          vat_rate: invoice.vat_rate,
-          vat_amount: invoice.vat_amount,
-          total_amount: invoice.total_amount,
-          paid_amount: invoice.paid_amount,
-          due_amount: invoice.due_amount,
-          status: invoice.status,
-        })
-        .select()
-        .single();
-
-      if (invoiceError) throw invoiceError;
-
-      // Insert invoice items
-      if (invoice.items.length > 0) {
-        const { error: itemsError } = await supabase
-          .from("invoice_items")
-          .insert(
-            invoice.items.map((item) => ({
-              invoice_id: invoiceData.id,
-              title: item.title,
-              qty: item.qty,
-              unit_price: item.unit_price,
-              amount: item.amount,
-            }))
-          );
-
-        if (itemsError) throw itemsError;
-      }
-
-      // Insert installments
-      if (invoice.installments.length > 0) {
-        const { error: installmentsError } = await supabase
-          .from("installments")
-          .insert(
-            invoice.installments.map((inst) => ({
-              invoice_id: invoiceData.id,
-              amount: inst.amount,
-              paid_date: inst.paid_date,
-              payment_method: inst.payment_method,
-            }))
-          );
-
-        if (installmentsError) throw installmentsError;
-      }
-
-      return invoiceData;
+      const { data, error } = await api.post("/invoices", invoice);
+      if (error) throw new Error(error);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -208,71 +132,9 @@ export function useUpdateInvoice() {
 
   return useMutation({
     mutationFn: async ({ id, ...invoice }: InvoiceInput & { id: string }) => {
-      // Update the invoice
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from("invoices")
-        .update({
-          company_id: invoice.company_id,
-          invoice_number: invoice.invoice_number,
-          client_name: invoice.client_name,
-          client_email: invoice.client_email,
-          client_phone: invoice.client_phone,
-          client_address: invoice.client_address,
-          notes: invoice.notes,
-          invoice_date: invoice.invoice_date,
-          due_date: invoice.due_date,
-          subtotal: invoice.subtotal,
-          vat_rate: invoice.vat_rate,
-          vat_amount: invoice.vat_amount,
-          total_amount: invoice.total_amount,
-          paid_amount: invoice.paid_amount,
-          due_amount: invoice.due_amount,
-          status: invoice.status,
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (invoiceError) throw invoiceError;
-
-      // Delete existing items and installments
-      await supabase.from("invoice_items").delete().eq("invoice_id", id);
-      await supabase.from("installments").delete().eq("invoice_id", id);
-
-      // Insert new items
-      if (invoice.items.length > 0) {
-        const { error: itemsError } = await supabase
-          .from("invoice_items")
-          .insert(
-            invoice.items.map((item) => ({
-              invoice_id: id,
-              title: item.title,
-              qty: item.qty,
-              unit_price: item.unit_price,
-              amount: item.amount,
-            }))
-          );
-
-        if (itemsError) throw itemsError;
-      }
-
-      // Insert new installments
-      if (invoice.installments.length > 0) {
-        const { error: installmentsError } = await supabase
-          .from("installments")
-          .insert(
-            invoice.installments.map((inst) => ({
-              invoice_id: id,
-              amount: inst.amount,
-              paid_date: inst.paid_date,
-              payment_method: inst.payment_method,
-            }))
-          );
-
-        if (installmentsError) throw installmentsError;
-      }
-
-      return invoiceData;
+      const { data, error } = await api.put(`/invoices/${id}`, invoice);
+      if (error) throw new Error(error);
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -298,12 +160,8 @@ export function useDeleteInvoice() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("invoices")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      const { error } = await api.delete(`/invoices/${id}`);
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -328,15 +186,9 @@ export function useNextInvoiceNumber() {
   return useQuery({
     queryKey: ["nextInvoiceNumber", user?.id],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("invoices")
-        .select("*", { count: "exact", head: true });
-
-      if (error) throw error;
-      
-      const year = new Date().getFullYear();
-      const nextNumber = (count || 0) + 1;
-      return `INV-${year}-${nextNumber.toString().padStart(3, "0")}`;
+      const { data, error } = await api.get<{ next_number: string }>("/invoices/next-number");
+      if (error) throw new Error(error);
+      return data?.next_number || "INV-2026-001";
     },
     enabled: !!user,
   });

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,12 +43,8 @@ export function useCompanies() {
   return useQuery({
     queryKey: ["companies", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const { data, error } = await api.get<Company[]>("/companies");
+      if (error) throw new Error(error);
       return data as Company[];
     },
     enabled: !!user,
@@ -62,13 +58,8 @@ export function useCompany(id: string | undefined) {
     queryKey: ["company", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (error) throw error;
+      const { data, error } = await api.get<Company>(`/companies/${id}`);
+      if (error) throw new Error(error);
       return data as Company | null;
     },
     enabled: !!user && !!id,
@@ -83,17 +74,8 @@ export function useCreateCompany() {
   return useMutation({
     mutationFn: async (company: CompanyInput) => {
       if (!user) throw new Error("Not authenticated");
-      
-      const { data, error } = await supabase
-        .from("companies")
-        .insert({
-          ...company,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { data, error } = await api.post("/companies", company);
+      if (error) throw new Error(error);
       return data;
     },
     onSuccess: () => {
@@ -119,14 +101,8 @@ export function useUpdateCompany() {
 
   return useMutation({
     mutationFn: async ({ id, ...company }: CompanyInput & { id: string }) => {
-      const { data, error } = await supabase
-        .from("companies")
-        .update(company)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { data, error } = await api.put(`/companies/${id}`, company);
+      if (error) throw new Error(error);
       return data;
     },
     onSuccess: (data) => {
@@ -153,12 +129,8 @@ export function useDeleteCompany() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("companies")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      const { error } = await api.delete(`/companies/${id}`);
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });

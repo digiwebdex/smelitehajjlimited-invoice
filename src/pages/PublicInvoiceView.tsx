@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { Loader2, Printer, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
@@ -19,18 +19,8 @@ export default function PublicInvoiceView() {
     queryKey: ["public-invoice", id],
     queryFn: async () => {
       if (!id) return null;
-      
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          items:invoice_items(*),
-          installments(*)
-        `)
-        .eq("id", id)
-        .maybeSingle();
-      
-      if (error) throw error;
+      const { data, error } = await api.get(`/public/invoices/${id}`);
+      if (error) throw new Error(error);
       return data;
     },
     enabled: !!id,
@@ -41,14 +31,8 @@ export default function PublicInvoiceView() {
     queryKey: ["public-company", invoice?.company_id],
     queryFn: async () => {
       if (!invoice?.company_id) return null;
-      
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", invoice.company_id)
-        .maybeSingle();
-      
-      if (error) throw error;
+      const { data, error } = await api.get(`/public/companies/${invoice.company_id}`);
+      if (error) throw new Error(error);
       return data;
     },
     enabled: !!invoice?.company_id,

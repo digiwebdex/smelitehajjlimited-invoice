@@ -12,7 +12,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface QuickEditSheetProps {
@@ -40,7 +40,6 @@ export function QuickEditSheet({ open, onOpenChange, invoice }: QuickEditSheetPr
   const [clientAddress, setClientAddress] = useState(invoice.client_address || "");
   const [notes, setNotes] = useState(invoice.notes || "");
 
-  // Sync when invoice changes or sheet opens
   useEffect(() => {
     if (open) {
       setClientName(invoice.client_name);
@@ -59,18 +58,15 @@ export function QuickEditSheet({ open, onOpenChange, invoice }: QuickEditSheetPr
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("invoices")
-        .update({
-          client_name: clientName.trim(),
-          client_email: clientEmail.trim() || null,
-          client_phone: clientPhone.trim() || null,
-          client_address: clientAddress.trim() || null,
-          notes: notes.trim() || null,
-        })
-        .eq("id", invoice.id);
+      const { error } = await api.patch(`/invoices/${invoice.id}/quick-edit`, {
+        client_name: clientName.trim(),
+        client_email: clientEmail.trim() || null,
+        client_phone: clientPhone.trim() || null,
+        client_address: clientAddress.trim() || null,
+        notes: notes.trim() || null,
+      });
 
-      if (error) throw error;
+      if (error) throw new Error(error);
 
       queryClient.invalidateQueries({ queryKey: ["invoice", invoice.id] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });

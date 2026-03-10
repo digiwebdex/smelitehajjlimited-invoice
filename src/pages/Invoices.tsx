@@ -27,7 +27,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { Invoice as InvoiceType, Company } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/apiClient";
 
 export default function Invoices() {
   const navigate = useNavigate();
@@ -75,32 +75,15 @@ export default function Invoices() {
     setDownloadingId(invoiceId);
     try {
       // Fetch full invoice data with items and installments
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("id", invoiceId)
-        .single();
+      const { data: invoiceData, error: invoiceError } = await api.get(`/invoices/${invoiceId}`);
       
       if (invoiceError || !invoiceData) throw new Error("Invoice not found");
 
-      // Fetch items
-      const { data: itemsData } = await supabase
-        .from("invoice_items")
-        .select("*")
-        .eq("invoice_id", invoiceId);
-
-      // Fetch installments
-      const { data: installmentsData } = await supabase
-        .from("installments")
-        .select("*")
-        .eq("invoice_id", invoiceId);
+      const itemsData = invoiceData.items || [];
+      const installmentsData = invoiceData.installments || [];
 
       // Fetch company
-      const { data: companyData } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", invoiceData.company_id)
-        .single();
+      const { data: companyData } = await api.get(`/companies/${invoiceData.company_id}`);
 
       // Build PDF invoice object
       const pdfInvoice: InvoiceType = {

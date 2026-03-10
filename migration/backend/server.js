@@ -128,6 +128,10 @@ app.post('/api/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
 
+    // Get profile info
+    const { rows: profiles } = await pool.query('SELECT full_name FROM profiles WHERE user_id = $1', [user.id]);
+    const fullName = profiles[0]?.full_name || user.raw_user_meta_data?.full_name || null;
+
     const token = jwt.sign(
       { id: user.id, email: user.email },
       JWT_SECRET,
@@ -135,9 +139,25 @@ app.post('/api/auth/login', async (req, res) => {
     );
 
     res.json({
-      session: { access_token: token },
-      user: { id: user.id, email: user.email, user_metadata: user.raw_user_meta_data }
+      data: {
+        token,
+        user: { id: user.id, email: user.email, full_name: fullName }
+      }
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get current user profile (token validation)
+app.get('/api/auth/profile', authenticate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.id, u.email, p.full_name 
+       FROM users u LEFT JOIN profiles p ON p.user_id = u.id 
+       WHERE u.id = $1`, [req.user.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -189,7 +209,7 @@ app.get('/api/companies', authenticate, async (req, res) => {
       'SELECT * FROM companies WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.id]
     );
-    res.json(rows);
+    res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -198,7 +218,7 @@ app.get('/api/companies', authenticate, async (req, res) => {
 app.get('/api/companies/:id', authenticate, async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM companies WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json(rows[0] || null);
+    res.json({ data: rows[0] || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -212,7 +232,7 @@ app.post('/api/companies', authenticate, async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [req.user.id, name, tagline, email, phone, address, logo_url, address_line1, address_line2, website, thank_you_text, show_qr_code, footer_alignment]
     );
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -230,7 +250,7 @@ app.put('/api/companies/:id', authenticate, async (req, res) => {
       `UPDATE companies SET ${sets} WHERE id = $1 AND user_id = $${keys.length + 2} RETURNING *`,
       [req.params.id, ...vals, req.user.id]
     );
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -239,7 +259,7 @@ app.put('/api/companies/:id', authenticate, async (req, res) => {
 app.delete('/api/companies/:id', authenticate, async (req, res) => {
   try {
     await pool.query('DELETE FROM companies WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
+    res.json({ data: { success: true } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -267,7 +287,7 @@ app.get('/api/invoices', authenticate, async (req, res) => {
       }
     }
 
-    res.json(invoices);
+    res.json({ data: invoices });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -278,7 +298,7 @@ app.get('/api/invoices/next-number', authenticate, async (req, res) => {
     const { rows } = await pool.query('SELECT COUNT(*) as count FROM invoices WHERE user_id = $1', [req.user.id]);
     const year = new Date().getFullYear();
     const nextNumber = (parseInt(rows[0].count) || 0) + 1;
-    res.json({ invoiceNumber: `INV-${year}-${nextNumber.toString().padStart(3, '0')}` });
+    res.json({ data: { next_number: `INV-${year}-${nextNumber.toString().padStart(3, '0')}` } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -295,7 +315,7 @@ app.get('/api/invoices/:id', authenticate, async (req, res) => {
     invoice.items = items;
     invoice.installments = installments;
 
-    res.json(invoice);
+    res.json({ data: invoice });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -316,7 +336,7 @@ app.get('/api/public/invoices/:id', async (req, res) => {
     invoice.installments = installments;
     invoice.company = companies[0] || null;
 
-    res.json(invoice);
+    res.json({ data: invoice });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -355,7 +375,7 @@ app.post('/api/invoices', authenticate, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json(invoice);
+    res.json({ data: invoice });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
@@ -399,7 +419,7 @@ app.put('/api/invoices/:id', authenticate, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
@@ -411,7 +431,7 @@ app.put('/api/invoices/:id', authenticate, async (req, res) => {
 app.delete('/api/invoices/:id', authenticate, async (req, res) => {
   try {
     await pool.query('DELETE FROM invoices WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
+    res.json({ data: { success: true } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -426,7 +446,19 @@ app.get('/api/admin/check', authenticate, async (req, res) => {
       'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2',
       [req.user.id, 'admin']
     );
-    res.json({ isAdmin: rows.length > 0 });
+    res.json({ data: { is_admin: rows.length > 0 } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/check-approval', authenticate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT is_approved FROM profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json({ data: { is_approved: rows[0]?.is_approved ?? false } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -440,7 +472,7 @@ app.get('/api/admin/users', authenticate, requireAdmin, async (req, res) => {
       LEFT JOIN users u ON p.user_id = u.id 
       ORDER BY p.created_at DESC
     `);
-    res.json(rows);
+    res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -455,7 +487,7 @@ app.get('/api/admin/pending-users', authenticate, requireAdmin, async (req, res)
       WHERE p.is_approved = false 
       ORDER BY p.created_at DESC
     `);
-    res.json(rows);
+    res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -463,9 +495,9 @@ app.get('/api/admin/pending-users', authenticate, requireAdmin, async (req, res)
 
 app.post('/api/admin/approve-user', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
-    await pool.query('UPDATE profiles SET is_approved = true WHERE user_id = $1', [userId]);
-    res.json({ success: true });
+    const { user_id } = req.body;
+    await pool.query('UPDATE profiles SET is_approved = true WHERE user_id = $1', [user_id]);
+    res.json({ data: { success: true } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -473,38 +505,62 @@ app.post('/api/admin/approve-user', authenticate, requireAdmin, async (req, res)
 
 app.post('/api/admin/revoke-user', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
-    await pool.query('UPDATE profiles SET is_approved = false WHERE user_id = $1', [userId]);
-    res.json({ success: true });
+    const { user_id } = req.body;
+    await pool.query('UPDATE profiles SET is_approved = false WHERE user_id = $1', [user_id]);
+    res.json({ data: { success: true } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/admin/delete-user', authenticate, requireAdmin, async (req, res) => {
+app.delete('/api/admin/users/:userId', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
-    if (userId === req.user.id) return res.status(400).json({ error: 'Cannot delete yourself' });
-    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
-    res.json({ success: true });
+    if (req.params.userId === req.user.id) return res.status(400).json({ error: 'Cannot delete yourself' });
+    await pool.query('DELETE FROM users WHERE id = $1', [req.params.userId]);
+    res.json({ data: { success: true } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Quick edit invoice (PATCH)
+app.patch('/api/invoices/:id/quick-edit', authenticate, async (req, res) => {
+  try {
+    const { client_name, client_email, client_phone, client_address, notes } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE invoices SET client_name=$1, client_email=$2, client_phone=$3, client_address=$4, notes=$5 
+       WHERE id=$6 AND user_id=$7 RETURNING *`,
+      [client_name, client_email, client_phone, client_address, notes, req.params.id, req.user.id]
+    );
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public company view (no auth)
+app.get('/api/public/companies/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM companies WHERE id = $1', [req.params.id]);
+    res.json({ data: rows[0] || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // ============================================
-// THEME SETTINGS ROUTES
+// THEME SETTINGS ROUTES (frontend calls /api/theme)
 // ============================================
-app.get('/api/theme-settings', async (req, res) => {
+app.get('/api/theme', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM theme_settings WHERE id = $1', ['00000000-0000-0000-0000-000000000001']);
-    res.json(rows[0] || null);
+    res.json({ data: rows[0] || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/api/theme-settings', authenticate, requireAdmin, async (req, res) => {
+app.put('/api/theme', authenticate, async (req, res) => {
   try {
     const fields = req.body;
     const keys = Object.keys(fields).filter(k => k !== 'id' && k !== 'created_at' && k !== 'updated_at');
@@ -514,25 +570,44 @@ app.put('/api/theme-settings', authenticate, requireAdmin, async (req, res) => {
       `UPDATE theme_settings SET ${sets} WHERE id = $1 RETURNING *`,
       ['00000000-0000-0000-0000-000000000001', ...vals]
     );
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/theme/reset', authenticate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE theme_settings SET 
+        primary_color='#1B2B5B', secondary_color='#C8A951', accent_color='#2563eb',
+        header_text_color='#1B2B5B', invoice_title_color='#1B2B5B', subtotal_text_color='#374151',
+        paid_text_color='#16a34a', balance_bg_color='#1B2B5B', balance_text_color='#FFFFFF',
+        table_header_bg='#1B2B5B', table_header_text='#FFFFFF', border_color='#e5e7eb',
+        badge_paid_color='#16a34a', badge_partial_color='#f59e0b', badge_unpaid_color='#ef4444',
+        footer_text_color='#6b7280'
+       WHERE id = $1 RETURNING *`,
+      ['00000000-0000-0000-0000-000000000001']
+    );
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // ============================================
-// BRAND SETTINGS ROUTES
+// BRAND SETTINGS ROUTES (frontend calls /api/branding)
 // ============================================
-app.get('/api/brand-settings', async (req, res) => {
+app.get('/api/branding', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM global_brand_settings WHERE id = $1', ['00000000-0000-0000-0000-000000000002']);
-    res.json(rows[0] || null);
+    res.json({ data: rows[0] || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/api/brand-settings', authenticate, requireAdmin, async (req, res) => {
+app.put('/api/branding', authenticate, async (req, res) => {
   try {
     const fields = req.body;
     const keys = Object.keys(fields).filter(k => k !== 'id' && k !== 'created_at' && k !== 'updated_at');
@@ -542,28 +617,23 @@ app.put('/api/brand-settings', authenticate, requireAdmin, async (req, res) => {
       `UPDATE global_brand_settings SET ${sets} WHERE id = $1 RETURNING *`,
       ['00000000-0000-0000-0000-000000000002', ...vals]
     );
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ============================================
-// USER PROFILE ROUTES
-// ============================================
-app.get('/api/profile', authenticate, async (req, res) => {
+app.post('/api/branding/reset', authenticate, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM profiles WHERE user_id = $1', [req.user.id]);
-    res.json(rows[0] || null);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/user-roles', authenticate, async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM user_roles WHERE user_id = $1', [req.user.id]);
-    res.json(rows);
+    const { rows } = await pool.query(
+      `UPDATE global_brand_settings SET 
+        company_name='SM Elite Hajj Limited', tagline=NULL, address_line1=NULL, address_line2=NULL,
+        phone=NULL, email=NULL, website=NULL, thank_you_text=NULL, show_qr_code=true,
+        footer_alignment='center', company_logo=NULL
+       WHERE id = $1 RETURNING *`,
+      ['00000000-0000-0000-0000-000000000002']
+    );
+    res.json({ data: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
+import { api, authApi, getStoredUser, setStoredUser, clearToken, clearStoredUser, setToken } from "@/lib/apiClient";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name?: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (
@@ -13,35 +17,38 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; error?: string; code?: string }>;
   signup: (email: string, password: string, fullName: string) => Promise<{ success: boolean; error?: string }>;
   resendConfirmationEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
-   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Check for stored user on mount
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      // Verify token is still valid
+      authApi.getProfile().then((result) => {
+        if (result.error) {
+          // Token expired
+          clearToken();
+          clearStoredUser();
+          setUser(null);
+        } else if (result.data) {
+          const userData = result.data;
+          setUser(userData);
+          setStoredUser(userData);
+        }
         setIsLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      });
+    } else {
       setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const login = async (
@@ -49,17 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ): Promise<{ success: boolean; error?: string; code?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const result = await authApi.login(email, password);
 
-      if (error) {
+      if (result.error) {
         return {
           success: false,
-          error: error.message,
-          code: (error as unknown as { code?: string })?.code,
+          error: result.error,
+          code: result.error.includes("not confirmed") ? "email_not_confirmed" : undefined,
         };
+      }
+
+      if (result.data?.user) {
+        setUser(result.data.user);
       }
 
       return { success: true };
@@ -70,19 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (email: string, password: string, fullName: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            full_name: fullName,
-          },
-        },
-      });
+      const result = await authApi.signup(email, password, fullName);
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (result.error) {
+        return { success: false, error: result.error };
       }
 
       return { success: true };
@@ -93,57 +92,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resendConfirmationEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
+      const result = await api.post("/auth/resend-confirmation", { email });
+      if (result.error) {
+        return { success: false, error: result.error };
       }
-
       return { success: true };
     } catch {
       return { success: false, error: "An unexpected error occurred" };
     }
   };
 
-   const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
-     try {
-       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-         redirectTo: `${window.location.origin}/reset-password`,
-       });
- 
-       if (error) {
-         return { success: false, error: error.message };
-       }
- 
-       return { success: true };
-     } catch {
-       return { success: false, error: "An unexpected error occurred" };
-     }
-   };
- 
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await authApi.resetPassword(email);
+      if (result.error) {
+        return { success: false, error: result.error };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: "An unexpected error occurred" };
+    }
+  };
+
   const logout = async () => {
-    await supabase.auth.signOut();
+    authApi.logout();
     setUser(null);
-    setSession(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
-        isAuthenticated: !!session,
+        isAuthenticated: !!user,
         isLoading,
         login,
         signup,
         resendConfirmationEmail,
-         resetPassword,
+        resetPassword,
         logout,
       }}
     >
