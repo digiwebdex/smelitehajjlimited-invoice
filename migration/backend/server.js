@@ -336,7 +336,7 @@ app.get('/api/public/invoices/:id', async (req, res) => {
     invoice.installments = installments;
     invoice.company = companies[0] || null;
 
-    res.json(invoice);
+    res.json({ data: invoice });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
