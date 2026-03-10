@@ -259,7 +259,7 @@ app.put('/api/companies/:id', authenticate, async (req, res) => {
 app.delete('/api/companies/:id', authenticate, async (req, res) => {
   try {
     await pool.query('DELETE FROM companies WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.json({ success: true });
+    res.json({ data: { success: true } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
