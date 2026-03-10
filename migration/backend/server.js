@@ -419,7 +419,7 @@ app.put('/api/invoices/:id', authenticate, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json(rows[0]);
+    res.json({ data: rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
