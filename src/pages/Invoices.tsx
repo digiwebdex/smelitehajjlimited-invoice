@@ -56,6 +56,7 @@ export default function Invoices() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const deleteInvoice = useDeleteInvoice();
 
   // Read company filter from URL query params
   useEffect(() => {
