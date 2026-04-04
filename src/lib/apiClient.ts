@@ -79,11 +79,19 @@ export const api = {
 // Auth-specific API calls
 export const authApi = {
   login: async (email: string, password: string) => {
-    const result = await api.post<{ token: string; user: any }>("/auth/login", { email, password });
-    if (result.data?.token) {
-      setToken(result.data.token);
-      setStoredUser(result.data.user);
+    const result = await api.post<any>("/auth/login", { email, password });
+    const payload = result.data;
+    const token = payload?.token || payload?.session?.access_token;
+    const user = payload?.user || payload?.profile || null;
+
+    if (token) {
+      setToken(token);
     }
+
+    if (user) {
+      setStoredUser(user);
+    }
+
     return result;
   },
 
