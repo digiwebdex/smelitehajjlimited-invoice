@@ -98,12 +98,12 @@ app.post('/api/auth/signup', async (req, res) => {
   try {
     const { email, password, full_name } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     const { rows } = await pool.query(
-      `INSERT INTO users (email, password_hash, raw_user_meta_data, email_confirmed_at)
-       VALUES ($1, $2, $3, now()) RETURNING id, email, created_at`,
+      `INSERT INTO users (email, password_hash, encrypted_password, raw_user_meta_data, email_confirmed_at)
+       VALUES ($1, $2, $2, $3, now()) RETURNING id, email, created_at`,
       [email, passwordHash, JSON.stringify({ full_name: full_name || '' })]
     );
 
@@ -125,7 +125,10 @@ app.post('/api/auth/login', async (req, res) => {
     if (rows.length === 0) return res.status(400).json({ error: 'Invalid credentials' });
 
     const user = rows[0];
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const storedHash = user.password_hash || user.encrypted_password;
+    if (!storedHash) return res.status(400).json({ error: 'Password not set for this account' });
+
+    const valid = await bcrypt.compare(password, storedHash);
     if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
 
     // Get profile info
@@ -179,7 +182,7 @@ app.post('/api/auth/update-password', authenticate, async (req, res) => {
     const { password } = req.body;
     if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
     const passwordHash = await bcrypt.hash(password, 12);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, req.user.id]);
+    await pool.query('UPDATE users SET password_hash = $1, encrypted_password = $1 WHERE id = $2', [passwordHash, req.user.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
