@@ -154,9 +154,7 @@ app.post('/api/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, storedHash);
     if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
 
-    // Get profile info
-    const { rows: profiles } = await pool.query('SELECT full_name FROM profiles WHERE user_id = $1', [user.id]);
-    const fullName = profiles[0]?.full_name || user.raw_user_meta_data?.full_name || null;
+    const accessUser = await getUserAccessState(user.id);
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
@@ -167,7 +165,13 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       data: {
         token,
-        user: { id: user.id, email: user.email, full_name: fullName }
+        user: accessUser || {
+          id: user.id,
+          email: user.email,
+          full_name: user.raw_user_meta_data?.full_name || null,
+          is_approved: false,
+          is_admin: false,
+        }
       }
     });
   } catch (err) {
