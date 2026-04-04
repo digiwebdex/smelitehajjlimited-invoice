@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,36 +12,68 @@ interface PendingUser {
   email?: string;
 }
 
+interface AccessState {
+  is_admin: boolean;
+  is_approved: boolean;
+}
+
+interface ProfileWithAccess extends Partial<AccessState> {
+  id: string;
+  email: string;
+  full_name?: string | null;
+}
+
 export function useAdmin() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if current user is admin
-  const { data: isAdmin, isLoading: isCheckingAdmin } = useQuery({
-    queryKey: ["isAdmin", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await api.get<{ is_admin: boolean }>("/admin/check");
-      if (error) return false;
-      return data?.is_admin ?? false;
+  const { data: accessState, isLoading: isCheckingAccess } = useQuery({
+    queryKey: ["accessState", user?.id, user?.is_admin, user?.is_approved],
+    queryFn: async (): Promise<AccessState> => {
+      if (!user?.id) {
+        return { is_admin: false, is_approved: false };
+      }
+
+      const hasStoredAdmin = typeof user.is_admin === "boolean";
+      const hasStoredApproval = typeof user.is_approved === "boolean";
+
+      if (hasStoredAdmin || hasStoredApproval) {
+        return {
+          is_admin: Boolean(user.is_admin),
+          is_approved: Boolean(user.is_approved),
+        };
+      }
+
+      const profileResult = await api.get<ProfileWithAccess>("/auth/profile");
+      const profileData = profileResult.data;
+      const hasProfileFlags =
+        typeof profileData?.is_admin === "boolean" ||
+        typeof profileData?.is_approved === "boolean";
+
+      if (!profileResult.error && hasProfileFlags) {
+        return {
+          is_admin: Boolean(profileData?.is_admin),
+          is_approved: Boolean(profileData?.is_approved),
+        };
+      }
+
+      const [adminResult, approvalResult] = await Promise.all([
+        api.get<{ is_admin: boolean }>("/admin/check"),
+        api.get<{ is_approved: boolean }>("/admin/check-approval"),
+      ]);
+
+      return {
+        is_admin: adminResult.data?.is_admin ?? false,
+        is_approved: approvalResult.data?.is_approved ?? false,
+      };
     },
     enabled: !!user?.id,
   });
 
-  // Check if current user is approved
-  const { data: isApproved, isLoading: isCheckingApproval } = useQuery({
-    queryKey: ["isApproved", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await api.get<{ is_approved: boolean }>("/admin/check-approval");
-      if (error) return false;
-      return data?.is_approved ?? false;
-    },
-    enabled: !!user?.id,
-  });
+  const isAdmin = accessState?.is_admin ?? false;
+  const isApproved = accessState?.is_approved ?? false;
 
-  // Fetch all pending users (for admin)
   const { data: pendingUsers, isLoading: isLoadingPending } = useQuery({
     queryKey: ["pendingUsers"],
     queryFn: async () => {
@@ -52,7 +84,6 @@ export function useAdmin() {
     enabled: isAdmin === true,
   });
 
-  // Fetch all users (for admin)
   const { data: allUsers, isLoading: isLoadingAllUsers } = useQuery({
     queryKey: ["allUsers"],
     queryFn: async () => {
@@ -63,7 +94,6 @@ export function useAdmin() {
     enabled: isAdmin === true,
   });
 
-  // Approve user mutation
   const approveUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await api.post(`/admin/approve-user`, { user_id: userId });
@@ -72,6 +102,7 @@ export function useAdmin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pendingUsers"] });
       queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["accessState"] });
       toast({
         title: "User approved",
         description: "The user can now access the system.",
@@ -86,7 +117,6 @@ export function useAdmin() {
     },
   });
 
-  // Revoke user access mutation
   const revokeUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await api.post(`/admin/revoke-user`, { user_id: userId });
@@ -95,6 +125,7 @@ export function useAdmin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pendingUsers"] });
       queryClient.invalidateQueries({ queryKey: ["allUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["accessState"] });
       toast({
         title: "Access revoked",
         description: "The user can no longer access the system.",
@@ -109,7 +140,6 @@ export function useAdmin() {
     },
   });
 
-  // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await api.delete(`/admin/users/${userId}`);
@@ -133,10 +163,10 @@ export function useAdmin() {
   });
 
   return {
-    isAdmin: isAdmin ?? false,
-    isApproved: isApproved ?? false,
-    isCheckingAdmin,
-    isCheckingApproval,
+    isAdmin,
+    isApproved,
+    isCheckingAdmin: isCheckingAccess,
+    isCheckingApproval: isCheckingAccess,
     pendingUsers: pendingUsers ?? [],
     allUsers: allUsers ?? [],
     isLoadingPending,

@@ -182,12 +182,9 @@ app.post('/api/auth/login', async (req, res) => {
 // Get current user profile (token validation)
 app.get('/api/auth/profile', authenticate, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT u.id, u.email, p.full_name 
-       FROM users u LEFT JOIN profiles p ON p.user_id = u.id 
-       WHERE u.id = $1`, [req.user.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ data: rows[0] });
+    const userProfile = await getUserAccessState(req.user.id);
+    if (!userProfile) return res.status(404).json({ error: 'User not found' });
+    res.json({ data: userProfile });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

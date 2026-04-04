@@ -68,8 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      if (result.data?.user) {
-        setUser(result.data.user);
+      const loggedInUser = result.data?.user ?? getStoredUser();
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        setStoredUser(loggedInUser);
       }
 
       return { success: true };
