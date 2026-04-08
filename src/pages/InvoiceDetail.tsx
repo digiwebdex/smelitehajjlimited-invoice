@@ -51,7 +51,7 @@ export default function InvoiceDetail() {
   const [clientAddress, setClientAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().split("T")[0]
+    isNew ? new Date().toISOString().split("T")[0] : ""
   );
   const [vatRate, setVatRate] = useState(0);
   const [items, setItems] = useState<LocalItem[]>([
@@ -161,7 +161,12 @@ export default function InvoiceDetail() {
       setItems((prev) =>
         prev.map((item) => {
           if (item.id !== itemId) return item;
-          const updated = { ...item, [field]: value };
+          const updated = { ...item };
+          if (field === "qty" || field === "unitPrice" || field === "amount") {
+            updated[field] = typeof value === "string" ? parseFloat(value) || 0 : value;
+          } else {
+            (updated as any)[field] = value;
+          }
           if (field === "qty" || field === "unitPrice") {
             updated.amount = updated.qty * updated.unitPrice;
           }
