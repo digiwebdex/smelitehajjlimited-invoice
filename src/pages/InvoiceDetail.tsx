@@ -137,7 +137,11 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    setInvoiceDate(toDateInputValue(existingInvoice.invoice_date));
+    setInvoiceDate(
+      toDateInputValue(existingInvoice.invoice_date) ||
+      toDateInputValue(existingInvoice.created_at) ||
+      ""
+    );
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
       setItems(
