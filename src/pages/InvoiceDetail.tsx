@@ -25,6 +25,44 @@ import {
   type InvoiceStatus,
 } from "@/components/invoice";
 
+const DEFAULT_NEW_INVOICE_DATE = new Date().toISOString().split("T")[0];
+
+function toNumber(value: unknown, fallback = 0) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toDateInputValue(value: unknown) {
+  if (!value) return "";
+
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+
+  const parsed = new Date(value as string | number | Date);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().split("T")[0];
+}
+
+function normalizeLineItem(item: LocalItem): LocalItem {
+  const qty = Math.max(1, toNumber(item.qty, 1));
+  const unitPrice = Math.max(0, toNumber(item.unitPrice, 0));
+
+  return {
+    id: item.id,
+    title: item.title,
+    qty,
+    unitPrice,
+    amount: qty * unitPrice,
+  };
+}
+
+function normalizeInstallment(installment: LocalInstallment): LocalInstallment {
+  return {
+    ...installment,
+    amount: Math.max(0, toNumber(installment.amount, 0)),
+  };
+}
+
 // ——————————————————————————————————————————————
 // Main Page
 // ——————————————————————————————————————————————
@@ -51,7 +89,7 @@ export default function InvoiceDetail() {
   const [clientAddress, setClientAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
-    isNew ? new Date().toISOString().split("T")[0] : ""
+    isNew ? DEFAULT_NEW_INVOICE_DATE : ""
   );
   const [vatRate, setVatRate] = useState(0);
   const [items, setItems] = useState<LocalItem[]>([
@@ -61,10 +99,12 @@ export default function InvoiceDetail() {
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   // Calculated values
-  const subtotal = items.reduce((s, i) => s + i.amount, 0);
+  const normalizedItems = items.map(normalizeLineItem);
+  const normalizedInstallments = installments.map(normalizeInstallment);
+  const subtotal = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
   const vatAmount = (subtotal * vatRate) / 100;
   const totalAmount = subtotal + vatAmount;
-  const paidAmount = installments.reduce((s, i) => s + i.amount, 0);
+  const paidAmount = normalizedInstallments.reduce((sum, installment) => sum + installment.amount, 0);
   const dueAmount = totalAmount - paidAmount;
   const status: InvoiceStatus =
     paidAmount >= totalAmount && totalAmount > 0
@@ -87,33 +127,16 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    // Parse invoice_date robustly – handle string, Date object, or any format
-    const rawDate = existingInvoice.invoice_date || existingInvoice.created_at;
-    if (rawDate) {
-      let d = "";
-      try {
-        if (typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
-          d = rawDate.substring(0, 10);
-        } else {
-          const parsed = new Date(rawDate as any);
-          if (!isNaN(parsed.getTime())) {
-            d = parsed.toISOString().split("T")[0];
-          }
-        }
-      } catch {
-        d = "";
-      }
-      if (d) setInvoiceDate(d);
-    }
+    setInvoiceDate(toDateInputValue(existingInvoice.invoice_date));
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
       setItems(
         existingInvoice.items.map((it) => ({
           id: it.id,
           title: it.title,
-          qty: it.qty ?? 1,
-          unitPrice: it.unit_price ?? Number(it.amount),
-          amount: Number(it.amount),
+          qty: toNumber(it.qty, 1),
+          unitPrice: toNumber(it.unit_price, 0),
+          amount: toNumber(it.amount, 0),
         }))
       );
     }
@@ -121,7 +144,7 @@ export default function InvoiceDetail() {
       setInstallments(
         existingInvoice.installments.map((inst) => ({
           id: inst.id,
-          amount: Number(inst.amount),
+          amount: toNumber(inst.amount, 0),
           paid_date: inst.paid_date,
           payment_method: inst.payment_method || "Bank Transfer",
         }))
@@ -161,15 +184,27 @@ export default function InvoiceDetail() {
       setItems((prev) =>
         prev.map((item) => {
           if (item.id !== itemId) return item;
-          const updated = { ...item };
-          if (field === "qty" || field === "unitPrice" || field === "amount") {
-            updated[field] = typeof value === "string" ? parseFloat(value) || 0 : value;
-          } else {
-            (updated as any)[field] = value;
+          const updated = normalizeLineItem(item);
+
+          if (field === "title") {
+            updated.title = String(value);
+            return updated;
           }
-          if (field === "qty" || field === "unitPrice") {
-            updated.amount = updated.qty * updated.unitPrice;
+
+          if (field === "qty") {
+            updated.qty = Math.max(1, toNumber(value, 1));
           }
+
+          if (field === "unitPrice") {
+            updated.unitPrice = Math.max(0, toNumber(value, 0));
+          }
+
+          if (field === "amount") {
+            updated.amount = Math.max(0, toNumber(value, 0));
+            return updated;
+          }
+
+          updated.amount = updated.qty * updated.unitPrice;
           return updated;
         })
       );
@@ -196,7 +231,18 @@ export default function InvoiceDetail() {
   const handleUpdateInstallment = useCallback(
     (instId: string, field: keyof LocalInstallment, value: string | number) => {
       setInstallments((prev) =>
-        prev.map((inst) => (inst.id === instId ? { ...inst, [field]: value } : inst))
+        prev.map((inst) => {
+          if (inst.id !== instId) return inst;
+
+          if (field === "amount") {
+            return {
+              ...inst,
+              amount: Math.max(0, toNumber(value, 0)),
+            };
+          }
+
+          return { ...inst, [field]: value };
+        })
       );
     },
     []
@@ -225,7 +271,7 @@ export default function InvoiceDetail() {
     }
 
     // Validate items
-    items.forEach((item, idx) => {
+    normalizedItems.forEach((item, idx) => {
       const res = lineItemSchema.safeParse(item);
       if (!res.success) {
         res.error.issues.forEach((issue) => {
@@ -263,10 +309,10 @@ export default function InvoiceDetail() {
       paid_amount: paidAmount,
       due_amount: dueAmount,
       status,
-      items: items
+        items: normalizedItems
         .filter((i) => i.title.trim())
         .map((i) => ({ title: i.title, qty: i.qty, unit_price: i.unitPrice, amount: i.amount })),
-      installments: installments.map((inst) => ({
+        installments: normalizedInstallments.map((inst) => ({
         amount: inst.amount,
         paid_date: inst.paid_date,
         payment_method: inst.payment_method || "Bank Transfer",
@@ -348,7 +394,7 @@ export default function InvoiceDetail() {
             />
 
             <LineItemsSection
-              items={items}
+              items={normalizedItems}
               errors={errors}
               onAdd={handleAddItem}
               onUpdate={handleUpdateItem}
@@ -356,7 +402,7 @@ export default function InvoiceDetail() {
             />
 
             <PaymentsSection
-              installments={installments}
+              installments={normalizedInstallments}
               onAdd={handleAddInstallment}
               onUpdate={handleUpdateInstallment}
               onRemove={handleRemoveInstallment}
