@@ -51,7 +51,7 @@ export default function InvoiceDetail() {
   const [clientAddress, setClientAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().split("T")[0]
+    isNew ? new Date().toISOString().split("T")[0] : ""
   );
   const [vatRate, setVatRate] = useState(0);
   const [items, setItems] = useState<LocalItem[]>([
