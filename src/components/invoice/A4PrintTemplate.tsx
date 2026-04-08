@@ -397,7 +397,7 @@ export const A4PrintTemplate = ({
               >
                 {pay.payment_method || "Bank Transfer"}
               </span>
-              <span style={{ color: t.subtotal_text_color, fontSize: "7pt" }}>— {idx === 0 ? "Advance Payment" : `${getOrdinal(idx + 1)} Payment`}</span>
+              <span style={{ color: t.subtotal_text_color, fontSize: "7pt" }}>— {getOrdinal(idx + 1)} Payment</span>
               <span style={{ float: "right", color: t.accent_color, fontSize: "10pt", fontWeight: "bold" }}>
                 {formatCurrency(pay.amount)}
               </span>

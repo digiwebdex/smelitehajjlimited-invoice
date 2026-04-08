@@ -514,7 +514,7 @@ export const generateInvoicePdf = async (
       doc.setTextColor(...mutedColor);
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.text(`— ${idx === 0 ? "Advance Payment" : `${getOrdinal(idx + 1)} Payment`}`, margin + 50 + methodWidth + 3, yPos + 5);
+      doc.text(`— ${getOrdinal(idx + 1)} Payment`, margin + 50 + methodWidth + 3, yPos + 5);
 
       // Amount (teal color, bold)
       doc.setTextColor(...accentColor);

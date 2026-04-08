@@ -370,7 +370,7 @@ export const ThemedInvoiceDocument = ({
                     {pay.payment_method || "Bank Transfer"}
                   </span>
                   <span className="text-sm" style={{ color: t.subtotal_text_color }}>
-                    — {idx === 0 ? "Advance Payment" : `${getOrdinal(idx + 1)} Payment`}
+                    — {getOrdinal(idx + 1)} Payment
                   </span>
                 </div>
                 <div className="font-bold text-lg" style={{ color: t.accent_color }}>
