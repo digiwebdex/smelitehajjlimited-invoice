@@ -87,7 +87,11 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    setInvoiceDate(existingInvoice.invoice_date ? existingInvoice.invoice_date.substring(0, 10) : new Date().toISOString().split("T")[0]);
+    const rawDate = existingInvoice.invoice_date;
+    if (rawDate) {
+      const d = typeof rawDate === "string" ? rawDate.substring(0, 10) : new Date(rawDate as any).toISOString().split("T")[0];
+      setInvoiceDate(d);
+    }
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
       setItems(
