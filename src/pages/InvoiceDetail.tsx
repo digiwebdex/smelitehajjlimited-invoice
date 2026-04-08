@@ -87,10 +87,23 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    const rawDate = existingInvoice.invoice_date;
+    // Parse invoice_date robustly – handle string, Date object, or any format
+    const rawDate = existingInvoice.invoice_date || existingInvoice.created_at;
     if (rawDate) {
-      const d = typeof rawDate === "string" ? rawDate.substring(0, 10) : new Date(rawDate as any).toISOString().split("T")[0];
-      setInvoiceDate(d);
+      let d = "";
+      try {
+        if (typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+          d = rawDate.substring(0, 10);
+        } else {
+          const parsed = new Date(rawDate as any);
+          if (!isNaN(parsed.getTime())) {
+            d = parsed.toISOString().split("T")[0];
+          }
+        }
+      } catch {
+        d = "";
+      }
+      if (d) setInvoiceDate(d);
     }
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
