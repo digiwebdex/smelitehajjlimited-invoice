@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -25,27 +25,20 @@ import {
   type InvoiceStatus,
 } from "@/components/invoice";
 
-const DEFAULT_NEW_INVOICE_DATE = new Date().toISOString().split("T")[0];
+const TODAY = new Date().toISOString().split("T")[0];
 
-function toNumber(value: unknown, fallback = 0) {
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
+/** Parse any date-ish value into "YYYY-MM-DD" for <input type="date"> */
 function toDateInputValue(value: unknown): string {
   if (!value) return "";
   const str = String(value);
-  // Try to extract YYYY-MM-DD from the beginning of any date string
+  // Direct extraction – works for "2026-03-03", "2026-03-03T00:00:00.000Z", etc.
   const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
   if (match) return `${match[1]}-${match[2]}-${match[3]}`;
-  // Fallback: parse as Date object
+  // Fallback: Date constructor
   try {
     const d = new Date(str);
     if (!isNaN(d.getTime())) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
   } catch {
     // ignore
@@ -53,24 +46,9 @@ function toDateInputValue(value: unknown): string {
   return "";
 }
 
-function normalizeLineItem(item: LocalItem): LocalItem {
-  const qty = Math.max(1, toNumber(item.qty, 1));
-  const unitPrice = Math.max(0, toNumber(item.unitPrice, 0));
-
-  return {
-    id: item.id,
-    title: item.title,
-    qty,
-    unitPrice,
-    amount: qty * unitPrice,
-  };
-}
-
-function normalizeInstallment(installment: LocalInstallment): LocalInstallment {
-  return {
-    ...installment,
-    amount: Math.max(0, toNumber(installment.amount, 0)),
-  };
+function toNumber(v: unknown, fallback = 0): number {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 // ——————————————————————————————————————————————
@@ -90,6 +68,9 @@ export default function InvoiceDetail() {
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice();
 
+  // Track whether we already populated the form from the fetched invoice
+  const [populated, setPopulated] = useState(false);
+
   // Form state
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [companyId, setCompanyId] = useState("");
@@ -98,9 +79,7 @@ export default function InvoiceDetail() {
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [notes, setNotes] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(
-    isNew ? DEFAULT_NEW_INVOICE_DATE : ""
-  );
+  const [invoiceDate, setInvoiceDate] = useState(isNew ? TODAY : "");
   const [vatRate, setVatRate] = useState(0);
   const [items, setItems] = useState<LocalItem[]>([
     { id: "1", title: "", qty: 1, unitPrice: 0, amount: 0 },
@@ -108,13 +87,17 @@ export default function InvoiceDetail() {
   const [installments, setInstallments] = useState<LocalInstallment[]>([]);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
-  // Calculated values
-  const normalizedItems = items.map(normalizeLineItem);
-  const normalizedInstallments = installments.map(normalizeInstallment);
-  const subtotal = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
+  // ── Derived calculations (use raw items, don't create new objects) ──
+  const subtotal = useMemo(
+    () => items.reduce((sum, it) => sum + toNumber(it.qty, 1) * toNumber(it.unitPrice, 0), 0),
+    [items]
+  );
   const vatAmount = (subtotal * vatRate) / 100;
   const totalAmount = subtotal + vatAmount;
-  const paidAmount = normalizedInstallments.reduce((sum, installment) => sum + installment.amount, 0);
+  const paidAmount = useMemo(
+    () => installments.reduce((sum, inst) => sum + toNumber(inst.amount, 0), 0),
+    [installments]
+  );
   const dueAmount = totalAmount - paidAmount;
   const status: InvoiceStatus =
     paidAmount >= totalAmount && totalAmount > 0
@@ -123,13 +106,15 @@ export default function InvoiceDetail() {
       ? "partial"
       : "unpaid";
 
-  // Load existing invoice
+  // ── Populate new invoice number ──
   useEffect(() => {
     if (isNew && nextInvoiceNumber) setInvoiceNumber(nextInvoiceNumber);
   }, [isNew, nextInvoiceNumber]);
 
+  // ── Populate form from existing invoice (run ONCE) ──
   useEffect(() => {
-    if (!existingInvoice) return;
+    if (!existingInvoice || populated) return;
+
     setInvoiceNumber(existingInvoice.invoice_number);
     setCompanyId(existingInvoice.company_id);
     setClientName(existingInvoice.client_name);
@@ -137,24 +122,33 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    setInvoiceDate(
+
+    // Date: prefer invoice_date, fallback to created_at
+    const dateVal =
       toDateInputValue(existingInvoice.invoice_date) ||
       toDateInputValue(existingInvoice.created_at) ||
-      ""
-    );
-    setVatRate(Number(existingInvoice.vat_rate) || 0);
+      TODAY;
+    setInvoiceDate(dateVal);
+
+    setVatRate(toNumber(existingInvoice.vat_rate, 0));
+
     if (existingInvoice.items?.length) {
       setItems(
-        existingInvoice.items.map((it) => ({
-          id: it.id,
-          title: it.title,
-          qty: toNumber(it.qty, 1),
-          unitPrice: toNumber(it.unit_price, 0),
-          amount: toNumber(it.amount, 0),
-        }))
+        existingInvoice.items.map((it) => {
+          const qty = toNumber(it.qty, 1);
+          const unitPrice = toNumber(it.unit_price, 0);
+          return {
+            id: it.id,
+            title: it.title,
+            qty,
+            unitPrice,
+            amount: qty * unitPrice,
+          };
+        })
       );
     }
-    if (existingInvoice.installments) {
+
+    if (existingInvoice.installments?.length) {
       setInstallments(
         existingInvoice.installments.map((inst) => ({
           id: inst.id,
@@ -164,9 +158,11 @@ export default function InvoiceDetail() {
         }))
       );
     }
-  }, [existingInvoice]);
 
-  // Handlers
+    setPopulated(true);
+  }, [existingInvoice, populated]);
+
+  // ── Handlers ──
   const handleFieldChange = useCallback((field: string, value: string) => {
     const map: Record<string, (v: string) => void> = {
       invoiceNumber: setInvoiceNumber,
@@ -198,26 +194,22 @@ export default function InvoiceDetail() {
       setItems((prev) =>
         prev.map((item) => {
           if (item.id !== itemId) return item;
-          const updated = normalizeLineItem(item);
+
+          // Clone — do NOT normalize, so local string state in child is not disturbed
+          const updated = { ...item };
 
           if (field === "title") {
             updated.title = String(value);
-            return updated;
-          }
-
-          if (field === "qty") {
+          } else if (field === "qty") {
             updated.qty = Math.max(1, toNumber(value, 1));
-          }
-
-          if (field === "unitPrice") {
+          } else if (field === "unitPrice") {
             updated.unitPrice = Math.max(0, toNumber(value, 0));
-          }
-
-          if (field === "amount") {
+          } else if (field === "amount") {
             updated.amount = Math.max(0, toNumber(value, 0));
             return updated;
           }
 
+          // Recalculate amount
           updated.amount = updated.qty * updated.unitPrice;
           return updated;
         })
@@ -232,7 +224,7 @@ export default function InvoiceDetail() {
       {
         id: Date.now().toString(),
         amount: 0,
-        paid_date: new Date().toISOString().split("T")[0],
+        paid_date: TODAY,
         payment_method: "Bank Transfer",
       },
     ]);
@@ -247,14 +239,9 @@ export default function InvoiceDetail() {
       setInstallments((prev) =>
         prev.map((inst) => {
           if (inst.id !== instId) return inst;
-
           if (field === "amount") {
-            return {
-              ...inst,
-              amount: Math.max(0, toNumber(value, 0)),
-            };
+            return { ...inst, amount: Math.max(0, toNumber(value, 0)) };
           }
-
           return { ...inst, [field]: value };
         })
       );
@@ -262,11 +249,10 @@ export default function InvoiceDetail() {
     []
   );
 
-  // Validation + save
+  // ── Save ──
   const handleSave = async () => {
     const newErrors: Record<string, string | undefined> = {};
 
-    // Validate form fields
     const formResult = invoiceFormSchema.safeParse({
       invoiceNumber,
       companyId,
@@ -284,9 +270,16 @@ export default function InvoiceDetail() {
       });
     }
 
-    // Validate items
-    normalizedItems.forEach((item, idx) => {
-      const res = lineItemSchema.safeParse(item);
+    // Validate items — use normalized values for validation
+    items.forEach((item, idx) => {
+      const normalized = {
+        id: item.id,
+        title: item.title,
+        qty: Math.max(1, toNumber(item.qty, 1)),
+        unitPrice: Math.max(0, toNumber(item.unitPrice, 0)),
+        amount: Math.max(1, toNumber(item.qty, 1)) * Math.max(0, toNumber(item.unitPrice, 0)),
+      };
+      const res = lineItemSchema.safeParse(normalized);
       if (!res.success) {
         res.error.issues.forEach((issue) => {
           const field = issue.path[0] as string;
@@ -323,11 +316,16 @@ export default function InvoiceDetail() {
       paid_amount: paidAmount,
       due_amount: dueAmount,
       status,
-        items: normalizedItems
+      items: items
         .filter((i) => i.title.trim())
-        .map((i) => ({ title: i.title, qty: i.qty, unit_price: i.unitPrice, amount: i.amount })),
-        installments: normalizedInstallments.map((inst) => ({
-        amount: inst.amount,
+        .map((i) => ({
+          title: i.title,
+          qty: toNumber(i.qty, 1),
+          unit_price: toNumber(i.unitPrice, 0),
+          amount: toNumber(i.qty, 1) * toNumber(i.unitPrice, 0),
+        })),
+      installments: installments.map((inst) => ({
+        amount: toNumber(inst.amount, 0),
         paid_date: inst.paid_date,
         payment_method: inst.payment_method || "Bank Transfer",
       })),
@@ -345,7 +343,7 @@ export default function InvoiceDetail() {
     }
   };
 
-  // Loading / not found
+  // ── Loading / not found ──
   const isLoading = invoiceLoading || companiesLoading;
   const isSaving = createInvoice.isPending || updateInvoice.isPending;
 
@@ -391,7 +389,6 @@ export default function InvoiceDetail() {
         />
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main form (2 cols) */}
           <div className="lg:col-span-2 space-y-6">
             <InvoiceDetailsCard
               invoiceNumber={invoiceNumber}
@@ -408,7 +405,7 @@ export default function InvoiceDetail() {
             />
 
             <LineItemsSection
-              items={normalizedItems}
+              items={items}
               errors={errors}
               onAdd={handleAddItem}
               onUpdate={handleUpdateItem}
@@ -416,14 +413,13 @@ export default function InvoiceDetail() {
             />
 
             <PaymentsSection
-              installments={normalizedInstallments}
+              installments={installments}
               onAdd={handleAddInstallment}
               onUpdate={handleUpdateInstallment}
               onRemove={handleRemoveInstallment}
             />
           </div>
 
-          {/* Summary sidebar (1 col) */}
           <div>
             <InvoiceSummaryCard
               subtotal={subtotal}
