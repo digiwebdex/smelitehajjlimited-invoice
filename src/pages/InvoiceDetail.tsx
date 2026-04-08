@@ -87,7 +87,7 @@ export default function InvoiceDetail() {
     setClientPhone(existingInvoice.client_phone || "");
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
-    setInvoiceDate(existingInvoice.invoice_date);
+    setInvoiceDate(existingInvoice.invoice_date ? existingInvoice.invoice_date.substring(0, 10) : new Date().toISOString().split("T")[0]);
     setVatRate(Number(existingInvoice.vat_rate) || 0);
     if (existingInvoice.items?.length) {
       setItems(
