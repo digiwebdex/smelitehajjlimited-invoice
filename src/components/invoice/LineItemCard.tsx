@@ -9,7 +9,11 @@ interface Props {
   item: LocalItem;
   index: number;
   canRemove: boolean;
-  error?: string;
+  fieldErrors?: {
+    title?: string;
+    qty?: string;
+    unitPrice?: string;
+  };
   onUpdate: (field: keyof LocalItem, value: string | number) => void;
   onRemove: () => void;
 }
@@ -27,7 +31,7 @@ export function LineItemCard({
   item,
   index,
   canRemove,
-  error,
+  fieldErrors,
   onUpdate,
   onRemove,
 }: Props) {
@@ -60,6 +64,32 @@ export function LineItemCard({
     setPriceStr(String(finalVal));
   }, [priceStr, onUpdate]);
 
+  const handleQtyChange = useCallback(
+    (raw: string) => {
+      setQtyStr(raw);
+      const normalized = normalizeNumericInput(raw);
+      if (!normalized) return;
+      const val = parseInt(normalized, 10);
+      if (Number.isFinite(val)) {
+        onUpdate("qty", val);
+      }
+    },
+    [onUpdate]
+  );
+
+  const handlePriceChange = useCallback(
+    (raw: string) => {
+      setPriceStr(raw);
+      const normalized = normalizeNumericInput(raw);
+      if (!normalized) return;
+      const val = parseFloat(normalized);
+      if (Number.isFinite(val)) {
+        onUpdate("unitPrice", val);
+      }
+    },
+    [onUpdate]
+  );
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
       {/* Row 1: index + description */}
@@ -73,9 +103,9 @@ export function LineItemCard({
             value={item.title}
             onChange={(e) => onUpdate("title", e.target.value)}
             placeholder="Item description"
-            className={error ? "border-destructive" : ""}
+            className={fieldErrors?.title ? "border-destructive" : ""}
           />
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {fieldErrors?.title && <p className="text-xs text-destructive">{fieldErrors.title}</p>}
         </div>
         <Button
           type="button"
@@ -98,7 +128,7 @@ export function LineItemCard({
             inputMode="numeric"
             pattern="[0-9০-৯]*"
             value={qtyStr}
-            onChange={(e) => setQtyStr(e.target.value)}
+            onChange={(e) => handleQtyChange(e.target.value)}
             onBlur={commitQty}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -106,8 +136,9 @@ export function LineItemCard({
                 commitQty();
               }
             }}
-            className="text-right tabular-nums"
+            className={fieldErrors?.qty ? "text-right tabular-nums border-destructive" : "text-right tabular-nums"}
           />
+          {fieldErrors?.qty && <p className="text-xs text-destructive">{fieldErrors.qty}</p>}
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Unit Price</Label>
@@ -120,7 +151,7 @@ export function LineItemCard({
               inputMode="decimal"
               pattern="[0-9০-৯]*\.?[0-9০-৯]*"
               value={priceStr}
-              onChange={(e) => setPriceStr(e.target.value)}
+              onChange={(e) => handlePriceChange(e.target.value)}
               onBlur={commitPrice}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -128,9 +159,10 @@ export function LineItemCard({
                   commitPrice();
                 }
               }}
-              className="pl-7 text-right tabular-nums"
+              className={fieldErrors?.unitPrice ? "pl-7 text-right tabular-nums border-destructive" : "pl-7 text-right tabular-nums"}
             />
           </div>
+          {fieldErrors?.unitPrice && <p className="text-xs text-destructive">{fieldErrors.unitPrice}</p>}
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Total</Label>

@@ -32,7 +32,11 @@ export function LineItemsSection({ items, errors, onAdd, onUpdate, onRemove }: P
             item={item}
             index={idx}
             canRemove={items.length > 1}
-            error={errors[`items.${idx}.title`]}
+            fieldErrors={{
+              title: errors[`items.${idx}.title`],
+              qty: errors[`items.${idx}.qty`],
+              unitPrice: errors[`items.${idx}.unitPrice`],
+            }}
             onUpdate={(field, value) => onUpdate(item.id, field, value)}
             onRemove={() => onRemove(item.id)}
           />

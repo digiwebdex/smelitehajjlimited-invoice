@@ -27,6 +27,16 @@ import {
 
 const TODAY = new Date().toISOString().split("T")[0];
 
+function createEmptyItem(): LocalItem {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: "",
+    qty: 1,
+    unitPrice: 0,
+    amount: 0,
+  };
+}
+
 /** Parse any date-ish value into "YYYY-MM-DD" for <input type="date"> */
 function toDateInputValue(value: unknown): string {
   if (!value) return "";
@@ -82,7 +92,7 @@ export default function InvoiceDetail() {
   const [invoiceDate, setInvoiceDate] = useState(isNew ? TODAY : "");
   const [vatRate, setVatRate] = useState(0);
   const [items, setItems] = useState<LocalItem[]>([
-    { id: "1", title: "", qty: 1, unitPrice: 0, amount: 0 },
+    createEmptyItem(),
   ]);
   const [installments, setInstallments] = useState<LocalInstallment[]>([]);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -111,6 +121,30 @@ export default function InvoiceDetail() {
     if (isNew && nextInvoiceNumber) setInvoiceNumber(nextInvoiceNumber);
   }, [isNew, nextInvoiceNumber]);
 
+  // ── Reset form when switching between invoices/routes ──
+  useEffect(() => {
+    setPopulated(false);
+    setErrors({});
+    setCompanyId("");
+    setClientName("");
+    setClientEmail("");
+    setClientPhone("");
+    setClientAddress("");
+    setNotes("");
+    setVatRate(0);
+    setItems([createEmptyItem()]);
+    setInstallments([]);
+
+    if (isNew) {
+      setInvoiceNumber(nextInvoiceNumber || "");
+      setInvoiceDate(TODAY);
+      return;
+    }
+
+    setInvoiceNumber("");
+    setInvoiceDate("");
+  }, [id, isNew, nextInvoiceNumber]);
+
   // ── Populate form from existing invoice (run ONCE) ──
   useEffect(() => {
     if (!existingInvoice || populated) return;
@@ -123,30 +157,25 @@ export default function InvoiceDetail() {
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
 
-    // Date: prefer invoice_date, fallback to created_at
-    const dateVal =
-      toDateInputValue(existingInvoice.invoice_date) ||
-      toDateInputValue(existingInvoice.created_at) ||
-      TODAY;
-    setInvoiceDate(dateVal);
+    setInvoiceDate(toDateInputValue(existingInvoice.invoice_date) || TODAY);
 
     setVatRate(toNumber(existingInvoice.vat_rate, 0));
 
-    if (existingInvoice.items?.length) {
-      setItems(
-        existingInvoice.items.map((it) => {
-          const qty = toNumber(it.qty, 1);
-          const unitPrice = toNumber(it.unit_price, 0);
-          return {
-            id: it.id,
-            title: it.title,
-            qty,
-            unitPrice,
-            amount: qty * unitPrice,
-          };
-        })
-      );
-    }
+    setItems(
+      existingInvoice.items?.length
+        ? existingInvoice.items.map((it) => {
+            const qty = toNumber(it.qty, 0);
+            const unitPrice = toNumber(it.unit_price, 0);
+            return {
+              id: it.id,
+              title: it.title,
+              qty,
+              unitPrice,
+              amount: qty * unitPrice,
+            };
+          })
+        : [createEmptyItem()]
+    );
 
     if (existingInvoice.installments?.length) {
       setInstallments(
@@ -179,10 +208,7 @@ export default function InvoiceDetail() {
   }, []);
 
   const handleAddItem = useCallback(() => {
-    setItems((prev) => [
-      ...prev,
-      { id: Date.now().toString(), title: "", qty: 1, unitPrice: 0, amount: 0 },
-    ]);
+    setItems((prev) => [...prev, createEmptyItem()]);
   }, []);
 
   const handleRemoveItem = useCallback((itemId: string) => {
@@ -201,7 +227,7 @@ export default function InvoiceDetail() {
           if (field === "title") {
             updated.title = String(value);
           } else if (field === "qty") {
-            updated.qty = Math.max(1, toNumber(value, 1));
+            updated.qty = Math.max(0, Math.trunc(toNumber(value, 0)));
           } else if (field === "unitPrice") {
             updated.unitPrice = Math.max(0, toNumber(value, 0));
           } else if (field === "amount") {
@@ -275,9 +301,9 @@ export default function InvoiceDetail() {
       const normalized = {
         id: item.id,
         title: item.title,
-        qty: Math.max(1, toNumber(item.qty, 1)),
+        qty: toNumber(item.qty, 0),
         unitPrice: Math.max(0, toNumber(item.unitPrice, 0)),
-        amount: Math.max(1, toNumber(item.qty, 1)) * Math.max(0, toNumber(item.unitPrice, 0)),
+        amount: toNumber(item.qty, 0) * Math.max(0, toNumber(item.unitPrice, 0)),
       };
       const res = lineItemSchema.safeParse(normalized);
       if (!res.success) {
@@ -320,9 +346,9 @@ export default function InvoiceDetail() {
         .filter((i) => i.title.trim())
         .map((i) => ({
           title: i.title,
-          qty: toNumber(i.qty, 1),
+          qty: toNumber(i.qty, 0),
           unit_price: toNumber(i.unitPrice, 0),
-          amount: toNumber(i.qty, 1) * toNumber(i.unitPrice, 0),
+          amount: toNumber(i.qty, 0) * toNumber(i.unitPrice, 0),
         })),
       installments: installments.map((inst) => ({
         amount: toNumber(inst.amount, 0),

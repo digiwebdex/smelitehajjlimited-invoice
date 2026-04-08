@@ -90,7 +90,11 @@ export function InvoiceDetailsCard({
             type="date"
             value={invoiceDate}
             onChange={(e) => onChange("invoiceDate", e.target.value)}
+            className={errors.invoiceDate ? "border-destructive" : ""}
           />
+          {errors.invoiceDate && (
+            <p className="text-xs text-destructive">{errors.invoiceDate}</p>
+          )}
         </div>
       </div>
 
