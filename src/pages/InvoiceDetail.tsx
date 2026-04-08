@@ -152,9 +152,9 @@ export default function InvoiceDetail() {
     }
   }, [isNew, nextInvoiceNumber]);
 
-  // ── Populate form from existing invoice (run ONCE) ──
+  // ── Populate form from existing invoice (only for the matching route id) ──
   useEffect(() => {
-    if (!existingInvoice || populated) return;
+    if (!existingInvoice || populated || existingInvoice.id !== id) return;
 
     setInvoiceNumber(existingInvoice.invoice_number);
     setCompanyId(existingInvoice.company_id);
@@ -164,7 +164,11 @@ export default function InvoiceDetail() {
     setClientAddress(existingInvoice.client_address || "");
     setNotes(existingInvoice.notes || "");
 
-    setInvoiceDate(toDateInputValue(existingInvoice.invoice_date) || TODAY);
+    setInvoiceDate(
+      toDateInputValue(existingInvoice.invoice_date) ||
+        toDateInputValue(existingInvoice.created_at) ||
+        TODAY
+    );
 
     setVatRate(toNumber(existingInvoice.vat_rate, 0));
 
@@ -196,7 +200,7 @@ export default function InvoiceDetail() {
     }
 
     setPopulated(true);
-  }, [existingInvoice, populated]);
+  }, [existingInvoice, populated, id]);
 
   // ── Handlers ──
   const handleFieldChange = useCallback((field: string, value: string) => {

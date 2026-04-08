@@ -86,7 +86,7 @@ export function useInvoice(id: string | undefined) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["invoice", id],
+    queryKey: ["invoice", user?.id, id],
     queryFn: async () => {
       if (!id) return null;
       const { data, error } = await api.get<Invoice>(`/invoices/${id}`);
@@ -94,6 +94,7 @@ export function useInvoice(id: string | undefined) {
       return data as Invoice | null;
     },
     enabled: !!user && !!id,
+    refetchOnMount: "always",
   });
 }
 
@@ -138,7 +139,7 @@ export function useUpdateInvoice() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["invoice", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["invoice"] });
       toast({
         title: "Invoice updated",
         description: "The invoice has been updated successfully.",
