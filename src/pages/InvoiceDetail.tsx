@@ -32,15 +32,25 @@ function toNumber(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toDateInputValue(value: unknown) {
+function toDateInputValue(value: unknown): string {
   if (!value) return "";
-
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-    return value.slice(0, 10);
+  const str = String(value);
+  // Try to extract YYYY-MM-DD from the beginning of any date string
+  const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  // Fallback: parse as Date object
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+  } catch {
+    // ignore
   }
-
-  const parsed = new Date(value as string | number | Date);
-  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().split("T")[0];
+  return "";
 }
 
 function normalizeLineItem(item: LocalItem): LocalItem {
