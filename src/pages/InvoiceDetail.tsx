@@ -136,14 +136,21 @@ export default function InvoiceDetail() {
     setInstallments([]);
 
     if (isNew) {
-      setInvoiceNumber(nextInvoiceNumber || "");
       setInvoiceDate(TODAY);
       return;
     }
 
     setInvoiceNumber("");
     setInvoiceDate("");
-  }, [id, isNew, nextInvoiceNumber]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isNew]);
+
+  // ── Set invoice number for new invoices separately ──
+  useEffect(() => {
+    if (isNew && nextInvoiceNumber) {
+      setInvoiceNumber(nextInvoiceNumber);
+    }
+  }, [isNew, nextInvoiceNumber]);
 
   // ── Populate form from existing invoice (run ONCE) ──
   useEffect(() => {
