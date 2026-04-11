@@ -9,11 +9,12 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Save, RotateCcw, Loader2, Building2, MapPin, Phone, Mail, Globe, MessageSquare } from "lucide-react";
+import { Save, RotateCcw, Loader2, Building2, MapPin, Phone, Mail, Globe, MessageSquare, PenTool } from "lucide-react";
 import { useBranding, useUpdateBranding, useResetBranding } from "@/hooks/useBranding";
 import { BrandSettings, defaultBranding } from "@/types/branding";
 import { BrandingPreview } from "@/components/admin/BrandingPreview";
 import { LogoUpload } from "@/components/LogoUpload";
+import { SignatureUpload } from "@/components/SignatureUpload";
 
 export default function BrandingSettings() {
   const { toast } = useToast();
@@ -297,6 +298,36 @@ export default function BrandingSettings() {
                     </SelectContent>
                   </Select>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Document Signatures */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PenTool className="h-5 w-5" />
+                  Document Signatures
+                </CardTitle>
+                <CardDescription>
+                  Upload signature images to appear on all documents (Invoice, Quotation, Challan, PO).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SignatureUpload
+                  label="Received by - Signature"
+                  currentSignature={formData.signature_received_by}
+                  onSignatureChange={(sig) => handleInputChange("signature_received_by", sig || "")}
+                />
+                <SignatureUpload
+                  label="Prepared by - Signature"
+                  currentSignature={formData.signature_prepared_by}
+                  onSignatureChange={(sig) => handleInputChange("signature_prepared_by", sig || "")}
+                />
+                <SignatureUpload
+                  label="Authorize by - Signature"
+                  currentSignature={formData.signature_authorize_by}
+                  onSignatureChange={(sig) => handleInputChange("signature_authorize_by", sig || "")}
+                />
               </CardContent>
             </Card>
           </div>
