@@ -294,6 +294,18 @@
     margin: 0;
   }
 
+  @page :left {
+    margin-top: 12mm;
+  }
+
+  @page :right {
+    margin-top: 12mm;
+  }
+
+  @page:first {
+    margin-top: 0;
+  }
+
   /* Remove browser default margins */
   html {
     margin: 0 !important;
