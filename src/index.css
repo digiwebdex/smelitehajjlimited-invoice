@@ -291,15 +291,7 @@
   /* A4 Page Setup */
   @page {
     size: A4;
-    margin: 0;
-  }
-
-  @page :left {
-    margin-top: 12mm;
-  }
-
-  @page :right {
-    margin-top: 12mm;
+    margin: 10mm 0 0 0;
   }
 
   @page:first {
