@@ -74,7 +74,7 @@ export const generateInvoicePdf = async (
   const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || company?.address;
   const thankYouText = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQRCode = company?.show_qr_code ?? b.show_qr_code ?? true;
-  const footerWebsite = company?.website || b.website;
+  const footerWebsite = company ? company.website : b.website;
 
   let yPos = margin;
 
