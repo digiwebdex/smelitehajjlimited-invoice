@@ -409,21 +409,20 @@ export const A4PrintTemplate = ({
 
       {/* ===== SIGNATURE SECTION ===== */}
       <div style={{ position: "absolute", bottom: "46mm", left: "15mm", right: "15mm", display: "flex", justifyContent: "space-between" }}>
-        <div style={{ width: "40mm", textAlign: "center" }}>
-          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
-            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Received by</span>
+        {[
+          { label: "Received by", sig: b.signature_received_by },
+          { label: "Prepared by", sig: b.signature_prepared_by },
+          { label: "Authorize by", sig: b.signature_authorize_by },
+        ].map((item) => (
+          <div key={item.label} style={{ width: "40mm", textAlign: "center" }}>
+            {item.sig && (
+              <img src={item.sig} alt={item.label} style={{ height: "12mm", margin: "0 auto 1mm", objectFit: "contain", display: "block" }} />
+            )}
+            <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
+              <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>{item.label}</span>
+            </div>
           </div>
-        </div>
-        <div style={{ width: "40mm", textAlign: "center" }}>
-          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
-            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Prepared by</span>
-          </div>
-        </div>
-        <div style={{ width: "40mm", textAlign: "center" }}>
-          <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
-            <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Authorize by</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* ===== FOOTER ===== */}
