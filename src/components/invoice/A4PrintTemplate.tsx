@@ -408,7 +408,7 @@ export const A4PrintTemplate = ({
       )}
 
       {/* ===== SIGNATURE SECTION ===== */}
-      <div style={{ position: "absolute", bottom: "42mm", left: "20mm", right: "20mm", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ position: "absolute", bottom: "46mm", left: "15mm", right: "15mm", display: "flex", justifyContent: "space-between" }}>
         <div style={{ width: "40mm", textAlign: "center" }}>
           <div style={{ borderTop: `0.3pt solid ${t.border_color}`, paddingTop: "2mm" }}>
             <span style={{ fontSize: "8pt", color: t.subtotal_text_color }}>Received by</span>
@@ -430,45 +430,45 @@ export const A4PrintTemplate = ({
       <div
         style={{
           position: "absolute",
-          bottom: "20mm",
-          left: "20mm",
-          right: "20mm",
+          bottom: "12mm",
+          left: "15mm",
+          right: "15mm",
           borderTop: `0.3pt solid ${t.border_color}`,
-          paddingTop: "4mm",
+          paddingTop: "3mm",
         }}
       >
         {/* Thank You - Center */}
-        <div style={{ textAlign: "center", marginBottom: "4mm" }}>
+        <div style={{ textAlign: "center", marginBottom: "3mm" }}>
           <span style={{ color: t.footer_text_color, fontSize: "9pt" }}>{footerThankYou}</span>
         </div>
 
         {/* Bottom Row: Address Left, QR Right */}
         <div style={{ position: "relative" }}>
           {/* Address - Left (Two lines) */}
-          <div style={{ display: "inline-block", width: "70%", verticalAlign: "top" }}>
+          <div style={{ display: "inline-block", width: "65%", verticalAlign: "top" }}>
             {addressLine1 && (
-              <div style={{ color: t.footer_text_color, fontSize: "7pt" }}>{addressLine1}</div>
+              <div style={{ color: t.footer_text_color, fontSize: "7.5pt" }}>{addressLine1}</div>
             )}
             {addressLine2 && (
-              <div style={{ color: t.footer_text_color, fontSize: "7pt" }}>{addressLine2}</div>
+              <div style={{ color: t.footer_text_color, fontSize: "7.5pt" }}>{addressLine2}</div>
             )}
             {(footerPhone || footerEmail) && (
-              <div style={{ color: t.footer_text_color, fontSize: "7pt" }}>
+              <div style={{ color: t.footer_text_color, fontSize: "7.5pt", marginTop: "1mm" }}>
                 {[footerPhone, footerEmail].filter(Boolean).join(" | ")}
               </div>
             )}
             {footerWebsite && (
-              <div style={{ color: t.primary_color, fontSize: "7pt" }}>{footerWebsite}</div>
+              <div style={{ color: t.primary_color, fontSize: "7.5pt" }}>{footerWebsite}</div>
             )}
           </div>
 
           {/* QR Code - Right */}
           {showQR && (
-            <div style={{ display: "inline-block", width: "30%", textAlign: "right", verticalAlign: "top" }}>
+            <div style={{ display: "inline-block", width: "35%", textAlign: "right", verticalAlign: "top" }}>
               <div style={{ display: "inline-block" }}>
-                <InvoiceQRCode invoiceId={invoice.id} size={60} />
-                <div style={{ color: t.footer_text_color, fontSize: "5pt", textAlign: "center", marginTop: "1mm" }}>
-                  Scan for details
+                <InvoiceQRCode invoiceId={invoice.id} size={55} showLabel={false} />
+                <div style={{ color: t.footer_text_color, fontSize: "6.5pt", textAlign: "center", marginTop: "2mm", fontWeight: "500" }}>
+                  Scan the QR code for details
                 </div>
               </div>
             </div>

@@ -557,13 +557,14 @@ export const generateInvoicePdf = async (
   }
 
   // ===================== FOOTER =====================
-  // Position footer at bottom
-  const footerY = pageHeight - 32;
+  // Position footer at bottom with proper padding
+  const footerY = pageHeight - 35;
+  const footerMargin = 15;
 
   // Divider line
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 6, pageWidth - margin, footerY - 6);
+  doc.line(footerMargin, footerY - 6, pageWidth - footerMargin, footerY - 6);
 
   // THANK YOU MESSAGE - Centered at top of footer
   doc.setTextColor(...footerTextColor);
@@ -576,36 +577,36 @@ export const generateInvoicePdf = async (
   
   // LEFT SIDE - Address details
   doc.setTextColor(...footerTextColor);
-  doc.setFontSize(7);
+  doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
   
   let addressY = bottomRowY;
   if (addressLine1) {
-    doc.text(addressLine1, margin, addressY);
+    doc.text(addressLine1, footerMargin, addressY);
     addressY += 3.5;
   }
   if (addressLine2) {
-    doc.text(addressLine2, margin, addressY);
+    doc.text(addressLine2, footerMargin, addressY);
     addressY += 3.5;
   }
   if (footerPhone) {
-    doc.text(footerPhone, margin, addressY);
+    doc.text(footerPhone, footerMargin, addressY);
     addressY += 3.5;
   }
   if (footerEmail) {
-    doc.text(footerEmail, margin, addressY);
+    doc.text(footerEmail, footerMargin, addressY);
     addressY += 3.5;
   }
   if (footerWebsite) {
     doc.setTextColor(...primaryColor);
-    doc.text(footerWebsite, margin, addressY);
+    doc.text(footerWebsite, footerMargin, addressY);
   }
 
   // RIGHT SIDE - QR Code
   if (showQRCode) {
-    const qrSize = 22;
+    const qrSize = 20;
     const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
-    const qrX = pageWidth - margin - qrSize;
+    const qrX = pageWidth - footerMargin - qrSize;
     const qrY = bottomRowY - 2;
     
     try {
@@ -616,11 +617,10 @@ export const generateInvoicePdf = async (
       });
       doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
 
-      // QR Labels - centered below QR code
-      doc.setFontSize(5);
+      // QR Label - clearly visible below QR code
+      doc.setFontSize(6.5);
       doc.setTextColor(...footerTextColor);
-      doc.text("Scan to view invoice", qrX + qrSize / 2, qrY + qrSize + 2.5, { align: "center" });
-      doc.text("Scan for details", qrX + qrSize / 2, qrY + qrSize + 5, { align: "center" });
+      doc.text("Scan the QR code for details", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
     } catch (error) {
       console.error("Failed to generate QR code:", error);
     }
