@@ -67,8 +67,8 @@ export default function BrandingSettings() {
     }
   };
 
-  const handleLogoUpload = (url: string) => {
-    handleInputChange("company_logo", url);
+  const handleLogoUpload = (url: string | undefined) => {
+    handleInputChange("company_logo", url || null);
   };
 
   if (isLoading) {
