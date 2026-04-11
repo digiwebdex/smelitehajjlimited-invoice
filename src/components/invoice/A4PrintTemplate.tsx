@@ -110,7 +110,7 @@ export const A4PrintTemplate = ({
   const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || company?.address;
   const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQR = company?.show_qr_code ?? b.show_qr_code ?? true;
-  const footerWebsite = company?.website || b.website;
+  const footerWebsite = company ? company.website : b.website;
 
   // Status badge colors
   const getStatusStyle = (status: string) => {
