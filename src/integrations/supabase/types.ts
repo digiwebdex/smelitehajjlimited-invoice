@@ -83,6 +83,9 @@ export type Database = {
           id: string
           phone: string | null
           show_qr_code: boolean
+          signature_authorize_by: string | null
+          signature_prepared_by: string | null
+          signature_received_by: string | null
           tagline: string | null
           thank_you_text: string | null
           updated_at: string
@@ -99,6 +102,9 @@ export type Database = {
           id?: string
           phone?: string | null
           show_qr_code?: boolean
+          signature_authorize_by?: string | null
+          signature_prepared_by?: string | null
+          signature_received_by?: string | null
           tagline?: string | null
           thank_you_text?: string | null
           updated_at?: string
@@ -115,6 +121,9 @@ export type Database = {
           id?: string
           phone?: string | null
           show_qr_code?: boolean
+          signature_authorize_by?: string | null
+          signature_prepared_by?: string | null
+          signature_received_by?: string | null
           tagline?: string | null
           thank_you_text?: string | null
           updated_at?: string

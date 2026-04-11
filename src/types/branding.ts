@@ -11,6 +11,9 @@ export interface BrandSettings {
   thank_you_text: string;
   show_qr_code: boolean;
   footer_alignment: "left" | "center" | "right";
+  signature_received_by?: string | null;
+  signature_prepared_by?: string | null;
+  signature_authorize_by?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -28,4 +31,7 @@ export const defaultBranding: BrandSettings = {
   thank_you_text: "Thank you for staying with us.",
   show_qr_code: true,
   footer_alignment: "center",
+  signature_received_by: null,
+  signature_prepared_by: null,
+  signature_authorize_by: null,
 };

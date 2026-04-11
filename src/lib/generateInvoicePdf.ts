@@ -535,20 +535,24 @@ export const generateInvoicePdf = async (
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
 
-  // Left: Received by (starts at left margin)
-  const leftSignX = margin;
-  doc.line(leftSignX, sigY, leftSignX + signLineWidth, sigY);
+  const signXPositions = [margin, pageWidth / 2 - signLineWidth / 2, pageWidth - margin - signLineWidth];
+  const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
 
-  // Center: Prepared by
-  const centerSignX = pageWidth / 2 - signLineWidth / 2;
-  doc.line(centerSignX, sigY, centerSignX + signLineWidth, sigY);
-
-  // Right: Authorize by (ends at right margin)
-  const rightSignX = pageWidth - margin - signLineWidth;
-  doc.line(rightSignX, sigY, rightSignX + signLineWidth, sigY);
+  // Add signature images above the lines
+  for (let i = 0; i < 3; i++) {
+    const sigImg = signatureImages[i];
+    if (sigImg) {
+      try {
+        doc.addImage(sigImg, "PNG", signXPositions[i] + 5, sigY - 15, 30, 14);
+      } catch (e) {
+        // skip if image fails
+      }
+    }
+    doc.line(signXPositions[i], sigY, signXPositions[i] + signLineWidth, sigY);
+  }
 
   const labels = ["Received by", "Prepared by", "Authorize by"];
-  const labelXPositions = [leftSignX + signLineWidth / 2, pageWidth / 2, rightSignX + signLineWidth / 2];
+  const labelXPositions = [signXPositions[0] + signLineWidth / 2, pageWidth / 2, signXPositions[2] + signLineWidth / 2];
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");

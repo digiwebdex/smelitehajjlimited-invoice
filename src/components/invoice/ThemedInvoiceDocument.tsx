@@ -386,21 +386,20 @@ export const ThemedInvoiceDocument = ({
       <div style={{ marginTop: "auto" }}>
       {/* SIGNATURE SECTION */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
-        <div style={{ width: "150px", textAlign: "center" }}>
-          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
-            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Received by</span>
+        {[
+          { label: "Received by", sig: b.signature_received_by },
+          { label: "Prepared by", sig: b.signature_prepared_by },
+          { label: "Authorize by", sig: b.signature_authorize_by },
+        ].map((item) => (
+          <div key={item.label} style={{ width: "150px", textAlign: "center" }}>
+            {item.sig && (
+              <img src={item.sig} alt={item.label} style={{ height: "40px", margin: "0 auto 4px", objectFit: "contain" }} />
+            )}
+            <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
+              <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
+            </div>
           </div>
-        </div>
-        <div style={{ width: "150px", textAlign: "center" }}>
-          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
-            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Prepared by</span>
-          </div>
-        </div>
-        <div style={{ width: "150px", textAlign: "center" }}>
-          <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
-            <span className="text-xs" style={{ color: t.subtotal_text_color }}>Authorize by</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* FOOTER - Using branding settings */}
