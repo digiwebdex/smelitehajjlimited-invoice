@@ -291,7 +291,11 @@
   /* A4 Page Setup */
   @page {
     size: A4;
-    margin: 0;
+    margin: 10mm 0 0 0;
+  }
+
+  @page:first {
+    margin-top: 0;
   }
 
   /* Remove browser default margins */
