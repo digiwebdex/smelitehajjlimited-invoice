@@ -113,9 +113,9 @@ export const ThemedInvoiceDocument = ({
   // Footer settings - when company exists, use ONLY company data (no branding fallback)
   const footerEmail = company ? company.email : b.email;
   const footerPhone = company ? company.phone : b.phone;
-  const addressLine1 = company ? company.address_line1 : b.address_line1;
-  const addressLine2 = company ? company.address_line2 : b.address_line2;
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || (company ? company.address : null);
+  const addressLine1 = b.address_line1 || "B-25/4, Al-Baraka Super Market";
+  const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
+  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ");
   const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerAlign = company ? (company.footer_alignment || "center") : (b.footer_alignment || "center");
