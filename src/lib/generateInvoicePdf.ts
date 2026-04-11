@@ -83,9 +83,9 @@ export const generateInvoicePdf = async (
   const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
   const hasAnySignature = signatureImages.some(Boolean);
   const signatureBlockHeight = hasAnySignature ? 22 : 14;
-  const footerContentHeight = Math.max(footerLines.length * 3.6, showQRCode ? 25 : 0);
-  const footerBlockHeight = 10 + footerContentHeight;
-  const finalBlockHeight = signatureBlockHeight + footerBlockHeight + 8;
+  const footerContentHeight = Math.max(footerLines.length * 3.6, showQRCode ? 28 : 0);
+  const footerBlockHeight = 12 + footerContentHeight;
+  const finalBlockHeight = signatureBlockHeight + footerBlockHeight + 10;
 
   const statusColors: Record<string, [number, number, number]> = {
     paid: [22, 163, 74],
