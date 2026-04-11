@@ -12,7 +12,6 @@ const getOrdinal = (n: number): string => {
 };
 
 const formatCurrency = (amount: number): string => {
-  // Use "Tk" instead of "৳" because jsPDF doesn't support Bengali Unicode with default fonts
   return `Tk ${new Intl.NumberFormat("en-BD", {
     style: "decimal",
     minimumFractionDigits: 2,
@@ -30,6 +29,11 @@ const formatDate = (date: Date | undefined): string => {
   });
 };
 
+const getImageFormat = (imageData: string): "PNG" | "JPEG" => {
+  const normalized = imageData.toLowerCase();
+  return normalized.includes("image/jpeg") || normalized.includes("image/jpg") ? "JPEG" : "PNG";
+};
+
 export const generateInvoicePdf = async (
   invoice: Invoice,
   company?: Company,
@@ -41,29 +45,28 @@ export const generateInvoicePdf = async (
     unit: "mm",
     format: "a4",
   });
-  
+
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
-  
-  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
-  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
+  const footerMargin = 15;
 
-  // Dynamic colors from theme
   const primaryColor = hexToRgb(t.primary_color);
   const accentColor = hexToRgb(t.accent_color);
   const mutedColor = hexToRgb(t.subtotal_text_color);
   const textColor = hexToRgb(t.header_text_color);
   const paidTextColor = hexToRgb(t.paid_text_color);
   const redColor = hexToRgb(t.badge_unpaid_color);
-  const orangeColor: [number, number, number] = [249, 115, 22]; // Orange-500 for invoice number
+  const orangeColor: [number, number, number] = [249, 115, 22];
   const borderColor = hexToRgb(t.border_color);
   const footerTextColor = hexToRgb(t.footer_text_color);
   const balanceBgColor = hexToRgb(t.balance_bg_color);
   const balanceTextColor = hexToRgb(t.balance_text_color);
 
-  // Branding settings - when company exists, use ONLY company data (no branding fallback)
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
   const headerLogo = company?.logo || b.company_logo;
@@ -71,54 +74,88 @@ export const generateInvoicePdf = async (
   const footerPhone = company ? company.phone : b.phone;
   const addressLine1 = b.address_line1 || "B-25/4, Al-Baraka Super Market";
   const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ");
   const thankYouText = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQRCode = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerWebsite = b.website || "www.smelitehajj.com";
+  const footerContactLine = [footerPhone, footerEmail].filter(Boolean).join(" | ");
+  const footerLines = [addressLine1, addressLine2, footerContactLine || null, footerWebsite || null].filter(Boolean) as string[];
+
+  const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
+  const hasAnySignature = signatureImages.some(Boolean);
+  const signatureBlockHeight = hasAnySignature ? 22 : 14;
+  const footerContentHeight = Math.max(footerLines.length * 3.6, showQRCode ? 25 : 0);
+  const footerBlockHeight = 10 + footerContentHeight;
+  const finalBlockHeight = signatureBlockHeight + footerBlockHeight + 8;
+
+  const statusColors: Record<string, [number, number, number]> = {
+    paid: [22, 163, 74],
+    partial: [202, 138, 4],
+    unpaid: [220, 38, 38],
+  };
+  const statusBgColors: Record<string, [number, number, number]> = {
+    paid: [220, 252, 231],
+    partial: [254, 249, 195],
+    unpaid: [254, 226, 226],
+  };
 
   let yPos = margin;
 
-  // ===================== HEADER SECTION =====================
-  // Company Logo - circular with blue border
+  const drawContinuationHeader = () => {
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(headerName, margin, yPos + 4);
+
+    doc.setTextColor(...mutedColor);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Invoice ${invoice.invoiceNumber} (continued)`, pageWidth - margin, yPos + 4, { align: "right" });
+
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.3);
+    doc.line(margin, yPos + 8, pageWidth - margin, yPos + 8);
+    yPos += 12;
+  };
+
+  const addContinuationPage = () => {
+    doc.addPage();
+    yPos = margin;
+    drawContinuationHeader();
+  };
+
+  const ensureSpace = (requiredHeight: number) => {
+    if (yPos + requiredHeight > pageHeight - margin) {
+      addContinuationPage();
+    }
+  };
+
   const logoSize = 18;
   const logoCenterX = margin + logoSize / 2;
   const logoCenterY = yPos + logoSize / 2;
   let logoDrawn = false;
-  
-  // Helper function to draw circular logo with clean blue border
+
   const drawCircularLogo = (imageData: string) => {
-    // Draw white filled circle as background
     doc.setFillColor(255, 255, 255);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "F");
-    
-    // Add the image inscribed within the circle (side = diameter / √2)
-    const imageSize = logoSize * 0.70;
+
+    const imageSize = logoSize * 0.7;
     const imageOffset = (logoSize - imageSize) / 2;
-    doc.addImage(imageData, "PNG", margin + imageOffset, yPos + imageOffset, imageSize, imageSize);
-    
-    // Mask corners outside circle with white arcs (4 corner rectangles)
-    const r = logoSize / 2;
-    const half = imageSize / 2;
-    // Top-left corner
+    doc.addImage(imageData, getImageFormat(imageData), margin + imageOffset, yPos + imageOffset, imageSize, imageSize);
+
     doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPos, imageOffset, imageOffset, "F");
-    // Top-right corner
     doc.rect(margin + logoSize - imageOffset, yPos, imageOffset, imageOffset, "F");
-    // Bottom-left corner
     doc.rect(margin, yPos + logoSize - imageOffset, imageOffset, imageOffset, "F");
-    // Bottom-right corner
     doc.rect(margin + logoSize - imageOffset, yPos + logoSize - imageOffset, imageOffset, imageOffset, "F");
-    
-    // Draw single clean blue border on top
+
     doc.setDrawColor(...primaryColor);
     doc.setLineWidth(0.6);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
   };
-  
+
   if (headerLogo) {
     try {
-      // For URLs, fetch the image as blob to avoid CORS issues
-      if (headerLogo.startsWith("http") || headerLogo.startsWith("https")) {
+      if (headerLogo.startsWith("http://") || headerLogo.startsWith("https://")) {
         try {
           const response = await fetch(headerLogo);
           const blob = await response.blob();
@@ -141,26 +178,21 @@ export const generateInvoicePdf = async (
       console.error("Failed to add logo:", e);
     }
   }
-  
-  // Fallback circular logo with company initial and blue border
+
   if (!logoDrawn) {
-    // Draw blue border
     doc.setDrawColor(...primaryColor);
     doc.setLineWidth(0.4);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2, "S");
-    
-    // Fill with primary color
+
     doc.setFillColor(...primaryColor);
     doc.circle(logoCenterX, logoCenterY, logoSize / 2 - 0.6, "F");
-    
-    // Add initial text
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text(headerName?.charAt(0) || "C", logoCenterX, logoCenterY + 3.5, { align: "center" });
   }
 
-  // Company Name and Tagline
   const companyInfoX = margin + logoSize + 4;
   doc.setTextColor(...primaryColor);
   doc.setFontSize(13);
@@ -174,34 +206,21 @@ export const generateInvoicePdf = async (
     doc.text(headerTagline, companyInfoX, yPos + 11);
   }
 
-  // INVOICE title on right
   doc.setTextColor(...primaryColor);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
   doc.text("INVOICE", pageWidth - margin, yPos + 6, { align: "right" });
 
-  // Invoice number in orange color (matching web view)
   doc.setTextColor(...orangeColor);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(invoice.invoiceNumber, pageWidth - margin, yPos + 13, { align: "right" });
 
-  // Status badge - positioned below invoice number
-  const statusColors: Record<string, [number, number, number]> = {
-    paid: [22, 163, 74], // Green-600
-    partial: [202, 138, 4], // Yellow-600
-    unpaid: [220, 38, 38], // Red-600
-  };
-  const statusBgColors: Record<string, [number, number, number]> = {
-    paid: [220, 252, 231], // Green-100
-    partial: [254, 249, 195], // Yellow-100
-    unpaid: [254, 226, 226], // Red-100
-  };
   const statusColor = statusColors[invoice.status] || statusColors.unpaid;
   const statusBgColor = statusBgColors[invoice.status] || statusBgColors.unpaid;
   const statusText = invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1);
   const statusWidth = doc.getTextWidth(statusText) + 8;
-  
+
   doc.setFillColor(...statusBgColor);
   doc.roundedRect(pageWidth - margin - statusWidth, yPos + 16, statusWidth, 6, 3, 3, "F");
   doc.setTextColor(...statusColor);
@@ -211,49 +230,38 @@ export const generateInvoicePdf = async (
 
   yPos += 22;
 
-  // ===================== BILL TO & DATES SECTION =====================
-  // Divider line
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 6;
 
-  // Calculate height for Bill To section based on content
-  let billToHeight = 20; // Base height
+  let billToHeight = 20;
   if (invoice.clientEmail) billToHeight += 4;
   if (invoice.clientPhone) billToHeight += 4;
   if (invoice.clientAddress) billToHeight += 4;
 
-  // Left accent bar for Bill To
   doc.setFillColor(...accentColor);
   doc.rect(margin, yPos, 1.5, billToHeight, "F");
 
-  // Bill To label
   doc.setTextColor(...mutedColor);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text("BILL TO", margin + 5, yPos + 4);
-
-  // Invoice Date on right (muted color)
-  doc.setFontSize(8);
-  doc.setTextColor(...mutedColor);
-  doc.setFont("helvetica", "normal");
   doc.text("INVOICE DATE :", pageWidth - margin - 48, yPos + 4);
-  doc.setTextColor(0, 0, 0); // Black
+
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text(formatDate(invoice.date), pageWidth - margin, yPos + 4, { align: "right" });
 
   yPos += 8;
 
-  // Client Name (bold, larger, black)
-  doc.setTextColor(0, 0, 0); // Black
+  doc.setTextColor(0, 0, 0);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.text(invoice.clientName, margin + 5, yPos + 1);
 
   yPos += 6;
 
-  // Client details (muted, smaller) - email, phone, address separately
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...mutedColor);
@@ -262,7 +270,7 @@ export const generateInvoicePdf = async (
     doc.text(invoice.clientEmail, margin + 5, yPos);
     yPos += 4;
   }
-  
+
   if (invoice.clientPhone) {
     doc.text(invoice.clientPhone, margin + 5, yPos);
     yPos += 4;
@@ -276,74 +284,62 @@ export const generateInvoicePdf = async (
 
   yPos += 10;
 
-  // ===================== ITEMS TABLE =====================
   const tableX = margin;
-
-  // Column widths (match web layout: Qty left, Unit Price left, Total right)
-  const descColWidth = contentWidth * 0.50;
-  const qtyColWidth = contentWidth * 0.10;
-  const unitColWidth = contentWidth * 0.20;
+  const descColWidth = contentWidth * 0.5;
+  const qtyColWidth = contentWidth * 0.1;
+  const unitColWidth = contentWidth * 0.2;
 
   const descX = tableX;
   const qtyX = tableX + descColWidth;
   const unitX = tableX + descColWidth + qtyColWidth;
   const totalRightX = tableX + contentWidth;
 
-  // Table Header with underline
-  doc.setTextColor(...mutedColor);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
-  doc.text("DESCRIPTION", descX, yPos);
-  doc.text("QTY", qtyX, yPos);
-  doc.text("UNIT PRICE", unitX, yPos);
-  doc.text("TOTAL", totalRightX, yPos, { align: "right" });
+  const drawItemsTableHeader = () => {
+    doc.setTextColor(...mutedColor);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIPTION", descX, yPos);
+    doc.text("QTY", qtyX, yPos);
+    doc.text("UNIT PRICE", unitX, yPos);
+    doc.text("TOTAL", totalRightX, yPos, { align: "right" });
 
-  yPos += 3;
-  doc.setDrawColor(...borderColor);
-  doc.setLineWidth(0.5);
-  doc.line(tableX, yPos, tableX + contentWidth, yPos);
-  yPos += 2;
+    yPos += 3;
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.5);
+    doc.line(tableX, yPos, tableX + contentWidth, yPos);
+    yPos += 2;
+  };
 
-  // Table Rows (wrap description; vertically center all columns within the row)
+  drawItemsTableHeader();
+
   const lineHeight = 4.2;
   const minRowHeight = 7;
   invoice.items.forEach((item) => {
-    const rowTopY = yPos;
-
-    // Description (wrap within description column)
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
 
     const title = item.title || "—";
     const titleLines = doc.splitTextToSize(title, descColWidth - 2);
-
     const textBlockHeight = titleLines.length * lineHeight;
     const totalRowHeight = Math.max(textBlockHeight + 2.8, minRowHeight);
 
-    // Vertical center Y for single-line columns (baseline offset ~0.8mm)
+    if (yPos + totalRowHeight + 2 > pageHeight - margin) {
+      addContinuationPage();
+      drawItemsTableHeader();
+    }
+
+    const rowTopY = yPos;
     const yCenter = rowTopY + totalRowHeight / 2 + 0.8;
-
-    // Description text - vertically centered
     const descStartY = rowTopY + (totalRowHeight - textBlockHeight) / 2 + lineHeight * 0.7;
+
     doc.text(titleLines, descX, descStartY);
+    doc.text((item.qty || 1).toString(), qtyX, yCenter);
+    doc.text(formatCurrency(item.unitPrice || item.amount), unitX, yCenter);
 
-    // Qty (left aligned, vertically centered)
-    const qty = item.qty || 1;
-    doc.setTextColor(0, 0, 0);
-    doc.text(qty.toString(), qtyX, yCenter);
-
-    // Unit Price (left aligned, vertically centered)
-    const unitPrice = item.unitPrice || item.amount;
-    doc.setTextColor(0, 0, 0);
-    doc.text(formatCurrency(unitPrice), unitX, yCenter);
-
-    // Total (right, bold, vertically centered)
-    doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.text(formatCurrency(item.amount), totalRightX, yCenter, { align: "right" });
 
-    // Advance cursor + divider
     yPos = rowTopY + totalRowHeight;
     doc.setDrawColor(...borderColor);
     doc.setLineWidth(0.2);
@@ -353,18 +349,31 @@ export const generateInvoicePdf = async (
 
   yPos += 2;
 
-  // ===================== SUMMARY SECTION =====================
   const summaryX = pageWidth - margin - 75;
   const summaryWidth = 75;
+  const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
+  const vatRate = invoice.vatRate || 0;
+  const vatAmount = invoice.vatAmount || (subtotal * vatRate) / 100;
+  const totalWithVat = subtotal + vatAmount;
+  const inWordAmount = invoice.dueAmount > 0 ? invoice.dueAmount : totalWithVat;
+  const inWordLabel = "In Word : ";
 
-  // Subtotal
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  const inWordLabelWidth = doc.getTextWidth(inWordLabel);
+  doc.setFont("helvetica", "normal");
+  const inWordText = numberToWords(inWordAmount) + " Taka Only";
+  const inWordLines = doc.splitTextToSize(inWordText, summaryWidth - inWordLabelWidth - 2);
+  const summaryHeight = 56 + Math.max(0, inWordLines.length - 1) * 3.5;
+
+  ensureSpace(summaryHeight);
+
   doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   doc.text("Subtotal", summaryX, yPos);
-  doc.setTextColor(0, 0, 0); // Black
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
-  const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
   doc.text(formatCurrency(subtotal), pageWidth - margin, yPos, { align: "right" });
 
   doc.setDrawColor(...borderColor);
@@ -372,31 +381,25 @@ export const generateInvoicePdf = async (
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Tax
-  const vatRate = invoice.vatRate || 0;
-  const vatAmount = invoice.vatAmount || (subtotal * vatRate) / 100;
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   doc.text("Tax", summaryX, yPos);
-  doc.setTextColor(0, 0, 0); // Black
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text(formatCurrency(vatAmount), pageWidth - margin, yPos, { align: "right" });
 
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Total (bold, larger)
   doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0); // Black
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text("Total", summaryX, yPos);
-  const totalWithVat = subtotal + vatAmount;
   doc.text(formatCurrency(totalWithVat), pageWidth - margin, yPos, { align: "right" });
 
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Total Paid (themed color)
   doc.setFontSize(9);
   doc.setTextColor(...paidTextColor);
   doc.setFont("helvetica", "bold");
@@ -406,7 +409,6 @@ export const generateInvoicePdf = async (
   doc.line(summaryX, yPos + 3, pageWidth - margin, yPos + 3);
   yPos += 9;
 
-  // Balance Box (themed colors)
   const balanceBoxBg = invoice.dueAmount > 0 ? redColor : balanceBgColor;
   doc.setFillColor(...balanceBoxBg);
   doc.rect(summaryX, yPos - 3, summaryWidth, 9, "F");
@@ -414,27 +416,19 @@ export const generateInvoicePdf = async (
   doc.setTextColor(...balanceTextColor);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  const balanceLabel = invoice.dueAmount > 0 ? "Balance" : "Paid in Full";
-  doc.text(balanceLabel, summaryX + 3, yPos + 2);
+  doc.text(invoice.dueAmount > 0 ? "Balance" : "Paid in Full", summaryX + 3, yPos + 2);
   doc.text(formatCurrency(invoice.dueAmount), pageWidth - margin - 3, yPos + 2, { align: "right" });
 
   yPos += 10;
 
-  // In Word
-  const inWordAmount = invoice.dueAmount > 0 ? invoice.dueAmount : totalWithVat;
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "bold");
-  const inWordLabel = "In Word : ";
-  const inWordLabelWidth = doc.getTextWidth(inWordLabel);
   doc.text(inWordLabel, summaryX, yPos);
   doc.setFont("helvetica", "normal");
-  const inWordText = numberToWords(inWordAmount) + " Taka Only";
-  const inWordLines = doc.splitTextToSize(inWordText, summaryWidth - inWordLabelWidth - 2);
   if (inWordLines.length === 1) {
     doc.text(inWordLines[0], summaryX + inWordLabelWidth, yPos);
   } else {
-    // First line after label, rest lines aligned to label start
     doc.text(inWordLines[0], summaryX + inWordLabelWidth, yPos);
     for (let i = 1; i < inWordLines.length; i++) {
       yPos += 3.5;
@@ -444,26 +438,23 @@ export const generateInvoicePdf = async (
 
   yPos += 10;
 
-  // ===================== NOTES SECTION =====================
   if (invoice.notes) {
-    // Notes section box
     doc.setDrawColor(...borderColor);
     doc.setLineWidth(0.3);
-    
+
     const notesLines = doc.splitTextToSize(invoice.notes, contentWidth - 10);
     const notesBoxHeight = 10 + notesLines.length * 4;
+    ensureSpace(notesBoxHeight + 6);
+
     doc.roundedRect(margin, yPos, contentWidth, notesBoxHeight, 2, 2, "S");
-    
     yPos += 6;
-    
-    // Notes header
+
     doc.setTextColor(...textColor);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text("NOTES / PAYMENT TERMS", margin + 5, yPos);
     yPos += 6;
-    
-    // Notes content
+
     doc.setFontSize(8);
     doc.setTextColor(...mutedColor);
     doc.setFont("helvetica", "normal");
@@ -471,148 +462,126 @@ export const generateInvoicePdf = async (
     yPos += notesLines.length * 4 + 4;
   }
 
-  // ===================== PAYMENT HISTORY =====================
   if (invoice.installments.length > 0) {
-    // Payment History section box
-    doc.setDrawColor(...borderColor);
-    doc.setLineWidth(0.3);
-    const historyBoxHeight = 10 + invoice.installments.length * 12;
-    doc.roundedRect(margin, yPos, contentWidth, historyBoxHeight, 2, 2, "S");
-    
-    yPos += 6;
-    
-    // Payment History header
-    doc.setTextColor(...textColor);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PAYMENT HISTORY", margin + 5, yPos);
-    yPos += 6;
+    const historyEntryHeight = 12;
+    const historyBlockPadding = 16;
+    let installmentIndex = 0;
 
-    // Payment entries
-    invoice.installments.forEach((inst, idx) => {
-      // Left accent bar (gray)
-      doc.setFillColor(209, 213, 219); // Gray-300
-      doc.rect(margin + 5, yPos, 1.5, 8, "F");
+    while (installmentIndex < invoice.installments.length) {
+      ensureSpace(historyBlockPadding + historyEntryHeight);
 
-      // Date
-      doc.setFontSize(8);
+      const availableHeight = pageHeight - margin - yPos;
+      const availableEntries = Math.max(1, Math.floor((availableHeight - historyBlockPadding) / historyEntryHeight));
+      const pageInstallments = invoice.installments.slice(installmentIndex, installmentIndex + availableEntries);
+      const historyBoxHeight = 10 + pageInstallments.length * historyEntryHeight;
+
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, yPos, contentWidth, historyBoxHeight, 2, 2, "S");
+      yPos += 6;
+
       doc.setTextColor(...textColor);
-      doc.setFont("helvetica", "normal");
-      doc.text(formatDate(inst.paidDate), margin + 10, yPos + 5);
-
-      // Payment method badge (gray)
-      const methodText = inst.paymentMethod || "Bank Transfer";
-      const methodWidth = Math.max(doc.getTextWidth(methodText) + 4, 22);
-      doc.setFillColor(156, 163, 175); // Gray-400
-      doc.roundedRect(margin + 50, yPos + 1, methodWidth, 5, 1, 1, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(6);
+      doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text(methodText, margin + 50 + methodWidth / 2, yPos + 4.5, { align: "center" });
+      doc.text("PAYMENT HISTORY", margin + 5, yPos);
+      yPos += 6;
 
-      // Description
-      doc.setTextColor(...mutedColor);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.text(`— ${getOrdinal(idx + 1)} Payment`, margin + 50 + methodWidth + 3, yPos + 5);
+      pageInstallments.forEach((inst, idx) => {
+        const paymentIndex = installmentIndex + idx;
 
-      // Amount (teal color, bold)
-      doc.setTextColor(...accentColor);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.text(formatCurrency(inst.amount), pageWidth - margin - 5, yPos + 5, { align: "right" });
+        doc.setFillColor(209, 213, 219);
+        doc.rect(margin + 5, yPos, 1.5, 8, "F");
 
-      yPos += 12;
-    });
+        doc.setFontSize(8);
+        doc.setTextColor(...textColor);
+        doc.setFont("helvetica", "normal");
+        doc.text(formatDate(inst.paidDate), margin + 10, yPos + 5);
 
-    yPos += 4;
+        const methodText = inst.paymentMethod || "Bank Transfer";
+        const methodWidth = Math.max(doc.getTextWidth(methodText) + 4, 22);
+        doc.setFillColor(156, 163, 175);
+        doc.roundedRect(margin + 50, yPos + 1, methodWidth, 5, 1, 1, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "bold");
+        doc.text(methodText, margin + 50 + methodWidth / 2, yPos + 4.5, { align: "center" });
+
+        doc.setTextColor(...mutedColor);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.text(`— ${getOrdinal(paymentIndex + 1)} Payment`, margin + 50 + methodWidth + 3, yPos + 5);
+
+        doc.setTextColor(...accentColor);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(formatCurrency(inst.amount), pageWidth - margin - 5, yPos + 5, { align: "right" });
+
+        yPos += historyEntryHeight;
+      });
+
+      yPos += 4;
+      installmentIndex += pageInstallments.length;
+    }
   }
 
-  // ===================== SIGNATURE SECTION =====================
-  const footerYRef = pageHeight - 32;
-  const sigY = footerYRef - 18;
+  ensureSpace(finalBlockHeight);
+
+  const finalBlockStartY = Math.max(yPos + 4, pageHeight - margin - finalBlockHeight);
   const signLineWidth = 40;
+  const signXPositions = [margin, pageWidth / 2 - signLineWidth / 2, pageWidth - margin - signLineWidth];
+  const labelXPositions = [signXPositions[0] + signLineWidth / 2, pageWidth / 2, signXPositions[2] + signLineWidth / 2];
+  const signatureLineY = finalBlockStartY + (hasAnySignature ? 14 : 8);
+
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
 
-  const signXPositions = [margin, pageWidth / 2 - signLineWidth / 2, pageWidth - margin - signLineWidth];
-  const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
-
-  // Add signature images above the lines
   for (let i = 0; i < 3; i++) {
     const sigImg = signatureImages[i];
     if (sigImg) {
       try {
-        doc.addImage(sigImg, "PNG", signXPositions[i] + 5, sigY - 15, 30, 14);
+        doc.addImage(sigImg, getImageFormat(sigImg), signXPositions[i] + 5, signatureLineY - 11, 30, 9);
       } catch (e) {
-        // skip if image fails
+        console.error("Failed to add signature image:", e);
       }
     }
-    doc.line(signXPositions[i], sigY, signXPositions[i] + signLineWidth, sigY);
+    doc.line(signXPositions[i], signatureLineY, signXPositions[i] + signLineWidth, signatureLineY);
   }
 
-  const labels = ["Received by", "Prepared by", "Authorize by"];
-  const labelXPositions = [signXPositions[0] + signLineWidth / 2, pageWidth / 2, signXPositions[2] + signLineWidth / 2];
   doc.setFontSize(8);
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
-  for (let i = 0; i < 3; i++) {
-    doc.text(labels[i], labelXPositions[i], sigY + 5, { align: "center" });
-  }
+  ["Received by", "Prepared by", "Authorize by"].forEach((label, index) => {
+    doc.text(label, labelXPositions[index], signatureLineY + 5, { align: "center" });
+  });
 
-  // ===================== FOOTER =====================
-  // Position footer at bottom with proper padding
-  const footerY = pageHeight - 35;
-  const footerMargin = 15;
-
-  // Divider line
+  const footerTopY = finalBlockStartY + signatureBlockHeight;
   doc.setDrawColor(...borderColor);
   doc.setLineWidth(0.3);
-  doc.line(footerMargin, footerY - 6, pageWidth - footerMargin, footerY - 6);
+  doc.line(footerMargin, footerTopY, pageWidth - footerMargin, footerTopY);
 
-  // THANK YOU MESSAGE - Centered at top of footer
   doc.setTextColor(...footerTextColor);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(thankYouText, pageWidth / 2, footerY, { align: "center" });
+  doc.text(thankYouText, pageWidth / 2, footerTopY + 5, { align: "center" });
 
-  // BOTTOM ROW - Address on left, QR on right
-  const bottomRowY = footerY + 6;
-  
-  // LEFT SIDE - Address details
-  doc.setTextColor(...footerTextColor);
+  let footerTextY = footerTopY + 11;
   doc.setFontSize(7.5);
-  doc.setFont("helvetica", "normal");
-  
-  let addressY = bottomRowY;
-  if (addressLine1) {
-    doc.text(addressLine1, footerMargin, addressY);
-    addressY += 3.5;
-  }
-  if (addressLine2) {
-    doc.text(addressLine2, footerMargin, addressY);
-    addressY += 3.5;
-  }
-  if (footerPhone) {
-    doc.text(footerPhone, footerMargin, addressY);
-    addressY += 3.5;
-  }
-  if (footerEmail) {
-    doc.text(footerEmail, footerMargin, addressY);
-    addressY += 3.5;
-  }
-  if (footerWebsite) {
-    doc.setTextColor(...primaryColor);
-    doc.text(footerWebsite, footerMargin, addressY);
-  }
+  footerLines.forEach((line, index) => {
+    if (index === footerLines.length - 1 && footerWebsite) {
+      doc.setTextColor(...primaryColor);
+    } else {
+      doc.setTextColor(...footerTextColor);
+    }
+    doc.text(line, footerMargin, footerTextY);
+    footerTextY += 3.5;
+  });
 
-  // RIGHT SIDE - QR Code
   if (showQRCode) {
     const qrSize = 20;
     const invoiceUrl = `${window.location.origin}/view/${invoice.id}`;
     const qrX = pageWidth - footerMargin - qrSize;
-    const qrY = bottomRowY - 2;
-    
+    const qrY = footerTopY + 9;
+
     try {
       const qrDataUrl = await QRCode.toDataURL(invoiceUrl, {
         width: 110,
@@ -620,8 +589,6 @@ export const generateInvoicePdf = async (
         errorCorrectionLevel: "M",
       });
       doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-
-      // QR Label - clearly visible below QR code
       doc.setFontSize(6.5);
       doc.setTextColor(...footerTextColor);
       doc.text("Scan the QR code for details", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
@@ -630,6 +597,5 @@ export const generateInvoicePdf = async (
     }
   }
 
-  // Save the PDF
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 };
