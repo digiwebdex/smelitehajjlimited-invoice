@@ -1,7 +1,6 @@
 /**
- * Convert a number to English words.
- * Handles integers up to 999,999,999,999 (billions).
- * Decimals are ignored (floor applied).
+ * Convert a number to English words using Bangladeshi numbering system.
+ * Uses Lakh (1,00,000) and Crore (1,00,00,000) instead of Million/Billion.
  */
 
 const ones = [
@@ -13,8 +12,6 @@ const ones = [
 const tens = [
   "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety",
 ];
-
-const scales = ["", "Thousand", "Million", "Billion"];
 
 function chunkToWords(n: number): string {
   if (n === 0) return "";
@@ -29,20 +26,34 @@ export function numberToWords(num: number): string {
   const n = Math.abs(Math.floor(num));
   if (n === 0) return "Zero";
 
-  const chunks: number[] = [];
+  const parts: string[] = [];
   let remaining = n;
-  while (remaining > 0) {
-    chunks.push(remaining % 1000);
-    remaining = Math.floor(remaining / 1000);
+
+  // Extract Crores (1,00,00,000)
+  if (remaining >= 10000000) {
+    const crores = Math.floor(remaining / 10000000);
+    parts.push(chunkToWords(crores) + " Crore");
+    remaining %= 10000000;
   }
 
-  const parts = chunks
-    .map((chunk, i) => {
-      if (chunk === 0) return "";
-      return chunkToWords(chunk) + (scales[i] ? " " + scales[i] : "");
-    })
-    .filter(Boolean)
-    .reverse();
+  // Extract Lakhs (1,00,000)
+  if (remaining >= 100000) {
+    const lakhs = Math.floor(remaining / 100000);
+    parts.push(chunkToWords(lakhs) + " Lac");
+    remaining %= 100000;
+  }
+
+  // Extract Thousands
+  if (remaining >= 1000) {
+    const thousands = Math.floor(remaining / 1000);
+    parts.push(chunkToWords(thousands) + " Thousand");
+    remaining %= 1000;
+  }
+
+  // Remaining (0-999)
+  if (remaining > 0) {
+    parts.push(chunkToWords(remaining));
+  }
 
   const result = parts.join(" ");
   return num < 0 ? "Minus " + result : result;
