@@ -408,8 +408,11 @@ export const A4PrintTemplate = ({
         </div>
       )}
 
+      {/* ===== SPACER to push signature/footer down on short invoices ===== */}
+      <div style={{ flexGrow: 1, minHeight: "10mm" }} />
+
       {/* ===== SIGNATURE SECTION ===== */}
-      <div style={{ position: "absolute", bottom: "46mm", left: "15mm", right: "15mm", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8mm", paddingTop: "6mm" }}>
         {[
           { label: "Received by", sig: b.signature_received_by },
           { label: "Prepared by", sig: b.signature_prepared_by },
@@ -429,10 +432,6 @@ export const A4PrintTemplate = ({
       {/* ===== FOOTER ===== */}
       <div
         style={{
-          position: "absolute",
-          bottom: "12mm",
-          left: "15mm",
-          right: "15mm",
           borderTop: `0.3pt solid ${t.border_color}`,
           paddingTop: "3mm",
         }}
