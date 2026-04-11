@@ -63,17 +63,17 @@ export const generateInvoicePdf = async (
   const balanceBgColor = hexToRgb(t.balance_bg_color);
   const balanceTextColor = hexToRgb(t.balance_text_color);
 
-  // Branding settings - company data takes priority over global branding
+  // Branding settings - when company exists, use ONLY company data (no branding fallback)
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
   const headerLogo = company?.logo || b.company_logo;
-  const footerEmail = company?.email || b.email;
-  const footerPhone = company?.phone || b.phone;
-  const addressLine1 = company?.address_line1 || b.address_line1;
-  const addressLine2 = company?.address_line2 || b.address_line2;
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || company?.address;
+  const footerEmail = company ? company.email : b.email;
+  const footerPhone = company ? company.phone : b.phone;
+  const addressLine1 = company ? company.address_line1 : b.address_line1;
+  const addressLine2 = company ? company.address_line2 : b.address_line2;
+  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || (company ? company.address : null);
   const thankYouText = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
-  const showQRCode = company?.show_qr_code ?? b.show_qr_code ?? true;
+  const showQRCode = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerWebsite = company ? company.website : b.website;
 
   let yPos = margin;

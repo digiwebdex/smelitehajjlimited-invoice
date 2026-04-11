@@ -102,14 +102,14 @@ export const A4PrintTemplate = ({
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
 
-  // Footer settings
-  const footerEmail = company?.email || b.email;
-  const footerPhone = company?.phone || b.phone;
-  const addressLine1 = company?.address_line1 || b.address_line1;
-  const addressLine2 = company?.address_line2 || b.address_line2;
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || company?.address;
+  // Footer settings - when company exists, use ONLY company data (no branding fallback)
+  const footerEmail = company ? company.email : b.email;
+  const footerPhone = company ? company.phone : b.phone;
+  const addressLine1 = company ? company.address_line1 : b.address_line1;
+  const addressLine2 = company ? company.address_line2 : b.address_line2;
+  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ") || (company ? company.address : null);
   const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
-  const showQR = company?.show_qr_code ?? b.show_qr_code ?? true;
+  const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerWebsite = company ? company.website : b.website;
 
   // Status badge colors
