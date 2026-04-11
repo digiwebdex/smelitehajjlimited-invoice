@@ -131,7 +131,7 @@ export const A4PrintTemplate = ({
 
   return (
     <div
-      className="a4-print-template"
+      className="a4-print-template invoice-print-document"
       style={{
         width: pageWidth,
         minHeight: "297mm",
@@ -267,10 +267,12 @@ export const A4PrintTemplate = ({
 
       {/* ===== ITEMS TABLE ===== */}
       <table
+        className="invoice-print-table"
         style={{
           width: "100%",
           borderCollapse: "collapse",
           marginBottom: "8mm",
+          pageBreakInside: "auto",
         }}
       >
         <thead>
@@ -291,7 +293,7 @@ export const A4PrintTemplate = ({
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} style={{ borderBottom: `0.2pt solid ${t.border_color}` }}>
+            <tr key={item.id} className="invoice-print-row" style={{ borderBottom: `0.2pt solid ${t.border_color}` }}>
               <td style={{ padding: "1.5mm 0", verticalAlign: "middle", height: "7mm", color: "#000000", fontSize: "9pt" }}>
                 {item.title || "—"}
               </td>
@@ -310,7 +312,7 @@ export const A4PrintTemplate = ({
       </table>
 
       {/* ===== SUMMARY SECTION ===== */}
-      <div style={{ textAlign: "right", marginBottom: "8mm" }}>
+      <div className="invoice-print-summary" style={{ textAlign: "right", marginBottom: "8mm", breakInside: "avoid-page", pageBreakInside: "avoid" }}>
         <div style={{ display: "inline-block", width: "75mm" }}>
           {/* Subtotal */}
           <div style={{ borderBottom: `0.2pt solid ${t.border_color}`, padding: "2mm 0" }}>
@@ -365,7 +367,7 @@ export const A4PrintTemplate = ({
 
       {/* ===== NOTES SECTION ===== */}
       {invoice.notes && (
-        <div style={{ border: `0.3pt solid ${t.border_color}`, padding: "4mm", marginBottom: "6mm" }}>
+        <div className="invoice-print-notes" style={{ border: `0.3pt solid ${t.border_color}`, padding: "4mm", marginBottom: "6mm", breakInside: "avoid-page", pageBreakInside: "avoid" }}>
           <div style={{ color: t.primary_color, fontSize: "9pt", fontWeight: "bold", marginBottom: "2mm", textTransform: "uppercase" }}>
             Notes / Payment Terms
           </div>
@@ -377,7 +379,7 @@ export const A4PrintTemplate = ({
 
       {/* ===== PAYMENT HISTORY ===== */}
       {installments.length > 0 && (
-        <div style={{ border: `0.3pt solid ${t.border_color}`, padding: "4mm", marginBottom: "6mm" }}>
+        <div className="invoice-print-payment-history" style={{ border: `0.3pt solid ${t.border_color}`, padding: "4mm", marginBottom: "6mm", breakInside: "avoid-page", pageBreakInside: "avoid" }}>
           <div style={{ color: t.primary_color, fontSize: "9pt", fontWeight: "bold", marginBottom: "3mm", textTransform: "uppercase" }}>
             Payment History
           </div>
@@ -409,10 +411,10 @@ export const A4PrintTemplate = ({
       )}
 
       {/* ===== SPACER to push signature/footer down on short invoices ===== */}
-      <div style={{ flexGrow: 1, minHeight: "10mm" }} />
+      <div className="invoice-print-spacer" style={{ flexGrow: 1, minHeight: "10mm" }} />
 
       {/* ===== SIGNATURE SECTION ===== */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8mm", paddingTop: "6mm" }}>
+      <div className="invoice-print-signatures" style={{ display: "flex", justifyContent: "space-between", marginBottom: "8mm", paddingTop: "6mm", breakInside: "avoid-page", pageBreakInside: "avoid" }}>
         {[
           { label: "Received by", sig: b.signature_received_by },
           { label: "Prepared by", sig: b.signature_prepared_by },
@@ -431,9 +433,12 @@ export const A4PrintTemplate = ({
 
       {/* ===== FOOTER ===== */}
       <div
+        className="invoice-print-footer"
         style={{
           borderTop: `0.3pt solid ${t.border_color}`,
           paddingTop: "3mm",
+          breakInside: "avoid-page",
+          pageBreakInside: "avoid",
         }}
       >
         {/* Thank You - Center */}
