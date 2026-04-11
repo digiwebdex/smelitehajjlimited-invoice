@@ -143,7 +143,8 @@ export const A4PrintTemplate = ({
         fontSize: "10pt",
         lineHeight: "1.4",
         color: "#000000",
-        position: "relative",
+        display: "flex",
+        flexDirection: "column",
         WebkitPrintColorAdjust: "exact",
         printColorAdjust: "exact",
       }}
