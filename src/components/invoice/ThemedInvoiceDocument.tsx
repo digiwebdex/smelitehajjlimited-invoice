@@ -119,7 +119,7 @@ export const ThemedInvoiceDocument = ({
   const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerAlign = company ? (company.footer_alignment || "center") : (b.footer_alignment || "center");
-  const footerWebsite = company ? company.website : b.website;
+  const footerWebsite = b.website || "www.smelitehajj.com";
 
   const footerAlignClass = {
     left: "text-left items-start",
