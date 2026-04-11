@@ -119,7 +119,7 @@ export const ThemedInvoiceDocument = ({
   const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQR = company?.show_qr_code ?? b.show_qr_code ?? true;
   const footerAlign = company?.footer_alignment || b.footer_alignment || "center";
-  const footerWebsite = company?.website || b.website;
+  const footerWebsite = company ? company.website : b.website;
 
   const footerAlignClass = {
     left: "text-left items-start",
