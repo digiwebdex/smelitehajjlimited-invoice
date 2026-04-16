@@ -76,7 +76,7 @@ export const generateInvoicePdf = async (
     footerThankYou: thankYouText,
     footerWebsite,
     showQR: showQRCode,
-  } = getInvoiceFooterDetails(company, b);
+  } = getInvoiceFooterDetails(company, branding);
 
   const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
   const hasAnySignature = signatureImages.some(Boolean);

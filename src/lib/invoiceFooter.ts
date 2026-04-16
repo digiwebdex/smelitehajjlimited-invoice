@@ -12,9 +12,6 @@ type FooterCompany = {
   footer_alignment?: string | null;
 };
 
-const DEFAULT_ADDRESS_LINE_1 = "B-25/4, Al-Baraka Super Market";
-const DEFAULT_ADDRESS_LINE_2 = "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
-
 const clean = (value?: string | null) => value?.trim() || null;
 
 const splitAddress = (address?: string | null) => {
@@ -47,8 +44,8 @@ export const getInvoiceFooterDetails = (
   branding: BrandSettings | null | undefined
 ) => {
   const b = branding || {
-    address_line1: DEFAULT_ADDRESS_LINE_1,
-    address_line2: DEFAULT_ADDRESS_LINE_2,
+    address_line1: null,
+    address_line2: null,
     email: null,
     phone: null,
     website: null,
@@ -64,15 +61,15 @@ export const getInvoiceFooterDetails = (
 
   const addressLine1 = hasCompanyAddress
     ? clean(company?.address_line1) || derivedCompanyAddress.line1
-    : clean(b.address_line1) || DEFAULT_ADDRESS_LINE_1;
+    : clean(b.address_line1);
 
   const addressLine2 = hasCompanyAddress
     ? clean(company?.address_line2) || derivedCompanyAddress.line2
-    : clean(b.address_line2) || DEFAULT_ADDRESS_LINE_2;
+    : clean(b.address_line2);
 
   const footerEmail = company ? clean(company.email) : clean(b.email);
   const footerPhone = company ? clean(company.phone) : clean(b.phone);
-  const footerWebsite = company ? clean(company.website) || clean(b.website) : clean(b.website) || "www.smelitehajj.com";
+  const footerWebsite = company ? clean(company.website) || clean(b.website) : clean(b.website);
   const footerThankYou = clean(company?.thank_you_text) || clean(b.thank_you_text) || "Thank you for staying with us.";
   const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerAlign = company ? clean(company.footer_alignment) || clean(b.footer_alignment) || "center" : clean(b.footer_alignment) || "center";
