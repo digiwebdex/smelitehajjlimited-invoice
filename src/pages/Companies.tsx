@@ -28,6 +28,22 @@ import {
 import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany, Company } from "@/hooks/useCompanies";
 import { LogoUpload } from "@/components/LogoUpload";
 
+const splitFooterAddress = (address: string) => {
+  const normalized = address
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (normalized.length === 0) {
+    return { address_line1: null, address_line2: null };
+  }
+
+  return {
+    address_line1: normalized[0],
+    address_line2: normalized.length > 1 ? normalized.slice(1).join(", ") : null,
+  };
+};
+
 export default function Companies() {
   const navigate = useNavigate();
   const { data: companies = [], isLoading } = useCompanies();
@@ -76,7 +92,7 @@ export default function Companies() {
         tagline: company.tagline || "",
         email: company.email || "",
         phone: company.phone || "",
-        address: company.address || "",
+        address: company.address || [company.address_line1, company.address_line2].filter(Boolean).join("\n"),
         website: company.website || "",
         logo_url: company.logo_url || undefined,
       });
@@ -93,6 +109,9 @@ export default function Companies() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedAddress = formData.address.trim();
+    const footerAddress = splitFooterAddress(trimmedAddress);
+
     if (editingCompany) {
       await updateCompany.mutateAsync({
         id: editingCompany.id,
@@ -100,7 +119,9 @@ export default function Companies() {
         tagline: formData.tagline || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
-        address: formData.address || undefined,
+        address: trimmedAddress ? trimmedAddress : null,
+        address_line1: footerAddress.address_line1,
+        address_line2: footerAddress.address_line2,
         website: formData.website.trim() ? formData.website.trim() : null,
         logo_url: formData.logo_url,
       });
@@ -110,7 +131,9 @@ export default function Companies() {
         tagline: formData.tagline || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
-        address: formData.address || undefined,
+        address: trimmedAddress ? trimmedAddress : null,
+        address_line1: footerAddress.address_line1,
+        address_line2: footerAddress.address_line2,
         website: formData.website.trim() ? formData.website.trim() : null,
         logo_url: formData.logo_url,
       });
