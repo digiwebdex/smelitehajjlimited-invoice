@@ -59,11 +59,12 @@ export default function Companies() {
     email: "",
     phone: "",
     address: "",
+    website: "",
     logo_url: undefined as string | undefined,
   });
 
   const resetForm = () => {
-    setFormData({ name: "", tagline: "", email: "", phone: "", address: "", logo_url: undefined });
+    setFormData({ name: "", tagline: "", email: "", phone: "", address: "", website: "", logo_url: undefined });
     setEditingCompany(null);
   };
 
@@ -76,6 +77,7 @@ export default function Companies() {
         email: company.email || "",
         phone: company.phone || "",
         address: company.address || "",
+        website: company.website || "",
         logo_url: company.logo_url || undefined,
       });
     } else {
@@ -99,6 +101,7 @@ export default function Companies() {
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
+        website: formData.website || undefined,
         logo_url: formData.logo_url,
       });
     } else {
@@ -108,6 +111,7 @@ export default function Companies() {
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
+        website: formData.website || undefined,
         logo_url: formData.logo_url,
       });
     }
@@ -235,6 +239,17 @@ export default function Companies() {
                     }
                     placeholder="Enter full address"
                     rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) =>
+                      setFormData({ ...formData, website: e.target.value })
+                    }
+                    placeholder="www.company.com"
                   />
                 </div>
                 <DialogFooter className="mt-6">
