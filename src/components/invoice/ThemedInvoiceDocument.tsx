@@ -120,7 +120,7 @@ export const ThemedInvoiceDocument = ({
     footerThankYou,
     footerWebsite,
     showQR,
-  } = getInvoiceFooterDetails(company, b);
+  } = getInvoiceFooterDetails(company, branding);
 
   const footerAlignClass = {
     left: "text-left items-start",

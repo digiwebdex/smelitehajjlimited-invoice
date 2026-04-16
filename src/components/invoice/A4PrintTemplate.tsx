@@ -111,7 +111,7 @@ export const A4PrintTemplate = ({
     footerThankYou,
     footerWebsite,
     showQR,
-  } = getInvoiceFooterDetails(company, b);
+  } = getInvoiceFooterDetails(company, branding);
 
   // Status badge colors
   const getStatusStyle = (status: string) => {
