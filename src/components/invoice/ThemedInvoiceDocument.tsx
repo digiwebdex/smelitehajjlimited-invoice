@@ -3,6 +3,7 @@ import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { ThemeSettings, defaultTheme } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
 import { numberToWords } from "@/lib/numberToWords";
+import { getInvoiceFooterDetails } from "@/lib/invoiceFooter";
 
 const getOrdinal = (n: number): string => {
   const suffixes = ["th", "st", "nd", "rd"];
@@ -110,16 +111,16 @@ export const ThemedInvoiceDocument = ({
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
 
-  // Footer settings - when company exists, use ONLY company data (no branding fallback)
-  const footerEmail = company ? company.email : b.email;
-  const footerPhone = company ? company.phone : b.phone;
-  const addressLine1 = b.address_line1 || "B-25/4, Al-Baraka Super Market";
-  const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ");
-  const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
-  const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
-  const footerAlign = company ? (company.footer_alignment || "center") : (b.footer_alignment || "center");
-  const footerWebsite = b.website || "www.smelitehajj.com";
+  const {
+    addressLine1,
+    addressLine2,
+    footerAlign,
+    footerEmail,
+    footerPhone,
+    footerThankYou,
+    footerWebsite,
+    showQR,
+  } = getInvoiceFooterDetails(company, b);
 
   const footerAlignClass = {
     left: "text-left items-start",
