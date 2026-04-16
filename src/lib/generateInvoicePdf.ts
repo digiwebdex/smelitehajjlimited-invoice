@@ -4,6 +4,7 @@ import { Invoice, Company } from "@/types";
 import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
 import { numberToWords } from "@/lib/numberToWords";
+import { getInvoiceFooterDetails } from "@/lib/invoiceFooter";
 
 const getOrdinal = (n: number): string => {
   const s = ["th", "st", "nd", "rd"];
@@ -70,15 +71,12 @@ export const generateInvoicePdf = async (
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
   const headerLogo = company?.logo || b.company_logo;
-  const footerEmail = company ? company.email : b.email;
-  const footerPhone = company ? company.phone : b.phone;
-  const addressLine1 = b.address_line1 || "B-25/4, Al-Baraka Super Market";
-  const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
-  const thankYouText = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
-  const showQRCode = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
-  const footerWebsite = company ? company.website : (b.website || "www.smelitehajj.com");
-  const footerContactLine = [footerPhone, footerEmail].filter(Boolean).join(" | ");
-  const footerLines = [addressLine1, addressLine2, footerContactLine || null, footerWebsite || null].filter(Boolean) as string[];
+  const {
+    footerLines,
+    footerThankYou: thankYouText,
+    footerWebsite,
+    showQR: showQRCode,
+  } = getInvoiceFooterDetails(company, b);
 
   const signatureImages = [b.signature_received_by, b.signature_prepared_by, b.signature_authorize_by];
   const hasAnySignature = signatureImages.some(Boolean);

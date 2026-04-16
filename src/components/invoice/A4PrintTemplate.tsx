@@ -2,6 +2,7 @@ import { ThemeSettings, defaultTheme, hexToRgb } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { numberToWords } from "@/lib/numberToWords";
+import { getInvoiceFooterDetails } from "@/lib/invoiceFooter";
 
 const getOrdinal = (n: number): string => {
   const suffixes = ["th", "st", "nd", "rd"];
@@ -102,15 +103,15 @@ export const A4PrintTemplate = ({
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
 
-  // Footer settings - when company exists, use ONLY company data (no branding fallback)
-  const footerEmail = company ? company.email : b.email;
-  const footerPhone = company ? company.phone : b.phone;
-  const addressLine1 = b.address_line1 || "B-25/4, Al-Baraka Super Market";
-  const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
-  const footerAddress = [addressLine1, addressLine2].filter(Boolean).join(", ");
-  const footerThankYou = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
-  const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
-  const footerWebsite = company ? company.website : (b.website || "www.smelitehajj.com");
+  const {
+    addressLine1,
+    addressLine2,
+    footerEmail,
+    footerPhone,
+    footerThankYou,
+    footerWebsite,
+    showQR,
+  } = getInvoiceFooterDetails(company, b);
 
   // Status badge colors
   const getStatusStyle = (status: string) => {
