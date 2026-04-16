@@ -59,17 +59,17 @@ export const getInvoiceFooterDetails = (
     clean(company?.address_line1) || clean(company?.address_line2) || clean(company?.address)
   );
 
-  const addressLine1 = hasCompanyAddress
-    ? clean(company?.address_line1) || derivedCompanyAddress.line1
+  const addressLine1 = company
+    ? clean(company.address_line1) || derivedCompanyAddress.line1
     : clean(b.address_line1);
 
-  const addressLine2 = hasCompanyAddress
-    ? clean(company?.address_line2) || derivedCompanyAddress.line2
+  const addressLine2 = company
+    ? clean(company.address_line2) || derivedCompanyAddress.line2
     : clean(b.address_line2);
 
   const footerEmail = company ? clean(company.email) : clean(b.email);
   const footerPhone = company ? clean(company.phone) : clean(b.phone);
-  const footerWebsite = company ? clean(company.website) || clean(b.website) : clean(b.website);
+  const footerWebsite = company ? clean(company.website) : clean(b.website);
   const footerThankYou = clean(company?.thank_you_text) || clean(b.thank_you_text) || "Thank you for staying with us.";
   const showQR = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
   const footerAlign = company ? clean(company.footer_alignment) || clean(b.footer_alignment) || "center" : clean(b.footer_alignment) || "center";
