@@ -76,7 +76,7 @@ export const generateInvoicePdf = async (
   const addressLine2 = b.address_line2 || "Savar Bazar Bus-Stand, Savar, Dhaka-1340";
   const thankYouText = company?.thank_you_text || b.thank_you_text || "Thank you for staying with us.";
   const showQRCode = company ? (company.show_qr_code ?? true) : (b.show_qr_code ?? true);
-  const footerWebsite = b.website || "www.smelitehajj.com";
+  const footerWebsite = company ? company.website : (b.website || "www.smelitehajj.com");
   const footerContactLine = [footerPhone, footerEmail].filter(Boolean).join(" | ");
   const footerLines = [addressLine1, addressLine2, footerContactLine || null, footerWebsite || null].filter(Boolean) as string[];
 
