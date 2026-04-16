@@ -14,31 +14,6 @@ type FooterCompany = {
 
 const clean = (value?: string | null) => value?.trim() || null;
 
-const splitAddress = (address?: string | null) => {
-  const normalized = clean(address);
-
-  if (!normalized) {
-    return { line1: null, line2: null };
-  }
-
-  const lines = normalized
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  if (lines.length > 1) {
-    return {
-      line1: lines[0],
-      line2: lines.slice(1).join(", "),
-    };
-  }
-
-  return {
-    line1: normalized,
-    line2: null,
-  };
-};
-
 export const getInvoiceFooterDetails = (
   company: FooterCompany | null | undefined,
   branding: BrandSettings | null | undefined
@@ -54,17 +29,12 @@ export const getInvoiceFooterDetails = (
     footer_alignment: "center",
   };
 
-  const derivedCompanyAddress = splitAddress(company?.address);
-  const hasCompanyAddress = Boolean(
-    clean(company?.address_line1) || clean(company?.address_line2) || clean(company?.address)
-  );
-
   const addressLine1 = company
-    ? clean(company.address_line1) || derivedCompanyAddress.line1
+    ? clean(company.address_line1)
     : clean(b.address_line1);
 
   const addressLine2 = company
-    ? clean(company.address_line2) || derivedCompanyAddress.line2
+    ? clean(company.address_line2)
     : clean(b.address_line2);
 
   const footerEmail = company ? clean(company.email) : clean(b.email);
