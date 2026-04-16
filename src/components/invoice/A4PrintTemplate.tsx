@@ -463,7 +463,9 @@ export const A4PrintTemplate = ({
               </div>
             )}
             {footerWebsite && (
-              <div style={{ color: t.primary_color, fontSize: "7.5pt" }}>{footerWebsite}</div>
+              <div style={{ color: t.primary_color, fontSize: "7.5pt" }}>
+                <span style={{ fontWeight: "bold" }}>Website : </span>{footerWebsite}
+              </div>
             )}
           </div>
 

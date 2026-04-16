@@ -429,7 +429,9 @@ export const ThemedInvoiceDocument = ({
               <p>{[footerPhone, footerEmail].filter(Boolean).join(" | ")}</p>
             )}
             {footerWebsite && (
-              <p style={{ color: t.primary_color }}>{footerWebsite}</p>
+              <p style={{ color: t.primary_color }}>
+                <span className="font-semibold">Website : </span>{footerWebsite}
+              </p>
             )}
           </div>
 
