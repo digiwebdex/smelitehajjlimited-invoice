@@ -565,12 +565,19 @@ export const generateInvoicePdf = async (
   let footerTextY = footerTopY + 11;
   doc.setFontSize(7.5);
   footerLines.forEach((line, index) => {
-    if (index === footerLines.length - 1 && footerWebsite) {
+    const isWebsiteLine = index === footerLines.length - 1 && footerWebsite;
+    if (isWebsiteLine) {
       doc.setTextColor(...primaryColor);
+      doc.setFont("helvetica", "bold");
+      const label = "Website : ";
+      const labelWidth = doc.getTextWidth(label);
+      doc.text(label, footerMargin, footerTextY);
+      doc.setFont("helvetica", "normal");
+      doc.text(line, footerMargin + labelWidth, footerTextY);
     } else {
       doc.setTextColor(...footerTextColor);
+      doc.text(line, footerMargin, footerTextY);
     }
-    doc.text(line, footerMargin, footerTextY);
     footerTextY += 3.5;
   });
 
