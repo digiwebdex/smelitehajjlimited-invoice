@@ -36,7 +36,21 @@ export default function BrandingSettings() {
 
   const handleSave = async () => {
     try {
-      await updateMutation.mutateAsync(formData);
+      await updateMutation.mutateAsync({
+        ...formData,
+        address_line1:
+          typeof formData.address_line1 === "string" && formData.address_line1.trim()
+            ? formData.address_line1.trim()
+            : null,
+        address_line2:
+          typeof formData.address_line2 === "string" && formData.address_line2.trim()
+            ? formData.address_line2.trim()
+            : null,
+        website:
+          typeof formData.website === "string" && formData.website.trim()
+            ? formData.website.trim()
+            : null,
+      });
       toast({
         title: "Branding Saved",
         description: "Your branding settings have been updated successfully.",
