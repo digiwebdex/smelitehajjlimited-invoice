@@ -48,7 +48,7 @@ export default function CompanyBranding() {
         logo_url: formData.logo_url || undefined,
         address_line1: formData.address_line1 || undefined,
         address_line2: formData.address_line2 || undefined,
-        website: formData.website || undefined,
+        website: typeof formData.website === "string" && formData.website.trim() ? formData.website.trim() : null,
         thank_you_text: formData.thank_you_text || undefined,
         show_qr_code: formData.show_qr_code ?? true,
         footer_alignment: formData.footer_alignment || "center",

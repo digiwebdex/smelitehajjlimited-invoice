@@ -101,7 +101,7 @@ export default function Companies() {
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
-        website: formData.website || undefined,
+        website: formData.website.trim() ? formData.website.trim() : null,
         logo_url: formData.logo_url,
       });
     } else {
@@ -111,7 +111,7 @@ export default function Companies() {
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
-        website: formData.website || undefined,
+        website: formData.website.trim() ? formData.website.trim() : null,
         logo_url: formData.logo_url,
       });
     }
