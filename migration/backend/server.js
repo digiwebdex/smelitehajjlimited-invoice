@@ -44,9 +44,44 @@ const pool = new Pool({
   max: 20,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-to-a-secure-secret';
-const PORT = process.env.PORT || 3001;
+// ============================================
+// STARTUP CONFIG VALIDATION (fail fast)
+// ============================================
+const EXPECTED_PORT = '3003';
+const EXPECTED_DB_PORT = '5440';
+const EXPECTED_DB_NAME = 'sm_elite_hajj';
+const REQUIRED_ENV = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'PORT', 'JWT_SECRET'];
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k] || String(process.env[k]).trim() === '');
+if (missingEnv.length > 0) {
+  console.error('[startup] FATAL: missing required env vars:', missingEnv.join(', '));
+  process.exit(1);
+}
+if (process.env.JWT_SECRET === 'change-this-to-a-secure-secret' || process.env.JWT_SECRET.length < 16) {
+  console.error('[startup] FATAL: JWT_SECRET is missing or too weak. Set a long random value in .env.');
+  process.exit(1);
+}
+if (process.env.PORT !== EXPECTED_PORT) {
+  console.error(`[startup] FATAL: PORT=${process.env.PORT} but invoice API is locked to ${EXPECTED_PORT}.`);
+  process.exit(1);
+}
+if (process.env.DB_PORT !== EXPECTED_DB_PORT) {
+  console.error(`[startup] FATAL: DB_PORT=${process.env.DB_PORT} but invoice DB is locked to ${EXPECTED_DB_PORT}.`);
+  process.exit(1);
+}
+if (process.env.DB_NAME !== EXPECTED_DB_NAME) {
+  console.error(`[startup] FATAL: DB_NAME=${process.env.DB_NAME} but invoice DB is locked to ${EXPECTED_DB_NAME}.`);
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+console.log('[startup] config OK', {
+  port: PORT,
+  db: `${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`,
+  cors: process.env.CORS_ORIGIN || '*',
+});
 
 // ============================================
 // Auth Middleware
@@ -106,9 +141,34 @@ const getUserAccessState = async (userId) => {
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ status: 'ok', database: 'connected' });
+    res.json({ status: 'ok', database: 'connected', port: PORT });
   } catch (err) {
     res.status(500).json({ status: 'error', database: 'disconnected', error: err.message });
+  }
+});
+
+// Readiness check - verifies expected tables and config
+app.get('/api/ready', async (req, res) => {
+  try {
+    const required = ['users', 'profiles', 'user_roles', 'companies', 'invoices'];
+    const { rows } = await pool.query(
+      `SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = ANY($1)`,
+      [required]
+    );
+    const present = rows.map((r) => r.table_name);
+    const missing = required.filter((t) => !present.includes(t));
+    if (missing.length > 0) {
+      return res.status(503).json({ status: 'not_ready', missing_tables: missing });
+    }
+    res.json({
+      status: 'ready',
+      port: PORT,
+      db: { host: process.env.DB_HOST, port: process.env.DB_PORT, name: process.env.DB_NAME },
+      jwt_secret_loaded: Boolean(JWT_SECRET) && JWT_SECRET.length >= 16,
+    });
+  } catch (err) {
+    res.status(503).json({ status: 'not_ready', error: err.message });
   }
 });
 
@@ -119,40 +179,61 @@ app.get('/api/health', async (req, res) => {
 // Sign Up
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, full_name } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const rawEmail = (req.body?.email || '').toString().trim().toLowerCase();
+    const password = req.body?.password;
+    const full_name = req.body?.full_name;
+    if (!rawEmail || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
     const passwordHash = await bcrypt.hash(password, 12);
 
     const { rows } = await pool.query(
       `INSERT INTO users (email, password_hash, encrypted_password, raw_user_meta_data, email_confirmed_at)
        VALUES ($1, $2, $2, $3, now()) RETURNING id, email, created_at`,
-      [email, passwordHash, JSON.stringify({ full_name: full_name || '' })]
+      [rawEmail, passwordHash, JSON.stringify({ full_name: full_name || '' })]
     );
 
     // Profile is auto-created by trigger
     res.json({ user: rows[0], message: 'Account created. Waiting for admin approval.' });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });
+    console.error('[signup] error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Sign In
 app.post('/api/auth/login', async (req, res) => {
+  const startedAt = Date.now();
+  const rawEmail = (req.body?.email || '').toString().trim().toLowerCase();
+  const password = req.body?.password;
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (!rawEmail || !password) {
+      console.warn('[login] missing_credentials');
+      return res.status(400).json({ error: 'Email and password required' });
+    }
 
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (rows.length === 0) return res.status(400).json({ error: 'Invalid credentials' });
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE lower(email) = $1 LIMIT 1',
+      [rawEmail]
+    );
+    if (rows.length === 0) {
+      console.warn('[login] user_not_found', { email: rawEmail });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const user = rows[0];
     const storedHash = user.password_hash || user.encrypted_password;
-    if (!storedHash) return res.status(400).json({ error: 'Password not set for this account' });
+    if (!storedHash) {
+      console.warn('[login] no_password_hash', { userId: user.id });
+      return res.status(401).json({ error: 'Account password not set. Contact admin.' });
+    }
 
     const valid = await bcrypt.compare(password, storedHash);
-    if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!valid) {
+      console.warn('[login] bad_password', { userId: user.id });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const accessUser = await getUserAccessState(user.id);
 
@@ -161,6 +242,8 @@ app.post('/api/auth/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log('[login] success', { userId: user.id, ms: Date.now() - startedAt });
 
     res.json({
       data: {
@@ -175,7 +258,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[login] internal_error:', err.message);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });
 
@@ -682,7 +766,22 @@ if (fs.existsSync(frontendPath)) {
 // ============================================
 // START SERVER
 // ============================================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SM Elite Hajj API server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`[startup] SM Elite Hajj API listening on port ${PORT}`);
+  console.log(`[startup] Health: http://localhost:${PORT}/api/health`);
+  console.log(`[startup] Ready:  http://localhost:${PORT}/api/ready`);
+  try {
+    await pool.query('SELECT 1');
+    console.log('[startup] DB connection OK');
+  } catch (err) {
+    console.error('[startup] DB connection FAILED:', err.message);
+  }
+});
+
+// Catch unhandled promise rejections so PM2/systemd doesn't restart silently
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandledRejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[process] uncaughtException:', err.message);
 });
