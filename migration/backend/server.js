@@ -154,40 +154,61 @@ app.get('/api/health', async (req, res) => {
 // Sign Up
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, full_name } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    const rawEmail = (req.body?.email || '').toString().trim().toLowerCase();
+    const password = req.body?.password;
+    const full_name = req.body?.full_name;
+    if (!rawEmail || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
     const passwordHash = await bcrypt.hash(password, 12);
 
     const { rows } = await pool.query(
       `INSERT INTO users (email, password_hash, encrypted_password, raw_user_meta_data, email_confirmed_at)
        VALUES ($1, $2, $2, $3, now()) RETURNING id, email, created_at`,
-      [email, passwordHash, JSON.stringify({ full_name: full_name || '' })]
+      [rawEmail, passwordHash, JSON.stringify({ full_name: full_name || '' })]
     );
 
     // Profile is auto-created by trigger
     res.json({ user: rows[0], message: 'Account created. Waiting for admin approval.' });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });
+    console.error('[signup] error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Sign In
 app.post('/api/auth/login', async (req, res) => {
+  const startedAt = Date.now();
+  const rawEmail = (req.body?.email || '').toString().trim().toLowerCase();
+  const password = req.body?.password;
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (!rawEmail || !password) {
+      console.warn('[login] missing_credentials');
+      return res.status(400).json({ error: 'Email and password required' });
+    }
 
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (rows.length === 0) return res.status(400).json({ error: 'Invalid credentials' });
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE lower(email) = $1 LIMIT 1',
+      [rawEmail]
+    );
+    if (rows.length === 0) {
+      console.warn('[login] user_not_found', { email: rawEmail });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const user = rows[0];
     const storedHash = user.password_hash || user.encrypted_password;
-    if (!storedHash) return res.status(400).json({ error: 'Password not set for this account' });
+    if (!storedHash) {
+      console.warn('[login] no_password_hash', { userId: user.id });
+      return res.status(401).json({ error: 'Account password not set. Contact admin.' });
+    }
 
     const valid = await bcrypt.compare(password, storedHash);
-    if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!valid) {
+      console.warn('[login] bad_password', { userId: user.id });
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const accessUser = await getUserAccessState(user.id);
 
@@ -196,6 +217,8 @@ app.post('/api/auth/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log('[login] success', { userId: user.id, ms: Date.now() - startedAt });
 
     res.json({
       data: {
@@ -210,7 +233,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[login] internal_error:', err.message);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });
 
