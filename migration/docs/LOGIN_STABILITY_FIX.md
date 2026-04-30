@@ -23,9 +23,9 @@ This rollout fixes the repeated login failures **without touching the database**
 ## One-time VPS setup
 
 1. SSH into the VPS.
-2. Make sure `/var/www/smelitehajj/migration/backend/.env` has a strong `JWT_SECRET`:
+2. Make sure `/var/www/smelitehajjinvoice/migration/backend/.env` has a strong `JWT_SECRET`:
    ```bash
-   cd /var/www/smelitehajj/migration/backend
+   cd /var/www/smelitehajjinvoice/migration/backend
    grep ^JWT_SECRET= .env || echo "JWT_SECRET=$(openssl rand -hex 48)" >> .env
    ```
    If it exists but is the placeholder `generate-a-secure-random-string-here`, replace it:
@@ -37,7 +37,7 @@ This rollout fixes the repeated login failures **without touching the database**
 
 3. Deploy:
    ```bash
-   bash /var/www/smelitehajj/migration/scripts/deploy.sh
+   bash /var/www/smelitehajjinvoice/migration/scripts/deploy.sh
    ```
 
 4. Verify:
@@ -59,8 +59,8 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/smelitehajj/migration/backend
-EnvironmentFile=/var/www/smelitehajj/migration/backend/.env
+WorkingDirectory=/var/www/smelitehajjinvoice/migration/backend
+EnvironmentFile=/var/www/smelitehajjinvoice/migration/backend/.env
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5
