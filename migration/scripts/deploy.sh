@@ -20,7 +20,6 @@ echo "============================================"
 # 1. Verify port is not taken by another project
 PORT_USER=$(lsof -ti:${LOCKED_PORT} 2>/dev/null || true)
 if [ -n "$PORT_USER" ]; then
-    PORT_PROCESS=$(ps -p $PORT_USER -o comm= 2>/dev/null || echo "unknown")
     PM2_NAME=$(pm2 jlist 2>/dev/null | python3 -c "
 import sys, json
 try:
@@ -31,11 +30,9 @@ try:
             break
 except: pass
 " 2>/dev/null || true)
-    
     if [ "$PM2_NAME" != "$PM2_APP_NAME" ] && [ -n "$PM2_NAME" ]; then
         echo "ERROR: Port ${LOCKED_PORT} is used by another project: ${PM2_NAME}"
         echo "This port is RESERVED for ${PM2_APP_NAME}."
-        echo "Please use a different port for the other project."
         exit 1
     fi
 fi
@@ -56,47 +53,65 @@ echo "Setting up backend..."
 cd "$BACKEND_DIR"
 npm install --production
 
-# 5. Verify .env has correct locked values
-if [ -f .env ]; then
-    CURRENT_PORT=$(grep -E "^PORT=" .env | cut -d= -f2)
-    CURRENT_DB_PORT=$(grep -E "^DB_PORT=" .env | cut -d= -f2)
-    CURRENT_DB_NAME=$(grep -E "^DB_NAME=" .env | cut -d= -f2)
-    
-    if [ "$CURRENT_PORT" != "$LOCKED_PORT" ]; then
-        echo "WARNING: .env PORT ($CURRENT_PORT) != locked port ($LOCKED_PORT). Fixing..."
-        sed -i "s/^PORT=.*/PORT=${LOCKED_PORT}/" .env
-    fi
-    if [ "$CURRENT_DB_PORT" != "$LOCKED_DB_PORT" ]; then
-        echo "WARNING: .env DB_PORT ($CURRENT_DB_PORT) != locked port ($LOCKED_DB_PORT). Fixing..."
-        sed -i "s/^DB_PORT=.*/DB_PORT=${LOCKED_DB_PORT}/" .env
-    fi
-    if [ "$CURRENT_DB_NAME" != "$LOCKED_DB_NAME" ]; then
-        echo "WARNING: .env DB_NAME ($CURRENT_DB_NAME) != locked name ($LOCKED_DB_NAME). Fixing..."
-        sed -i "s/^DB_NAME=.*/DB_NAME=${LOCKED_DB_NAME}/" .env
-    fi
-fi
-
-# 6. Restart API with locked env
-echo "Restarting API..."
-pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
-pm2 start ecosystem.config.js
-pm2 save
-
-# 7. Verify
-sleep 3
-HEALTH=$(curl -sf http://localhost:${LOCKED_PORT}/api/health 2>/dev/null || echo "FAILED")
-if echo "$HEALTH" | grep -q "ok"; then
-    echo ""
-    echo "============================================"
-    echo "  DEPLOYMENT SUCCESSFUL"
-    echo "  API: http://localhost:${LOCKED_PORT}"
-    echo "  DB:  ${LOCKED_DB_NAME} on port ${LOCKED_DB_PORT}"
-    echo "  Frontend: ${PROJECT_DIR}/dist"
-    echo "============================================"
-else
-    echo ""
-    echo "WARNING: Health check failed!"
-    echo "Response: $HEALTH"
-    echo "Check: pm2 logs $PM2_APP_NAME --lines 20"
+# 5. Verify .env has correct locked values + required secrets
+if [ ! -f .env ]; then
+    echo "ERROR: $BACKEND_DIR/.env is missing. Cannot deploy."
     exit 1
 fi
+
+CURRENT_PORT=$(grep -E "^PORT=" .env | cut -d= -f2)
+CURRENT_DB_PORT=$(grep -E "^DB_PORT=" .env | cut -d= -f2)
+CURRENT_DB_NAME=$(grep -E "^DB_NAME=" .env | cut -d= -f2)
+CURRENT_JWT=$(grep -E "^JWT_SECRET=" .env | cut -d= -f2-)
+
+if [ "$CURRENT_PORT" != "$LOCKED_PORT" ]; then
+    echo "Fixing PORT in .env -> ${LOCKED_PORT}"
+    sed -i "s/^PORT=.*/PORT=${LOCKED_PORT}/" .env
+fi
+if [ "$CURRENT_DB_PORT" != "$LOCKED_DB_PORT" ]; then
+    echo "Fixing DB_PORT in .env -> ${LOCKED_DB_PORT}"
+    sed -i "s/^DB_PORT=.*/DB_PORT=${LOCKED_DB_PORT}/" .env
+fi
+if [ "$CURRENT_DB_NAME" != "$LOCKED_DB_NAME" ]; then
+    echo "Fixing DB_NAME in .env -> ${LOCKED_DB_NAME}"
+    sed -i "s/^DB_NAME=.*/DB_NAME=${LOCKED_DB_NAME}/" .env
+fi
+if [ -z "$CURRENT_JWT" ] || [ "$CURRENT_JWT" = "generate-a-secure-random-string-here" ] || [ "${#CURRENT_JWT}" -lt 16 ]; then
+    echo "ERROR: JWT_SECRET in .env is missing or too weak (>=16 chars required)."
+    echo "       Generate with: openssl rand -hex 48"
+    exit 1
+fi
+
+# 6. Restart API with FORCED env refresh (drops stale PM2-baked env from other projects)
+echo "Restarting API (forced env refresh)..."
+pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+pm2 start ecosystem.config.js --update-env
+pm2 save
+
+# 7. Wait for readiness with polling (no blind sleep)
+echo "Waiting for API readiness..."
+READY=""
+for i in $(seq 1 20); do
+    R=$(curl -sf "http://localhost:${LOCKED_PORT}/api/ready" 2>/dev/null || true)
+    if echo "$R" | grep -q '"status":"ready"'; then
+        READY="$R"
+        break
+    fi
+    sleep 1
+done
+
+if [ -z "$READY" ]; then
+    echo "ERROR: API did not become ready."
+    echo "Last log:"
+    pm2 logs "$PM2_APP_NAME" --lines 30 --nostream --err || true
+    exit 1
+fi
+
+echo ""
+echo "============================================"
+echo "  DEPLOYMENT SUCCESSFUL"
+echo "  API:  http://localhost:${LOCKED_PORT}"
+echo "  DB:   ${LOCKED_DB_NAME} on port ${LOCKED_DB_PORT}"
+echo "  PM2:  ${PM2_APP_NAME}"
+echo "  Site: https://soft.smelitehajj.com"
+echo "============================================"
