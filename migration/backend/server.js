@@ -44,9 +44,44 @@ const pool = new Pool({
   max: 20,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-to-a-secure-secret';
-const PORT = process.env.PORT || 3001;
+// ============================================
+// STARTUP CONFIG VALIDATION (fail fast)
+// ============================================
+const EXPECTED_PORT = '3003';
+const EXPECTED_DB_PORT = '5440';
+const EXPECTED_DB_NAME = 'sm_elite_hajj';
+const REQUIRED_ENV = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'PORT', 'JWT_SECRET'];
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k] || String(process.env[k]).trim() === '');
+if (missingEnv.length > 0) {
+  console.error('[startup] FATAL: missing required env vars:', missingEnv.join(', '));
+  process.exit(1);
+}
+if (process.env.JWT_SECRET === 'change-this-to-a-secure-secret' || process.env.JWT_SECRET.length < 16) {
+  console.error('[startup] FATAL: JWT_SECRET is missing or too weak. Set a long random value in .env.');
+  process.exit(1);
+}
+if (process.env.PORT !== EXPECTED_PORT) {
+  console.error(`[startup] FATAL: PORT=${process.env.PORT} but invoice API is locked to ${EXPECTED_PORT}.`);
+  process.exit(1);
+}
+if (process.env.DB_PORT !== EXPECTED_DB_PORT) {
+  console.error(`[startup] FATAL: DB_PORT=${process.env.DB_PORT} but invoice DB is locked to ${EXPECTED_DB_PORT}.`);
+  process.exit(1);
+}
+if (process.env.DB_NAME !== EXPECTED_DB_NAME) {
+  console.error(`[startup] FATAL: DB_NAME=${process.env.DB_NAME} but invoice DB is locked to ${EXPECTED_DB_NAME}.`);
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+console.log('[startup] config OK', {
+  port: PORT,
+  db: `${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`,
+  cors: process.env.CORS_ORIGIN || '*',
+});
 
 // ============================================
 // Auth Middleware
