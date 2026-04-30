@@ -141,9 +141,34 @@ const getUserAccessState = async (userId) => {
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
-    res.json({ status: 'ok', database: 'connected' });
+    res.json({ status: 'ok', database: 'connected', port: PORT });
   } catch (err) {
     res.status(500).json({ status: 'error', database: 'disconnected', error: err.message });
+  }
+});
+
+// Readiness check - verifies expected tables and config
+app.get('/api/ready', async (req, res) => {
+  try {
+    const required = ['users', 'profiles', 'user_roles', 'companies', 'invoices'];
+    const { rows } = await pool.query(
+      `SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = ANY($1)`,
+      [required]
+    );
+    const present = rows.map((r) => r.table_name);
+    const missing = required.filter((t) => !present.includes(t));
+    if (missing.length > 0) {
+      return res.status(503).json({ status: 'not_ready', missing_tables: missing });
+    }
+    res.json({
+      status: 'ready',
+      port: PORT,
+      db: { host: process.env.DB_HOST, port: process.env.DB_PORT, name: process.env.DB_NAME },
+      jwt_secret_loaded: Boolean(JWT_SECRET) && JWT_SECRET.length >= 16,
+    });
+  } catch (err) {
+    res.status(503).json({ status: 'not_ready', error: err.message });
   }
 });
 
