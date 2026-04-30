@@ -47,7 +47,7 @@ const pool = new Pool({
 // ============================================
 // STARTUP CONFIG VALIDATION (fail fast)
 // ============================================
-const EXPECTED_PORT = '3003';
+const EXPECTED_PORT = '3012';
 const EXPECTED_DB_PORT = '5440';
 const EXPECTED_DB_NAME = 'sm_elite_hajj';
 const REQUIRED_ENV = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'PORT', 'JWT_SECRET'];
