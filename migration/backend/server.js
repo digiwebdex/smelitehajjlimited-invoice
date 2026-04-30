@@ -766,7 +766,22 @@ if (fs.existsSync(frontendPath)) {
 // ============================================
 // START SERVER
 // ============================================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SM Elite Hajj API server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`[startup] SM Elite Hajj API listening on port ${PORT}`);
+  console.log(`[startup] Health: http://localhost:${PORT}/api/health`);
+  console.log(`[startup] Ready:  http://localhost:${PORT}/api/ready`);
+  try {
+    await pool.query('SELECT 1');
+    console.log('[startup] DB connection OK');
+  } catch (err) {
+    console.error('[startup] DB connection FAILED:', err.message);
+  }
+});
+
+// Catch unhandled promise rejections so PM2/systemd doesn't restart silently
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandledRejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[process] uncaughtException:', err.message);
 });
