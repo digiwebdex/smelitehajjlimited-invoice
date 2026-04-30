@@ -52,15 +52,26 @@ async function request<T = any>(
       headers,
     });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      return { error: result.error || result.message || "Request failed" };
+    let result: any = null;
+    try {
+      result = await response.json();
+    } catch {
+      result = null;
     }
 
-    return { data: result.data ?? result, count: result.count };
+    if (!response.ok) {
+      const serverError = result?.error || result?.message;
+      if (serverError) return { error: serverError };
+      if (response.status === 401) return { error: "Invalid email or password" };
+      if (response.status === 502 || response.status === 503 || response.status === 504) {
+        return { error: "Server temporarily unavailable. Please try again in a moment." };
+      }
+      return { error: `Request failed (${response.status})` };
+    }
+
+    return { data: result?.data ?? result, count: result?.count };
   } catch (error: any) {
-    return { error: error.message || "Network error" };
+    return { error: error?.message || "Network error" };
   }
 }
 
