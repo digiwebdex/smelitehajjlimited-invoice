@@ -1,6 +1,6 @@
 // ============================================
 // SM Elite Hajj Invoice API - PM2 Ecosystem
-// LOCKED: name=smelitehajj-api, port=3003, db=sm_elite_hajj@5440
+// LOCKED: name=smelitehajj-api, port=3012, db=sm_elite_hajj@5440
 // IMPORTANT: This file owns the runtime env. PM2's saved dump must NOT
 // override these. After editing, always restart with:
 //   pm2 delete smelitehajj-api 2>/dev/null || true
@@ -27,7 +27,7 @@ module.exports = {
       // dotenv is loaded inside server.js via require('dotenv').config().
       env: {
         NODE_ENV: 'production',
-        PORT: '3003',
+        PORT: '3012',
         DB_HOST: 'localhost',
         DB_PORT: '5440',
         DB_NAME: 'sm_elite_hajj',

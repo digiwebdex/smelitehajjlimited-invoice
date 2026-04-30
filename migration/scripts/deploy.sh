@@ -9,7 +9,7 @@ set -e
 PROJECT_DIR="/var/www/smelitehajjinvoice"
 BACKEND_DIR="${PROJECT_DIR}/migration/backend"
 PM2_APP_NAME="smelitehajj-api"
-LOCKED_PORT=3003
+LOCKED_PORT=3012
 LOCKED_DB_PORT=5440
 LOCKED_DB_NAME="sm_elite_hajj"
 
