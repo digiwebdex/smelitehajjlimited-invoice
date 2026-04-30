@@ -9,9 +9,9 @@
 | **DB Name**     | `sm_elite_hajj`                            | 🔒 LOCKED |
 | **DB User**     | `sm_elite_user`                            | 🔒 LOCKED |
 | **Domain**      | `soft.smelitehajj.com`                     | 🔒 LOCKED |
-| **Frontend**    | `/var/www/smelitehajj/dist`                | 🔒 LOCKED |
-| **Backend**     | `/var/www/smelitehajj/migration/backend`   | 🔒 LOCKED |
-| **Uploads**     | `/var/www/smelitehajj/migration/backend/uploads` | 🔒 LOCKED |
+| **Frontend**    | `/var/www/smelitehajjinvoice/dist`                | 🔒 LOCKED |
+| **Backend**     | `/var/www/smelitehajjinvoice/migration/backend`   | 🔒 LOCKED |
+| **Uploads**     | `/var/www/smelitehajjinvoice/migration/backend/uploads` | 🔒 LOCKED |
 | **PM2 Process** | `smelitehajj-api`                          | 🔒 LOCKED |
 | **Nginx Config**| `/etc/nginx/sites-available/sm-elite-hajj` | 🔒 LOCKED |
 
@@ -32,7 +32,7 @@
 2. **Create a separate database** with a unique name and user
 3. **Use a separate Nginx server block** with its own domain
 4. **Use a separate PM2 process** with a unique name
-5. **Never modify** any file in `/var/www/smelitehajj/`
+5. **Never modify** any file in `/var/www/smelitehajjinvoice/`
 
 ## Database Isolation
 
