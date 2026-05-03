@@ -222,111 +222,102 @@ export const ThemedInvoiceDocument = ({
         </div>
       </div>
 
-      {/* ITEM TABLE */}
+      {/* UNIFIED ITEM + SUMMARY TABLE — matches A4/PDF layout exactly */}
       <div className="mt-10">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+          <colgroup>
+            <col style={{ width: "50%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "19%" }} />
+            <col style={{ width: "19%" }} />
+          </colgroup>
           <thead>
             <tr style={{ borderBottomWidth: '2px', borderBottomColor: t.border_color }}>
-              <th
-                className="text-left py-3 font-semibold uppercase tracking-wide"
-                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
-              >
+              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Description
               </th>
-              <th
-                className="text-left py-3 font-semibold uppercase tracking-wide w-16"
-                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
-              >
+              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Qty
               </th>
-              <th
-                className="text-left py-3 font-semibold uppercase tracking-wide"
-                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
-              >
+              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Unit Price
               </th>
-              <th
-                className="text-right py-3 font-semibold uppercase tracking-wide"
-                style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}
-              >
+              <th className="text-right py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Total
               </th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color, height: '26.5px' }}>
-                <td className="py-1.5 font-medium text-black align-middle">
+              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
+                <td className="py-3 font-medium text-black align-middle uppercase">
                   {item.title || "—"}
                 </td>
-                <td className="py-1.5 text-left text-black align-middle">{item.qty || 1}</td>
-                <td className="py-1.5 text-left text-black align-middle">
+                <td className="py-3 text-left text-black align-middle">{item.qty || 1}</td>
+                <td className="py-3 text-left text-black align-middle">
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="py-1.5 text-right font-semibold text-black align-middle">
+                <td className="py-3 text-right font-semibold text-black align-middle">
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
+
+            {/* Spacer */}
+            <tr><td colSpan={4} style={{ height: "16px" }} /></tr>
+
+            {/* Subtotal */}
+            <tr>
+              <td colSpan={2} />
+              <td className="py-2 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
+              <td className="py-2 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
+            </tr>
+            {/* Tax */}
+            <tr>
+              <td colSpan={2} />
+              <td className="py-2 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
+              <td className="py-2 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
+            </tr>
+            {/* Total */}
+            <tr>
+              <td colSpan={2} />
+              <td className="py-2 font-bold text-black">Total</td>
+              <td className="py-2 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
+            </tr>
+            {/* Total Paid */}
+            <tr>
+              <td colSpan={2} />
+              <td className="py-2 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
+              <td className="py-2 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
+            </tr>
+            {/* Balance / Paid in Full */}
+            <tr>
+              <td colSpan={2} />
+              <td
+                colSpan={2}
+                style={{
+                  backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
+                  color: t.balance_text_color,
+                  padding: "12px 16px",
+                  fontWeight: "bold",
+                }}
+              >
+                <div className="flex justify-between">
+                  <span>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
+                  <span>{formatCurrency(invoice.due_amount)}</span>
+                </div>
+              </td>
+            </tr>
+            {/* In Word */}
+            <tr>
+              <td colSpan={2} />
+              <td colSpan={2} className="pt-3 text-xs break-words" style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                <span className="font-semibold">In Word : </span>
+                <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
+              </td>
+            </tr>
           </tbody>
         </table>
-      </div>
-
-      {/* SUMMARY */}
-      <div className="flex justify-end mt-8">
-        <div className="w-80 text-sm">
-          <div
-            className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
-          >
-            <span className="font-medium" style={{ color: t.subtotal_text_color }}>Subtotal</span>
-            <span className="font-semibold text-black">
-              {formatCurrency(invoice.subtotal)}
-            </span>
-          </div>
-          <div
-            className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
-          >
-            <span className="font-medium" style={{ color: t.subtotal_text_color }}>Tax</span>
-            <span className="font-semibold text-black">
-              {formatCurrency(invoice.vat_amount)}
-            </span>
-          </div>
-          <div
-            className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
-          >
-            <span className="font-bold text-black">Total</span>
-            <span className="font-bold text-black">
-              {formatCurrency(invoice.total_amount)}
-            </span>
-          </div>
-          <div
-            className="flex justify-between py-3"
-            style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}
-          >
-            <span className="font-bold" style={{ color: t.paid_text_color }}>Total Paid</span>
-            <span className="font-bold" style={{ color: t.paid_text_color }}>
-              {formatCurrency(invoice.paid_amount)}
-            </span>
-          </div>
-          <div
-            className="flex justify-between px-4 py-3 mt-2 font-bold"
-            style={{
-              backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
-              color: t.balance_text_color,
-            }}
-          >
-            <span>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
-            <span>{formatCurrency(invoice.due_amount)}</span>
-          </div>
-          {/* In Word */}
-          <div className="mt-2 text-xs break-words" style={{ color: t.subtotal_text_color, maxWidth: '320px', overflowWrap: 'break-word' }}>
-            <span className="font-semibold">In Word : </span>
-            <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
-          </div>
-        </div>
       </div>
 
       {/* NOTES */}
