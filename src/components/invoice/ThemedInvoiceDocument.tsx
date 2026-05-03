@@ -132,7 +132,7 @@ export const ThemedInvoiceDocument = ({
   }[footerAlign];
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none flex flex-col" style={{ minHeight: "297mm" }}>
+    <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
       {/* HEADER */}
       <div className="flex justify-between items-start pb-6">
         <div className="flex items-center gap-4">
@@ -378,7 +378,7 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer style={{ marginTop: "auto" }}>
+      <div data-pdf-footer className="mt-10">
       {/* SIGNATURE SECTION */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
         {[
