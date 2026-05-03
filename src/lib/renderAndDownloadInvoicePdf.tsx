@@ -25,14 +25,15 @@ export async function renderAndDownloadInvoicePdf(args: RenderArgs): Promise<voi
   host.style.position = "fixed";
   host.style.left = "-10000px";
   host.style.top = "0";
-  host.style.width = "896px"; // ~ max-w-4xl
+  // A4 width at 96dpi = 210mm ≈ 794px
+  host.style.width = "794px";
   host.style.background = "#ffffff";
   host.style.zIndex = "-1";
   document.body.appendChild(host);
 
   const root = createRoot(host);
   root.render(
-    <div className="invoice-print-area" style={{ width: "896px" }}>
+    <div className="invoice-print-area" style={{ width: "794px" }}>
       <ThemedInvoiceDocument
         invoice={invoice}
         items={items}
