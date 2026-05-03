@@ -41,6 +41,7 @@ export async function renderAndDownloadInvoicePdf(args: RenderArgs): Promise<voi
         company={company}
         theme={theme}
         branding={branding}
+        pdfMode
       />
     </div>
   );
