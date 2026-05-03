@@ -46,7 +46,7 @@ export async function generateInvoicePdfFromDom(
   // Restore footer and capture it separately
   let footerCanvas: HTMLCanvasElement | null = null;
   if (footerEl) {
-    footerEl.style.display = prevDisplay;
+    footerEl.style.display = prevFooterDisplay;
     footerCanvas = await html2canvas(footerEl, {
       scale: 2,
       useCORS: true,
