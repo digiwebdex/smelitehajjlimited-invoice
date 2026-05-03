@@ -233,16 +233,16 @@ export const ThemedInvoiceDocument = ({
           </colgroup>
           <thead>
             <tr style={{ borderBottomWidth: '2px', borderBottomColor: t.border_color }}>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Description
               </th>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Qty
               </th>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Unit Price
               </th>
-              <th className="text-right py-3 font-semibold uppercase tracking-wide" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-right py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
                 Total
               </th>
             </tr>
