@@ -253,45 +253,45 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="py-2.5 font-medium text-black align-middle uppercase">
+                <td className={cn(pdfMode ? "py-1.5" : "py-2.5", "font-medium text-black align-middle uppercase leading-tight")}>
                   {item.title || "—"}
                 </td>
-                <td className="py-2.5 text-left text-black align-middle">{item.qty || 1}</td>
-                <td className="py-2.5 text-left text-black align-middle">
+                <td className={cn(pdfMode ? "py-1.5" : "py-2.5", "text-left text-black align-middle leading-tight")}>{item.qty || 1}</td>
+                <td className={cn(pdfMode ? "py-1.5" : "py-2.5", "text-left text-black align-middle leading-tight")}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="py-2.5 text-right font-semibold text-black align-middle">
+                <td className={cn(pdfMode ? "py-1.5" : "py-2.5", "text-right font-semibold text-black align-middle leading-tight")}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
 
             {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "8px" }} /></tr>
+            <tr><td colSpan={4} style={{ height: pdfMode ? "4px" : "8px" }} /></tr>
 
             {/* Subtotal */}
             <tr>
               <td colSpan={2} />
-              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
-              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-sm leading-tight")} style={{ color: t.subtotal_text_color }}>Subtotal</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-right text-sm font-semibold text-black leading-tight")}>{formatCurrency(invoice.subtotal)}</td>
             </tr>
             {/* Tax */}
             <tr>
               <td colSpan={2} />
-              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
-              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-sm leading-tight")} style={{ color: t.subtotal_text_color }}>Tax</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-right text-sm font-semibold text-black leading-tight")}>{formatCurrency(invoice.vat_amount)}</td>
             </tr>
             {/* Total */}
             <tr>
               <td colSpan={2} />
-              <td className="py-1.5 font-bold text-black">Total</td>
-              <td className="py-1.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "font-bold text-black leading-tight")}>Total</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-right font-bold text-black leading-tight")}>{formatCurrency(invoice.total_amount)}</td>
             </tr>
             {/* Total Paid */}
             <tr>
               <td colSpan={2} />
-              <td className="py-1.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
-              <td className="py-1.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "font-bold leading-tight")} style={{ color: t.paid_text_color }}>Total Paid</td>
+              <td className={cn(pdfMode ? "py-1" : "py-1.5", "text-right font-bold leading-tight")} style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
             </tr>
             {/* Balance / Paid in Full */}
             <tr>
@@ -301,7 +301,7 @@ export const ThemedInvoiceDocument = ({
                 style={{
                   backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
                   color: t.balance_text_color,
-                  padding: "8px 12px",
+                  padding: pdfMode ? "6px 12px" : "8px 12px",
                   fontWeight: "bold",
                 }}
               >
@@ -314,7 +314,7 @@ export const ThemedInvoiceDocument = ({
             {/* In Word */}
             <tr>
               <td colSpan={2} />
-              <td colSpan={2} className="pt-2 text-xs break-words" style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+              <td colSpan={2} className={cn(pdfMode ? "pt-1.5" : "pt-2", "text-xs break-words leading-tight")} style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 <span className="font-semibold">In Word : </span>
                 <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
               </td>

@@ -31,19 +31,24 @@ export async function generateInvoicePdfFromDom(
   const imgWidth = pdfWidth;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+  // Reserve a small bottom margin (0.05 inch ≈ 1.27mm) on multi-page PDFs
+  const FOOTER_MARGIN_MM = 1.27;
+  const isMultiPage = imgHeight > pdfHeight;
+  const usableHeight = isMultiPage ? pdfHeight - FOOTER_MARGIN_MM : pdfHeight;
+
   let heightLeft = imgHeight;
   let position = 0;
 
   const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
   pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-  heightLeft -= pdfHeight;
+  heightLeft -= usableHeight;
 
   while (heightLeft > 0) {
-    position = heightLeft - imgHeight; // negative offset
+    position -= usableHeight;
     pdf.addPage();
     pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, undefined, "FAST");
-    heightLeft -= pdfHeight;
+    heightLeft -= usableHeight;
   }
 
   pdf.save(filename);
