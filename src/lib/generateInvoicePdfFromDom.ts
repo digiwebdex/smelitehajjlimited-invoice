@@ -176,6 +176,7 @@ export async function generateInvoicePdfFromDom(
 
   let sourceY = 0;
   let isFirst = true;
+  let lastRenderedSlicePx = 0;
 
   while (sourceY < bodyCanvas.height) {
     const sliceHeightPx = chooseSliceHeightPx(
@@ -217,13 +218,13 @@ export async function generateInvoicePdfFromDom(
     );
 
     sourceY += sliceHeightPx;
+    lastRenderedSlicePx = sliceHeightPx;
     isFirst = false;
   }
 
   // Place footer on the last page pinned above the bottom margin
   if (footerCanvas) {
-    const lastSlicePx = (bodyCanvas.height % pageHeightPx) || pageHeightPx;
-    const lastPageBodyHeightMm = lastSlicePx / pixelsPerMm;
+    const lastPageBodyHeightMm = lastRenderedSlicePx / pixelsPerMm;
     const remainingSpaceMm = contentHeightMm - lastPageBodyHeightMm - FOOTER_SAFETY_MM;
 
     if (remainingSpaceMm < footerHeightMm) {
