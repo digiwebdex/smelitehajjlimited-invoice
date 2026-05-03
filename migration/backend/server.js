@@ -720,24 +720,32 @@ app.get('/api/branding', async (req, res) => {
 
 app.put('/api/branding', authenticate, async (req, res) => {
   try {
-    // Ensure signature columns exist (idempotent, runs once per request but cheap)
-    await pool.query(`
-      ALTER TABLE public.global_brand_settings
-        ADD COLUMN IF NOT EXISTS signature_received_by TEXT,
-        ADD COLUMN IF NOT EXISTS signature_prepared_by TEXT,
-        ADD COLUMN IF NOT EXISTS signature_authorize_by TEXT
-    `);
-
-    const fields = req.body;
-    // Get actual columns from DB to filter out unknown keys
+    // Get actual columns from DB
     const colRes = await pool.query(
       `SELECT column_name FROM information_schema.columns
        WHERE table_schema='public' AND table_name='global_brand_settings'`
     );
-    const validCols = new Set(colRes.rows.map(r => r.column_name));
+    let validCols = new Set(colRes.rows.map(r => r.column_name));
+
+    // Ensure signature columns exist; try to add them, ignore permission errors
+    const required = ['signature_received_by', 'signature_prepared_by', 'signature_authorize_by'];
+    const missing = required.filter(c => !validCols.has(c));
+    for (const col of missing) {
+      try {
+        await pool.query(`ALTER TABLE public.global_brand_settings ADD COLUMN IF NOT EXISTS "${col}" TEXT`);
+        validCols.add(col);
+      } catch (e) {
+        console.warn('[branding PUT] could not add column', col, e.message);
+      }
+    }
+
+    const fields = req.body || {};
     const keys = Object.keys(fields).filter(k =>
       validCols.has(k) && !['id', 'created_at', 'updated_at'].includes(k)
     );
+    const skipped = Object.keys(fields).filter(k => !validCols.has(k));
+    if (skipped.length) console.warn('[branding PUT] skipped unknown columns:', skipped);
+
     if (keys.length === 0) {
       const { rows } = await pool.query('SELECT * FROM global_brand_settings WHERE id = $1', ['00000000-0000-0000-0000-000000000002']);
       return res.json({ data: rows[0] });
@@ -750,7 +758,7 @@ app.put('/api/branding', authenticate, async (req, res) => {
     );
     res.json({ data: rows[0] });
   } catch (err) {
-    console.error('[branding PUT] error:', err.message);
+    console.error('[branding PUT] error:', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 });
