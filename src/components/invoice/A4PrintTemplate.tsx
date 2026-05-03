@@ -266,7 +266,9 @@ export const A4PrintTemplate = ({
         </div>
       </div>
 
-      {/* ===== ITEMS TABLE ===== */}
+      {/* ===== ITEMS + SUMMARY UNIFIED TABLE =====
+           Summary rows live inside the same 4-column grid so labels/values align
+           perfectly with the UNIT PRICE / TOTAL columns (matches reference design). */}
       <table
         className="invoice-print-table"
         style={{
@@ -276,18 +278,24 @@ export const A4PrintTemplate = ({
           pageBreakInside: "auto",
         }}
       >
+        <colgroup>
+          <col style={{ width: "50%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "19%" }} />
+          <col style={{ width: "19%" }} />
+        </colgroup>
         <thead>
           <tr style={{ borderBottom: `0.5pt solid ${t.border_color}` }}>
-            <th style={{ width: "50%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5pt" }}>
               Description
             </th>
-            <th style={{ width: "10%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5pt" }}>
               Qty
             </th>
-            <th style={{ width: "20%", textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ textAlign: "left", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5pt" }}>
               Unit Price
             </th>
-            <th style={{ width: "20%", textAlign: "right", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase" }}>
+            <th style={{ textAlign: "right", padding: "3mm 0", verticalAlign: "middle", color: t.subtotal_text_color, fontSize: "8pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5pt" }}>
               Total
             </th>
           </tr>
@@ -295,76 +303,91 @@ export const A4PrintTemplate = ({
         <tbody>
           {items.map((item) => (
             <tr key={item.id} className="invoice-print-row" style={{ borderBottom: `0.2pt solid ${t.border_color}` }}>
-              <td style={{ padding: "1.5mm 0", verticalAlign: "middle", height: "7mm", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", color: "#000000", fontSize: "9pt", textTransform: "uppercase" }}>
                 {item.title || "—"}
               </td>
-              <td style={{ padding: "1.5mm 0", verticalAlign: "middle", height: "7mm", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {item.qty || 1}
               </td>
-              <td style={{ padding: "1.5mm 0", verticalAlign: "middle", height: "7mm", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "left", color: "#000000", fontSize: "9pt" }}>
                 {formatCurrency(item.unit_price || item.amount)}
               </td>
-              <td style={{ padding: "1.5mm 0", verticalAlign: "middle", height: "7mm", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
+              <td style={{ padding: "3mm 0", verticalAlign: "middle", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
                 {formatCurrency(item.amount)}
               </td>
             </tr>
           ))}
-        </tbody>
-      </table>
 
-      {/* ===== SUMMARY SECTION ===== */}
-      <div className="invoice-print-summary" style={{ textAlign: "right", marginBottom: "8mm", breakInside: "avoid-page", pageBreakInside: "avoid" }}>
-        <div style={{ display: "inline-block", width: "75mm" }}>
+          {/* Spacer row */}
+          <tr>
+            <td colSpan={4} style={{ height: "4mm" }} />
+          </tr>
+
           {/* Subtotal */}
-          <div style={{ borderBottom: `0.2pt solid ${t.border_color}`, padding: "2mm 0" }}>
-            <span style={{ float: "left", color: t.subtotal_text_color, fontSize: "9pt" }}>Subtotal</span>
-            <span style={{ color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>{formatCurrency(invoice.subtotal)}</span>
-            <div style={{ clear: "both" }} />
-          </div>
+          <tr>
+            <td colSpan={2} />
+            <td style={{ padding: "2.5mm 0", color: t.subtotal_text_color, fontSize: "9pt" }}>Subtotal</td>
+            <td style={{ padding: "2.5mm 0", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
+              {formatCurrency(invoice.subtotal)}
+            </td>
+          </tr>
 
           {/* Tax */}
-          <div style={{ borderBottom: `0.2pt solid ${t.border_color}`, padding: "2mm 0" }}>
-            <span style={{ float: "left", color: t.subtotal_text_color, fontSize: "9pt" }}>Tax</span>
-            <span style={{ color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>{formatCurrency(invoice.vat_amount)}</span>
-            <div style={{ clear: "both" }} />
-          </div>
+          <tr>
+            <td colSpan={2} />
+            <td style={{ padding: "2.5mm 0", color: t.subtotal_text_color, fontSize: "9pt" }}>Tax</td>
+            <td style={{ padding: "2.5mm 0", textAlign: "right", color: "#000000", fontSize: "9pt", fontWeight: "bold" }}>
+              {formatCurrency(invoice.vat_amount)}
+            </td>
+          </tr>
 
           {/* Total */}
-          <div style={{ borderBottom: `0.2pt solid ${t.border_color}`, padding: "2mm 0" }}>
-            <span style={{ float: "left", color: "#000000", fontSize: "10pt", fontWeight: "bold" }}>Total</span>
-            <span style={{ color: "#000000", fontSize: "10pt", fontWeight: "bold" }}>{formatCurrency(invoice.total_amount)}</span>
-            <div style={{ clear: "both" }} />
-          </div>
+          <tr>
+            <td colSpan={2} />
+            <td style={{ padding: "2.5mm 0", color: "#000000", fontSize: "10pt", fontWeight: "bold" }}>Total</td>
+            <td style={{ padding: "2.5mm 0", textAlign: "right", color: "#000000", fontSize: "10pt", fontWeight: "bold" }}>
+              {formatCurrency(invoice.total_amount)}
+            </td>
+          </tr>
 
           {/* Total Paid */}
-          <div style={{ borderBottom: `0.2pt solid ${t.border_color}`, padding: "2mm 0" }}>
-            <span style={{ float: "left", color: t.paid_text_color, fontSize: "9pt", fontWeight: "bold" }}>Total Paid</span>
-            <span style={{ color: t.paid_text_color, fontSize: "9pt", fontWeight: "bold" }}>{formatCurrency(invoice.paid_amount)}</span>
-            <div style={{ clear: "both" }} />
-          </div>
+          <tr>
+            <td colSpan={2} />
+            <td style={{ padding: "2.5mm 0", color: t.paid_text_color, fontSize: "9pt", fontWeight: "bold" }}>Total Paid</td>
+            <td style={{ padding: "2.5mm 0", textAlign: "right", color: t.paid_text_color, fontSize: "9pt", fontWeight: "bold" }}>
+              {formatCurrency(invoice.paid_amount)}
+            </td>
+          </tr>
 
-          {/* Balance Box */}
-          <div
-            style={{
-              backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
-              color: t.balance_text_color,
-              padding: "3mm",
-              marginTop: "2mm",
-              fontWeight: "bold",
-              fontSize: "9pt",
-            }}
-          >
-            <span style={{ float: "left" }}>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
-            <span>{formatCurrency(invoice.due_amount)}</span>
-            <div style={{ clear: "both" }} />
-          </div>
-          {/* In Word */}
-          <div style={{ marginTop: "2mm", fontSize: "8pt", color: t.subtotal_text_color, maxWidth: "75mm", overflowWrap: "break-word", wordBreak: "break-word" }}>
-            <span style={{ fontWeight: "bold" }}>In Word : </span>
-            <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
-          </div>
-        </div>
-      </div>
+          {/* Balance Box - spans the right two columns */}
+          <tr>
+            <td colSpan={2} />
+            <td
+              colSpan={2}
+              style={{
+                backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
+                color: t.balance_text_color,
+                padding: "3.5mm 3mm",
+                fontWeight: "bold",
+                fontSize: "10pt",
+              }}
+            >
+              <span style={{ float: "left" }}>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
+              <span style={{ float: "right" }}>{formatCurrency(invoice.due_amount)}</span>
+              <div style={{ clear: "both" }} />
+            </td>
+          </tr>
+
+          {/* In Word - sits under the right two columns */}
+          <tr>
+            <td colSpan={2} />
+            <td colSpan={2} style={{ paddingTop: "3mm", fontSize: "8pt", color: t.subtotal_text_color, overflowWrap: "break-word", wordBreak: "break-word" }}>
+              <span style={{ fontWeight: "bold" }}>In Word : </span>
+              <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* ===== NOTES SECTION ===== */}
       {invoice.notes && (
