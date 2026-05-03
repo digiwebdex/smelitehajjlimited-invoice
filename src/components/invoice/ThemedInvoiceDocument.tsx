@@ -65,6 +65,7 @@ interface ThemedInvoiceDocumentProps {
   company?: CompanyData | null;
   theme: ThemeSettings;
   branding?: BrandSettings | null;
+  pdfMode?: boolean;
 }
 
 export const ThemedInvoiceDocument = ({
@@ -74,12 +75,14 @@ export const ThemedInvoiceDocument = ({
   company,
   theme,
   branding,
+  pdfMode = false,
 }: ThemedInvoiceDocumentProps) => {
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
 
+  const currencySymbol = pdfMode ? "Tk " : "৳";
   const formatCurrency = (amount: number) => {
-    return `৳${new Intl.NumberFormat("en-BD", {
+    return `${currencySymbol}${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount)}`;
@@ -223,7 +226,7 @@ export const ThemedInvoiceDocument = ({
       </div>
 
       {/* UNIFIED ITEM + SUMMARY TABLE — matches A4/PDF layout exactly */}
-      <div className="mt-10">
+      <div className="mt-6">
         <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
           <colgroup>
             <col style={{ width: "50%" }} />
@@ -232,17 +235,17 @@ export const ThemedInvoiceDocument = ({
             <col style={{ width: "19%" }} />
           </colgroup>
           <thead>
-            <tr style={{ borderBottomWidth: '2px', borderBottomColor: t.border_color }}>
-              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+            <tr style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
+              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Description
               </th>
-              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Qty
               </th>
-              <th className="text-left py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Unit Price
               </th>
-              <th className="text-right py-4 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text, backgroundColor: t.table_header_bg }}>
+              <th className="text-right py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Total
               </th>
             </tr>
@@ -250,45 +253,45 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="py-4 font-medium text-black align-middle uppercase">
+                <td className="py-2.5 font-medium text-black align-middle uppercase">
                   {item.title || "—"}
                 </td>
-                <td className="py-4 text-left text-black align-middle">{item.qty || 1}</td>
-                <td className="py-4 text-left text-black align-middle">
+                <td className="py-2.5 text-left text-black align-middle">{item.qty || 1}</td>
+                <td className="py-2.5 text-left text-black align-middle">
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="py-4 text-right font-semibold text-black align-middle">
+                <td className="py-2.5 text-right font-semibold text-black align-middle">
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
 
             {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "20px" }} /></tr>
+            <tr><td colSpan={4} style={{ height: "8px" }} /></tr>
 
             {/* Subtotal */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
-              <td className="py-2.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
+              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
+              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
             </tr>
             {/* Tax */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
-              <td className="py-2.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
+              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
+              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
             </tr>
             {/* Total */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2.5 font-bold text-black">Total</td>
-              <td className="py-2.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
+              <td className="py-1.5 font-bold text-black">Total</td>
+              <td className="py-1.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
             </tr>
             {/* Total Paid */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
-              <td className="py-2.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
+              <td className="py-1.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
+              <td className="py-1.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
             </tr>
             {/* Balance / Paid in Full */}
             <tr>
@@ -298,7 +301,7 @@ export const ThemedInvoiceDocument = ({
                 style={{
                   backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
                   color: t.balance_text_color,
-                  padding: "12px 16px",
+                  padding: "8px 12px",
                   fontWeight: "bold",
                 }}
               >
@@ -311,7 +314,7 @@ export const ThemedInvoiceDocument = ({
             {/* In Word */}
             <tr>
               <td colSpan={2} />
-              <td colSpan={2} className="pt-3 text-xs break-words" style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+              <td colSpan={2} className="pt-2 text-xs break-words" style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 <span className="font-semibold">In Word : </span>
                 <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
               </td>
