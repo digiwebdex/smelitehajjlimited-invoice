@@ -226,7 +226,7 @@ export const ThemedInvoiceDocument = ({
       </div>
 
       {/* UNIFIED ITEM + SUMMARY TABLE — matches A4/PDF layout exactly */}
-      <div className="mt-10">
+      <div className="mt-6">
         <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
           <colgroup>
             <col style={{ width: "50%" }} />
