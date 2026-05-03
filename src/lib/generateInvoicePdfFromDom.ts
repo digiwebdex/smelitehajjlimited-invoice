@@ -18,12 +18,18 @@ export async function generateInvoicePdfFromDom(
 ): Promise<void> {
   const footerEl = element.querySelector<HTMLElement>("[data-pdf-footer]");
 
-  // Hide footer while capturing body so body canvas excludes it
-  let prevDisplay = "";
+  // Hide footer + collapse min-height so body capture has no trailing gap
+  let prevFooterDisplay = "";
+  let prevMinHeight = "";
+  let prevHeight = "";
   if (footerEl) {
-    prevDisplay = footerEl.style.display;
+    prevFooterDisplay = footerEl.style.display;
     footerEl.style.display = "none";
   }
+  prevMinHeight = element.style.minHeight;
+  prevHeight = element.style.height;
+  element.style.minHeight = "0";
+  element.style.height = "auto";
 
   const bodyCanvas = await html2canvas(element, {
     scale: 2,
@@ -32,6 +38,10 @@ export async function generateInvoicePdfFromDom(
     logging: false,
     windowWidth: element.scrollWidth,
   });
+
+  // Restore min-height
+  element.style.minHeight = prevMinHeight;
+  element.style.height = prevHeight;
 
   // Restore footer and capture it separately
   let footerCanvas: HTMLCanvasElement | null = null;
