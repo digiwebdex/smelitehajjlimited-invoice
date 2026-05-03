@@ -58,9 +58,8 @@ export async function generateInvoicePdfFromDom(
   const bodyHeightMm = bodyCanvas.height / pixelsPerMm;
   const footerHeightMm = footerCanvas ? footerCanvas.height / pixelsPerMm : 0;
 
-  // Single page if body alone fits within content area — footer always pins to bottom
-  // Small tolerance (2mm) to avoid spillover from rounding
-  const fitsSinglePage = bodyHeightMm <= contentHeightMm + 2;
+  // Single page if body + footer fits within content area (with small rounding tolerance)
+  const fitsSinglePage = bodyHeightMm + footerHeightMm <= contentHeightMm + 2;
 
   if (fitsSinglePage) {
     pdf.addImage(
