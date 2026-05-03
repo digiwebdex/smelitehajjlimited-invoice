@@ -65,6 +65,7 @@ interface ThemedInvoiceDocumentProps {
   company?: CompanyData | null;
   theme: ThemeSettings;
   branding?: BrandSettings | null;
+  pdfMode?: boolean;
 }
 
 export const ThemedInvoiceDocument = ({
@@ -74,12 +75,14 @@ export const ThemedInvoiceDocument = ({
   company,
   theme,
   branding,
+  pdfMode = false,
 }: ThemedInvoiceDocumentProps) => {
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
 
+  const currencySymbol = pdfMode ? "Tk " : "৳";
   const formatCurrency = (amount: number) => {
-    return `৳${new Intl.NumberFormat("en-BD", {
+    return `${currencySymbol}${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount)}`;
