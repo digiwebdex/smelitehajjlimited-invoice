@@ -36,8 +36,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
-import { Invoice as InvoiceType, Company } from "@/types";
+import { renderAndDownloadInvoicePdf } from "@/lib/renderAndDownloadInvoicePdf";
+import { defaultTheme } from "@/types/theme";
 import { api } from "@/lib/apiClient";
 
 export default function Invoices() {
@@ -86,70 +86,70 @@ export default function Invoices() {
   const handleDownloadPdf = async (invoiceId: string) => {
     setDownloadingId(invoiceId);
     try {
-      // Fetch full invoice data with items and installments
       const { data: invoiceData, error: invoiceError } = await api.get(`/invoices/${invoiceId}`);
-      
       if (invoiceError || !invoiceData) throw new Error("Invoice not found");
 
       const itemsData = invoiceData.items || [];
       const installmentsData = invoiceData.installments || [];
-
-      // Fetch company
       const { data: companyData } = await api.get(`/companies/${invoiceData.company_id}`);
 
-      // Build PDF invoice object
-      const pdfInvoice: InvoiceType = {
+      const items = itemsData.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        amount: Number(item.amount),
+        qty: item.qty || 1,
+        unit_price: Number(item.unit_price) || Number(item.amount),
+      }));
+
+      const installments = installmentsData.map((inst: any) => ({
+        id: inst.id,
+        amount: Number(inst.amount),
+        paid_date: inst.paid_date,
+        payment_method: inst.payment_method || "Bank Transfer",
+      }));
+
+      const invoiceDoc = {
         id: invoiceData.id,
-        invoiceNumber: invoiceData.invoice_number,
-        companyId: invoiceData.company_id,
-        clientName: invoiceData.client_name,
-        clientAddress: invoiceData.client_address || undefined,
-        clientEmail: invoiceData.client_email || undefined,
-        clientPhone: invoiceData.client_phone || undefined,
-        date: new Date(invoiceData.invoice_date),
-        dueDate: invoiceData.due_date ? new Date(invoiceData.due_date) : undefined,
-        items: (itemsData || []).map(item => ({
-          id: item.id,
-          title: item.title,
-          qty: item.qty || 1,
-          unitPrice: Number(item.unit_price) || Number(item.amount),
-          amount: Number(item.amount),
-        })),
-        installments: (installmentsData || []).map(inst => ({
-          id: inst.id,
-          amount: Number(inst.amount),
-          paidDate: new Date(inst.paid_date),
-        })),
-        status: invoiceData.status as "unpaid" | "partial" | "paid",
-        totalAmount: Number(invoiceData.total_amount),
-        vatRate: Number(invoiceData.vat_rate) || 0,
-        vatAmount: Number(invoiceData.vat_amount) || 0,
+        invoice_number: invoiceData.invoice_number,
+        client_name: invoiceData.client_name,
+        client_email: invoiceData.client_email,
+        client_phone: invoiceData.client_phone,
+        client_address: invoiceData.client_address,
+        invoice_date: invoiceData.invoice_date,
+        status: invoiceData.status,
         subtotal: Number(invoiceData.subtotal) || 0,
-        paidAmount: Number(invoiceData.paid_amount),
-        dueAmount: Number(invoiceData.due_amount),
-        notes: invoiceData.notes || undefined,
+        vat_amount: Number(invoiceData.vat_amount) || 0,
+        total_amount: Number(invoiceData.total_amount),
+        paid_amount: Number(invoiceData.paid_amount),
+        due_amount: Number(invoiceData.due_amount),
+        notes: invoiceData.notes,
       };
 
-      // Build PDF company object
-      const pdfCompany: Company | undefined = companyData ? {
-        id: companyData.id,
+      const companyDoc = companyData ? {
         name: companyData.name,
-        tagline: companyData.tagline || undefined,
-        logo: companyData.logo_url || undefined,
-        email: companyData.email || "",
-        phone: companyData.phone || "",
-        address: companyData.address || "",
-        address_line1: companyData.address_line1 || undefined,
-        address_line2: companyData.address_line2 || undefined,
-        website: companyData.website || undefined,
-        thank_you_text: companyData.thank_you_text || undefined,
-        show_qr_code: companyData.show_qr_code ?? true,
-        footer_alignment: companyData.footer_alignment || undefined,
-        createdAt: new Date(companyData.created_at),
-      } : undefined;
+        tagline: companyData.tagline,
+        logo_url: companyData.logo_url,
+        email: companyData.email,
+        phone: companyData.phone,
+        address: companyData.address,
+        address_line1: companyData.address_line1,
+        address_line2: companyData.address_line2,
+        website: companyData.website,
+        thank_you_text: companyData.thank_you_text,
+        show_qr_code: companyData.show_qr_code,
+        footer_alignment: companyData.footer_alignment,
+      } : null;
 
-      await generateInvoicePdf(pdfInvoice, pdfCompany, theme, branding);
-      
+      await renderAndDownloadInvoicePdf({
+        invoice: invoiceDoc,
+        items,
+        installments,
+        company: companyDoc,
+        theme: theme || defaultTheme,
+        branding,
+        filename: `${invoiceData.invoice_number}.pdf`,
+      });
+
       toast({
         title: "PDF Downloaded",
         description: `Invoice ${invoiceData.invoice_number} has been downloaded.`,
