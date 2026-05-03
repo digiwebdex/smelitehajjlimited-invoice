@@ -378,7 +378,7 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer style={{ marginTop: "auto" }}>
+      <div data-pdf-footer className="mt-10">
       {/* SIGNATURE SECTION */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
         {[
