@@ -1,12 +1,16 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-const FOOTER_MARGIN_MM = 1.27; // 0.05 inch bottom margin on multi-page
+// Standard A4 page margins (mm) — matches typical "Normal" Word/Print preset
+const MARGIN_TOP_MM = 10;
+const MARGIN_BOTTOM_MM = 10;
+const MARGIN_LEFT_MM = 10;
+const MARGIN_RIGHT_MM = 10;
 
 /**
- * Capture a DOM element and produce a multi-page A4 PDF.
+ * Capture a DOM element and produce a multi-page A4 PDF with standard margins.
  * The element marked with [data-pdf-footer] (signature + footer block)
- * is always placed at the bottom of the LAST page.
+ * is always placed at the bottom of the LAST page (above the bottom margin).
  */
 export async function generateInvoicePdfFromDom(
   element: HTMLElement,
@@ -46,33 +50,36 @@ export async function generateInvoicePdfFromDom(
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  const pixelsPerMm = bodyCanvas.width / pdfWidth;
+  const contentWidthMm = pdfWidth - MARGIN_LEFT_MM - MARGIN_RIGHT_MM;
+  const contentHeightMm = pdfHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
+
+  // Scale based on content width (not full page width)
+  const pixelsPerMm = bodyCanvas.width / contentWidthMm;
   const bodyHeightMm = bodyCanvas.height / pixelsPerMm;
   const footerHeightMm = footerCanvas ? footerCanvas.height / pixelsPerMm : 0;
 
-  // Determine if multi-page (body + footer cannot fit one page)
-  const fitsSinglePage = bodyHeightMm + footerHeightMm <= pdfHeight;
+  // Determine if everything fits on a single page within margins
+  const fitsSinglePage = bodyHeightMm + footerHeightMm <= contentHeightMm;
 
   if (fitsSinglePage) {
-    // Single page: render body at top, footer at natural position (bottom area)
     pdf.addImage(
       bodyCanvas.toDataURL("image/jpeg", 0.98),
       "JPEG",
-      0,
-      0,
-      pdfWidth,
+      MARGIN_LEFT_MM,
+      MARGIN_TOP_MM,
+      contentWidthMm,
       bodyHeightMm,
       undefined,
       "FAST"
     );
     if (footerCanvas) {
-      const footerY = pdfHeight - footerHeightMm; // pinned to bottom
+      const footerY = pdfHeight - MARGIN_BOTTOM_MM - footerHeightMm;
       pdf.addImage(
         footerCanvas.toDataURL("image/jpeg", 0.98),
         "JPEG",
-        0,
-        Math.max(bodyHeightMm, footerY),
-        pdfWidth,
+        MARGIN_LEFT_MM,
+        Math.max(MARGIN_TOP_MM + bodyHeightMm, footerY),
+        contentWidthMm,
         footerHeightMm,
         undefined,
         "FAST"
@@ -82,27 +89,15 @@ export async function generateInvoicePdfFromDom(
     return;
   }
 
-  // Multi-page: slice body across pages with FOOTER_MARGIN reserved at bottom
-  const usableHeightMm = pdfHeight - FOOTER_MARGIN_MM;
-  const pageHeightPx = Math.floor(usableHeightMm * pixelsPerMm);
+  // Multi-page: slice body across pages, respecting top + bottom margins
+  const pageHeightPx = Math.floor(contentHeightMm * pixelsPerMm);
 
   let sourceY = 0;
   let isFirst = true;
 
   while (sourceY < bodyCanvas.height) {
     const remaining = bodyCanvas.height - sourceY;
-    let sliceHeightPx = Math.min(pageHeightPx, remaining);
-    const isLastBodyPage = sourceY + sliceHeightPx >= bodyCanvas.height;
-
-    // On the last body page, reserve room for the footer
-    if (isLastBodyPage && footerCanvas) {
-      const footerHeightPx = footerCanvas.height;
-      const availablePx = pageHeightPx - footerHeightPx;
-      if (remaining > availablePx) {
-        // Body remainder doesn't fit with footer — shrink slice and push footer to a new page
-        sliceHeightPx = Math.min(remaining, pageHeightPx);
-      }
-    }
+    const sliceHeightPx = Math.min(pageHeightPx, remaining);
 
     const pageCanvas = document.createElement("canvas");
     pageCanvas.width = bodyCanvas.width;
@@ -126,9 +121,9 @@ export async function generateInvoicePdfFromDom(
     pdf.addImage(
       pageCanvas.toDataURL("image/jpeg", 0.98),
       "JPEG",
-      0,
-      0,
-      pdfWidth,
+      MARGIN_LEFT_MM,
+      MARGIN_TOP_MM,
+      contentWidthMm,
       sliceHeightPx / pixelsPerMm,
       undefined,
       "FAST"
@@ -138,37 +133,26 @@ export async function generateInvoicePdfFromDom(
     isFirst = false;
   }
 
-  // Place footer on the last page, pinned to bottom (respecting margin)
+  // Place footer on the last page pinned above the bottom margin
   if (footerCanvas) {
-    const lastPageBodyHeightMm =
-      ((bodyCanvas.height % pageHeightPx) || pageHeightPx) / pixelsPerMm;
-    const footerY = pdfHeight - FOOTER_MARGIN_MM - footerHeightMm;
+    const lastSlicePx = (bodyCanvas.height % pageHeightPx) || pageHeightPx;
+    const lastPageBodyHeightMm = lastSlicePx / pixelsPerMm;
+    const remainingSpaceMm = contentHeightMm - lastPageBodyHeightMm;
 
-    if (lastPageBodyHeightMm + footerHeightMm + FOOTER_MARGIN_MM > pdfHeight) {
+    if (remainingSpaceMm < footerHeightMm) {
       // Not enough room — add a new page for footer
       pdf.addPage();
-      pdf.addImage(
-        footerCanvas.toDataURL("image/jpeg", 0.98),
-        "JPEG",
-        0,
-        pdfHeight - FOOTER_MARGIN_MM - footerHeightMm,
-        pdfWidth,
-        footerHeightMm,
-        undefined,
-        "FAST"
-      );
-    } else {
-      pdf.addImage(
-        footerCanvas.toDataURL("image/jpeg", 0.98),
-        "JPEG",
-        0,
-        footerY,
-        pdfWidth,
-        footerHeightMm,
-        undefined,
-        "FAST"
-      );
     }
+    pdf.addImage(
+      footerCanvas.toDataURL("image/jpeg", 0.98),
+      "JPEG",
+      MARGIN_LEFT_MM,
+      pdfHeight - MARGIN_BOTTOM_MM - footerHeightMm,
+      contentWidthMm,
+      footerHeightMm,
+      undefined,
+      "FAST"
+    );
   }
 
   pdf.save(filename);
