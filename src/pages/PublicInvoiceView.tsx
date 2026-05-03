@@ -7,7 +7,7 @@ import { api } from "@/lib/apiClient";
 import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
-import { generateInvoicePdfFromDom } from "@/lib/generateInvoicePdfFromDom";
+import { renderAndDownloadInvoicePdf } from "@/lib/renderAndDownloadInvoicePdf";
 import { defaultTheme } from "@/types/theme";
 
 export default function PublicInvoiceView() {
@@ -118,8 +118,15 @@ export default function PublicInvoiceView() {
   } : null;
 
   const handleDownloadPdf = async () => {
-    if (!printRef.current) return;
-    await generateInvoicePdfFromDom(printRef.current, `${invoice.invoice_number}.pdf`);
+    await renderAndDownloadInvoicePdf({
+      invoice: invoiceData,
+      items,
+      installments,
+      company: companyData,
+      theme: activeTheme,
+      branding,
+      filename: `${invoice.invoice_number}.pdf`,
+    });
   };
 
   return (
