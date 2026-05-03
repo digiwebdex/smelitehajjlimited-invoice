@@ -250,45 +250,45 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="py-3 font-medium text-black align-middle uppercase">
+                <td className="py-4 font-medium text-black align-middle uppercase">
                   {item.title || "—"}
                 </td>
-                <td className="py-3 text-left text-black align-middle">{item.qty || 1}</td>
-                <td className="py-3 text-left text-black align-middle">
+                <td className="py-4 text-left text-black align-middle">{item.qty || 1}</td>
+                <td className="py-4 text-left text-black align-middle">
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="py-3 text-right font-semibold text-black align-middle">
+                <td className="py-4 text-right font-semibold text-black align-middle">
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
 
             {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "16px" }} /></tr>
+            <tr><td colSpan={4} style={{ height: "20px" }} /></tr>
 
             {/* Subtotal */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
-              <td className="py-2 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
+              <td className="py-2.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
+              <td className="py-2.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
             </tr>
             {/* Tax */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
-              <td className="py-2 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
+              <td className="py-2.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
+              <td className="py-2.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
             </tr>
             {/* Total */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2 font-bold text-black">Total</td>
-              <td className="py-2 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
+              <td className="py-2.5 font-bold text-black">Total</td>
+              <td className="py-2.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
             </tr>
             {/* Total Paid */}
             <tr>
               <td colSpan={2} />
-              <td className="py-2 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
-              <td className="py-2 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
+              <td className="py-2.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
+              <td className="py-2.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
             </tr>
             {/* Balance / Paid in Full */}
             <tr>
