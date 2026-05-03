@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Printer, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,13 +7,12 @@ import { api } from "@/lib/apiClient";
 import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
-import { A4PrintTemplate } from "@/components/invoice/A4PrintTemplate";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
-import { Invoice, Company } from "@/types";
+import { generateInvoicePdfFromDom } from "@/lib/generateInvoicePdfFromDom";
 import { defaultTheme } from "@/types/theme";
 
 export default function PublicInvoiceView() {
   const { id } = useParams();
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Fetch invoice without auth requirement
   const { data: invoice, isLoading: invoiceLoading, error: invoiceError } = useQuery({
@@ -118,56 +118,8 @@ export default function PublicInvoiceView() {
   } : null;
 
   const handleDownloadPdf = async () => {
-    const pdfInvoice: Invoice = {
-      id: invoice.id,
-      invoiceNumber: invoice.invoice_number,
-      companyId: invoice.company_id,
-      clientName: invoice.client_name,
-      clientAddress: invoice.client_address || undefined,
-      clientEmail: invoice.client_email || undefined,
-      clientPhone: invoice.client_phone || undefined,
-      date: new Date(invoice.invoice_date),
-      dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
-      items: items.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        qty: item.qty,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-      })),
-      installments: installments.map((inst: any) => ({
-        id: inst.id,
-        amount: inst.amount,
-        paidDate: new Date(inst.paid_date),
-      })),
-      status: invoice.status as "unpaid" | "partial" | "paid",
-      totalAmount: Number(invoice.total_amount),
-      vatRate: Number(invoice.vat_rate) || 0,
-      vatAmount: Number(invoice.vat_amount) || 0,
-      subtotal: Number(invoice.subtotal) || 0,
-      paidAmount: Number(invoice.paid_amount),
-      dueAmount: Number(invoice.due_amount),
-      notes: invoice.notes || undefined,
-    };
-    
-    const pdfCompany: Company | undefined = company ? {
-      id: company.id,
-      name: company.name,
-      tagline: company.tagline || undefined,
-      logo: company.logo_url || undefined,
-      email: company.email || "",
-      phone: company.phone || "",
-      address: company.address || "",
-      address_line1: company.address_line1 || undefined,
-      address_line2: company.address_line2 || undefined,
-      website: company.website || undefined,
-      thank_you_text: company.thank_you_text || undefined,
-      show_qr_code: company.show_qr_code ?? true,
-      footer_alignment: company.footer_alignment || undefined,
-      createdAt: new Date(company.created_at),
-    } : undefined;
-    
-    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme, branding);
+    if (!printRef.current) return;
+    await generateInvoicePdfFromDom(printRef.current, `${invoice.invoice_number}.pdf`);
   };
 
   return (
@@ -184,21 +136,9 @@ export default function PublicInvoiceView() {
         </Button>
       </div>
 
-      {/* Invoice Document - Screen View */}
-      <div className="max-w-4xl mx-auto print:hidden">
+      {/* Invoice Document - shared DOM for screen, print and PDF */}
+      <div ref={printRef} className="invoice-print-area max-w-4xl mx-auto">
         <ThemedInvoiceDocument
-          invoice={invoiceData}
-          items={items}
-          installments={installments}
-          company={companyData}
-          theme={activeTheme}
-          branding={branding}
-        />
-      </div>
-
-      {/* A4 Print Template - Only visible when printing */}
-      <div className="hidden print:block">
-        <A4PrintTemplate
           invoice={invoiceData}
           items={items}
           installments={installments}

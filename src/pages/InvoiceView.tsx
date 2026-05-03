@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Printer, Share2, Copy, Mail, MessageCircle, Loader2, FileDown, PenLine } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -15,8 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { useToast } from "@/hooks/use-toast";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
-import { A4PrintTemplate } from "@/components/invoice/A4PrintTemplate";
-import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { generateInvoicePdfFromDom } from "@/lib/generateInvoicePdfFromDom";
 import { QuickEditSheet } from "@/components/invoice/QuickEditSheet";
 import { Invoice, Company } from "@/types";
 import { defaultTheme } from "@/types/theme";
@@ -26,6 +25,7 @@ export default function InvoiceView() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [quickEditOpen, setQuickEditOpen] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const { data: invoice, isLoading: invoiceLoading } = useInvoice(id);
   const { data: company, isLoading: companyLoading } = useCompany(invoice?.company_id);
@@ -124,57 +124,8 @@ export default function InvoiceView() {
   } : null;
 
   const handleDownloadPdf = async () => {
-    const pdfInvoice: Invoice = {
-      id: invoice.id,
-      invoiceNumber: invoice.invoice_number,
-      companyId: invoice.company_id,
-      clientName: invoice.client_name,
-      clientAddress: invoice.client_address || undefined,
-      clientEmail: invoice.client_email || undefined,
-      clientPhone: invoice.client_phone || undefined,
-      date: new Date(invoice.invoice_date),
-      dueDate: invoice.due_date ? new Date(invoice.due_date) : undefined,
-      items: items.map(item => ({
-        id: item.id,
-        title: item.title,
-        qty: item.qty,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-      })),
-      installments: installments.map(inst => ({
-        id: inst.id,
-        amount: inst.amount,
-        paidDate: new Date(inst.paid_date),
-        paymentMethod: inst.payment_method || "Bank Transfer",
-      })),
-      status: invoice.status as "unpaid" | "partial" | "paid",
-      totalAmount: Number(invoice.total_amount),
-      vatRate: Number(invoice.vat_rate) || 0,
-      vatAmount: Number(invoice.vat_amount) || 0,
-      subtotal: Number(invoice.subtotal) || 0,
-      paidAmount: Number(invoice.paid_amount),
-      dueAmount: Number(invoice.due_amount),
-      notes: invoice.notes || undefined,
-    };
-    
-    const pdfCompany: Company | undefined = company ? {
-      id: company.id,
-      name: company.name,
-      tagline: company.tagline || undefined,
-      logo: company.logo_url || undefined,
-      email: company.email || "",
-      phone: company.phone || "",
-      address: company.address || "",
-      address_line1: company.address_line1 || undefined,
-      address_line2: company.address_line2 || undefined,
-      website: company.website || undefined,
-      thank_you_text: company.thank_you_text || undefined,
-      show_qr_code: company.show_qr_code ?? true,
-      footer_alignment: company.footer_alignment || undefined,
-      createdAt: new Date(company.created_at),
-    } : undefined;
-    
-    await generateInvoicePdf(pdfInvoice, pdfCompany, activeTheme, branding);
+    if (!printRef.current) return;
+    await generateInvoicePdfFromDom(printRef.current, `${invoice.invoice_number}.pdf`);
     toast({
       title: "PDF Downloaded",
       description: `Invoice ${invoice.invoice_number} has been downloaded.`,
@@ -286,21 +237,9 @@ export default function InvoiceView() {
           </div>
         </div>
 
-        {/* Invoice Document - Screen View */}
-        <div className="max-w-4xl mx-auto print:hidden">
+        {/* Invoice Document - same DOM used for screen, print and PDF */}
+        <div ref={printRef} className="invoice-print-area max-w-4xl mx-auto">
           <ThemedInvoiceDocument
-            invoice={invoiceData}
-            items={items}
-            installments={installments}
-            company={companyData}
-            theme={activeTheme}
-            branding={branding}
-          />
-        </div>
-
-        {/* A4 Print Template - Only visible when printing */}
-        <div className="hidden print:block">
-          <A4PrintTemplate
             invoice={invoiceData}
             items={items}
             installments={installments}
