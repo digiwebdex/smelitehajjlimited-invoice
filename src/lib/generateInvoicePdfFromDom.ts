@@ -8,6 +8,7 @@ const MARGIN_LEFT_MM = 10;
 const MARGIN_RIGHT_MM = 10;
 const PAGE_BREAK_SAFETY_MM = 3;
 const FOOTER_SAFETY_MM = 4;
+const FOOTER_CAPTURE_PADDING_PX = 24;
 
 const getBreakpointsFromDom = (element: HTMLElement, pixelsPerMmGuess: number): number[] => {
   const rootRect = element.getBoundingClientRect();
@@ -115,6 +116,13 @@ export async function generateInvoicePdfFromDom(
   let footerCanvas: HTMLCanvasElement | null = null;
   if (footerEl) {
     footerEl.style.display = prevFooterDisplay;
+    const prevFooterPaddingBottom = footerEl.style.paddingBottom;
+    const prevFooterOverflow = footerEl.style.overflow;
+    const computedFooterPaddingBottom = parseFloat(window.getComputedStyle(footerEl).paddingBottom || "0") || 0;
+
+    footerEl.style.paddingBottom = `${computedFooterPaddingBottom + FOOTER_CAPTURE_PADDING_PX}px`;
+    footerEl.style.overflow = "visible";
+
     footerCanvas = await html2canvas(footerEl, {
       scale: 2,
       useCORS: true,
@@ -122,6 +130,9 @@ export async function generateInvoicePdfFromDom(
       logging: false,
       windowWidth: element.scrollWidth,
     });
+
+    footerEl.style.paddingBottom = prevFooterPaddingBottom;
+    footerEl.style.overflow = prevFooterOverflow;
   }
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
