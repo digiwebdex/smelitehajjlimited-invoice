@@ -15,7 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { useToast } from "@/hooks/use-toast";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
-import { generateInvoicePdfFromDom } from "@/lib/generateInvoicePdfFromDom";
+import { renderAndDownloadInvoicePdf } from "@/lib/renderAndDownloadInvoicePdf";
 import { QuickEditSheet } from "@/components/invoice/QuickEditSheet";
 import { Invoice, Company } from "@/types";
 import { defaultTheme } from "@/types/theme";
@@ -124,8 +124,15 @@ export default function InvoiceView() {
   } : null;
 
   const handleDownloadPdf = async () => {
-    if (!printRef.current) return;
-    await generateInvoicePdfFromDom(printRef.current, `${invoice.invoice_number}.pdf`);
+    await renderAndDownloadInvoicePdf({
+      invoice: invoiceData,
+      items,
+      installments,
+      company: companyData,
+      theme: activeTheme,
+      branding,
+      filename: `${invoice.invoice_number}.pdf`,
+    });
     toast({
       title: "PDF Downloaded",
       description: `Invoice ${invoice.invoice_number} has been downloaded.`,
