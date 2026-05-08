@@ -134,7 +134,7 @@ export const ThemedInvoiceDocument = ({
   return (
     <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
       {/* HEADER */}
-      <div className="flex justify-between items-start pb-6">
+      <div className="flex justify-between items-start pb-4">
         <div className="flex items-center gap-4">
           {headerLogo ? (
             <img
