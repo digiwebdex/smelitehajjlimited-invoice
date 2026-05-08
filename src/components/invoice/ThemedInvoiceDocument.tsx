@@ -242,10 +242,10 @@ export const ThemedInvoiceDocument = ({
       <div className="mt-4">
         <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
           <colgroup>
-            <col style={{ width: "60%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "15%" }} />
-            <col style={{ width: "15%" }} />
+            <col style={{ width: "50%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "20%" }} />
           </colgroup>
           <thead>
             <tr style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
