@@ -378,9 +378,9 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className="mt-16">
+      <div data-pdf-footer className="mt-6">
         {/* SIGNATURE SECTION */}
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
           {[
             { label: "Received by", sig: b.signature_received_by },
             { label: "Prepared by", sig: b.signature_prepared_by },
@@ -388,7 +388,7 @@ export const ThemedInvoiceDocument = ({
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
               {item.sig && (
-                <img src={item.sig} alt={item.label} style={{ height: "36px", margin: "0 auto 4px", objectFit: "contain" }} />
+                <img src={item.sig} alt={item.label} style={{ height: "32px", margin: "0 auto 4px", objectFit: "contain" }} />
               )}
               <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "6px" }}>
                 <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
@@ -398,14 +398,14 @@ export const ThemedInvoiceDocument = ({
         </div>
 
         {/* THANK YOU - centered below signatures */}
-        <div className="text-center mt-3">
+        <div className="text-center mt-2">
           <p className="text-sm" style={{ color: t.footer_text_color }}>
             {footerThankYou}
           </p>
         </div>
 
         {/* BOTTOM ROW - Address Left, QR Right */}
-        <div className="flex justify-between items-end mt-12">
+        <div className="flex justify-between items-end mt-6">
           <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
             {addressLine1 && <p>{addressLine1}</p>}
             {addressLine2 && <p>{addressLine2}</p>}
@@ -421,7 +421,7 @@ export const ThemedInvoiceDocument = ({
 
           {showQR && (
             <div className="flex flex-col items-center">
-              <InvoiceQRCode invoiceId={invoice.id} size={70} />
+              <InvoiceQRCode invoiceId={invoice.id} size={64} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
                 Scan the QR code for details
               </p>
