@@ -359,8 +359,8 @@ export const ThemedInvoiceDocument = ({
                     {formatDate(pay.paid_date)}
                   </span>
                   <span
-                    className="px-2 py-1 text-white text-xs rounded font-medium"
-                    style={{ backgroundColor: t.subtotal_text_color }}
+                    className="px-3 py-1 text-xs rounded-full font-medium"
+                    style={{ backgroundColor: "#cbd5e1", color: "#1f2937" }}
                   >
                     {pay.payment_method || "Bank Transfer"}
                   </span>
