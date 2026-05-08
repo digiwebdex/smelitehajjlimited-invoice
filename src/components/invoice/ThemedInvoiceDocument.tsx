@@ -266,14 +266,14 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {item.title || "—"}
                 </td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>{item.qty || 1}</td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>{item.qty || 1}</td>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
