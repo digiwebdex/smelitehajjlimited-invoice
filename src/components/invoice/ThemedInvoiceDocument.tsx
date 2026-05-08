@@ -372,8 +372,16 @@ export const ThemedInvoiceDocument = ({
                     {formatDate(pay.paid_date)}
                   </span>
                   <span
-                    className="px-3 py-1 text-xs rounded-full font-medium"
-                    style={{ backgroundColor: "#cbd5e1", color: "#1f2937" }}
+                    className="inline-block text-xs rounded-full font-medium capitalize"
+                    style={{
+                      backgroundColor: "#cbd5e1",
+                      color: "#1f2937",
+                      lineHeight: "22px",
+                      height: "22px",
+                      padding: "0 12px",
+                      verticalAlign: "middle",
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     {pay.payment_method || "Bank Transfer"}
                   </span>
