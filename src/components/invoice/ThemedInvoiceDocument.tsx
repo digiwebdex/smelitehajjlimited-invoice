@@ -236,16 +236,16 @@ export const ThemedInvoiceDocument = ({
           </colgroup>
           <thead>
             <tr style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
+              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Description
               </th>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
+              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Qty
               </th>
-              <th className="text-left py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
+              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Unit Price
               </th>
-              <th className="text-right py-3 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
+              <th className="text-right py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
                 Total
               </th>
             </tr>
@@ -253,21 +253,21 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className={cn("py-2.5", "font-medium text-black align-middle uppercase leading-tight")}>
+                <td className={cn("py-1", "font-medium text-black align-middle uppercase leading-tight")}>
                   {item.title || "—"}
                 </td>
-                <td className={cn("py-2.5", "text-left text-black align-middle leading-tight")}>{item.qty || 1}</td>
-                <td className={cn("py-2.5", "text-left text-black align-middle leading-tight")}>
+                <td className={cn("py-1", "text-left text-black align-middle leading-tight")}>{item.qty || 1}</td>
+                <td className={cn("py-1", "text-left text-black align-middle leading-tight")}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className={cn("py-2.5", "text-right font-semibold text-black align-middle leading-tight")}>
+                <td className={cn("py-1", "text-right font-semibold text-black align-middle leading-tight")}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
 
             {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "8px" }} /></tr>
+            <tr><td colSpan={4} style={{ height: "4px" }} /></tr>
 
             {/* Subtotal */}
             <tr>
