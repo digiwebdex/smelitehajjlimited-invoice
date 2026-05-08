@@ -384,7 +384,7 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className="mt-6">
+      <div data-pdf-footer className={cn("mt-6", pdfMode && "mt-auto pt-6")}>
         {/* SIGNATURE SECTION */}
         <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
           {[
