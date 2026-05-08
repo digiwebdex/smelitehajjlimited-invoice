@@ -137,7 +137,7 @@ export const ThemedInvoiceDocument = ({
         "bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none",
         pdfMode && "flex flex-col"
       )}
-      style={pdfMode ? { minHeight: "1075px" } : undefined}
+      style={pdfMode ? { minHeight: "1040px" } : undefined}
     >
       {/* HEADER */}
       <div className="flex justify-between items-start pb-4">

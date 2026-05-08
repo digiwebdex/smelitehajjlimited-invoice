@@ -83,11 +83,6 @@ export async function generateInvoicePdfFromDom(
   element: HTMLElement,
   filename: string
 ): Promise<void> {
-  const prevMinHeight = element.style.minHeight;
-  const prevHeight = element.style.height;
-  element.style.minHeight = "0";
-  element.style.height = "auto";
-
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
@@ -95,9 +90,6 @@ export async function generateInvoicePdfFromDom(
     logging: false,
     windowWidth: element.scrollWidth,
   });
-
-  element.style.minHeight = prevMinHeight;
-  element.style.height = prevHeight;
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pdfWidth = pdf.internal.pageSize.getWidth();
