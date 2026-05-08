@@ -291,11 +291,19 @@
   /* A4 Page Setup */
   @page {
     size: A4;
-    margin: 10mm 0 0 0;
+    margin: 10mm 0.5in 0 0;
   }
 
   @page:first {
     margin-top: 0;
+    margin-right: 0.5in;
+  }
+
+  /* Clean background — no shade */
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
   }
 
   /* Remove browser default margins */
