@@ -183,8 +183,15 @@ export const ThemedInvoiceDocument = ({
           </p>
           <div className="mt-2">
             <span
-              className="inline-flex items-center justify-center px-3 text-sm font-medium rounded-full capitalize"
-              style={{ ...getStatusBadgeStyle(invoice.status), lineHeight: 1, height: "22px", paddingTop: 0, paddingBottom: 0 }}
+              className="inline-block text-sm font-medium rounded-full capitalize"
+              style={{
+                ...getStatusBadgeStyle(invoice.status),
+                lineHeight: "26px",
+                height: "26px",
+                padding: "0 14px",
+                verticalAlign: "middle",
+                whiteSpace: "nowrap",
+              }}
             >
               {invoice.status}
             </span>
@@ -235,10 +242,10 @@ export const ThemedInvoiceDocument = ({
       <div className="mt-4">
         <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
           <colgroup>
-            <col style={{ width: "60%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "15%" }} />
-            <col style={{ width: "15%" }} />
+            <col style={{ width: "50%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "20%" }} />
           </colgroup>
           <thead>
             <tr style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
@@ -259,14 +266,14 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {item.title || "—"}
                 </td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>{item.qty || 1}</td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>{item.qty || 1}</td>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
+                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "10px", paddingBottom: "4px" }}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
@@ -365,8 +372,16 @@ export const ThemedInvoiceDocument = ({
                     {formatDate(pay.paid_date)}
                   </span>
                   <span
-                    className="px-3 py-1 text-xs rounded-full font-medium"
-                    style={{ backgroundColor: "#cbd5e1", color: "#1f2937" }}
+                    className="inline-block text-xs rounded-full font-medium capitalize"
+                    style={{
+                      backgroundColor: "#cbd5e1",
+                      color: "#1f2937",
+                      lineHeight: "22px",
+                      height: "22px",
+                      padding: "0 12px",
+                      verticalAlign: "middle",
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     {pay.payment_method || "Bank Transfer"}
                   </span>
