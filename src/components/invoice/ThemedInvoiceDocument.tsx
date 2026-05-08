@@ -266,45 +266,45 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "top", paddingTop: "6px", paddingBottom: "3px" }}>
+                <td className="font-medium text-black uppercase" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
                   {item.title || "—"}
                 </td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "6px", paddingBottom: "3px" }}>{item.qty || 1}</td>
-                <td className="text-left text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "6px", paddingBottom: "3px" }}>
+                <td className="text-left text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>{item.qty || 1}</td>
+                <td className="text-left text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "top", paddingTop: "6px", paddingBottom: "3px" }}>
+                <td className="text-right font-semibold text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
             ))}
 
             {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "2px" }} /></tr>
+            <tr><td colSpan={4} style={{ height: "6px" }} /></tr>
 
             {/* Subtotal */}
             <tr>
               <td colSpan={2} />
-              <td className={cn("py-0.5", "text-sm leading-tight")} style={{ color: t.subtotal_text_color }}>Subtotal</td>
-              <td className={cn("py-0.5", "text-right text-sm font-semibold text-black leading-tight")}>{formatCurrency(invoice.subtotal)}</td>
+              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
+              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
             </tr>
             {/* Tax */}
             <tr>
               <td colSpan={2} />
-              <td className={cn("py-0.5", "text-sm leading-tight")} style={{ color: t.subtotal_text_color }}>Tax</td>
-              <td className={cn("py-0.5", "text-right text-sm font-semibold text-black leading-tight")}>{formatCurrency(invoice.vat_amount)}</td>
+              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
+              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
             </tr>
             {/* Total */}
             <tr>
               <td colSpan={2} />
-              <td className={cn("py-0.5", "font-bold text-black leading-tight")}>Total</td>
-              <td className={cn("py-0.5", "text-right font-bold text-black leading-tight")}>{formatCurrency(invoice.total_amount)}</td>
+              <td className="py-1.5 font-bold text-black">Total</td>
+              <td className="py-1.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
             </tr>
             {/* Total Paid */}
             <tr>
               <td colSpan={2} />
-              <td className={cn("py-0.5", "font-bold leading-tight")} style={{ color: t.paid_text_color }}>Total Paid</td>
-              <td className={cn("py-0.5", "text-right font-bold leading-tight")} style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
+              <td className="py-1.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
+              <td className="py-1.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
             </tr>
             {/* Balance / Paid in Full */}
             <tr>
@@ -314,7 +314,7 @@ export const ThemedInvoiceDocument = ({
                 style={{
                   backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
                   color: t.balance_text_color,
-                  padding: "5px 12px",
+                  padding: "8px 12px",
                   fontWeight: "bold",
                 }}
               >
