@@ -416,8 +416,7 @@ export const ThemedInvoiceDocument = ({
             {addressLine1 && <p>{addressLine1}</p>}
             {addressLine2 && <p>{addressLine2}</p>}
             {footerPhone && <p>{footerPhone}</p>}
-            {footerEmail && <p>{footerEmail}</p>
-            )}
+            {footerEmail && <p>{footerEmail}</p>}
             {footerWebsite && (
               <p style={{ color: t.primary_color }}>
                 <span className="font-semibold">Website : </span>{footerWebsite}
