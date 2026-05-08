@@ -134,7 +134,7 @@ export const ThemedInvoiceDocument = ({
   return (
     <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
       {/* HEADER */}
-      <div className="flex justify-between items-start pb-6">
+      <div className="flex justify-between items-start pb-4">
         <div className="flex items-center gap-4">
           {headerLogo ? (
             <img
@@ -188,7 +188,7 @@ export const ThemedInvoiceDocument = ({
 
       {/* BILL TO + DATES */}
       <div
-        className="flex justify-between mt-6 pt-6"
+        className="flex justify-between mt-4 pt-4"
         style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
         <div
@@ -226,7 +226,7 @@ export const ThemedInvoiceDocument = ({
       </div>
 
       {/* UNIFIED ITEM + SUMMARY TABLE — matches A4/PDF layout exactly */}
-      <div className="mt-6">
+      <div className="mt-4">
         <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
           <colgroup>
             <col style={{ width: "50%" }} />
@@ -326,7 +326,7 @@ export const ThemedInvoiceDocument = ({
       {/* NOTES */}
       {invoice.notes && (
         <div
-          className="mt-10 rounded-lg p-6"
+          className="mt-4 rounded-lg p-4"
           style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
           <h4 className="font-semibold mb-3 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
@@ -341,17 +341,17 @@ export const ThemedInvoiceDocument = ({
       {/* PAYMENT HISTORY */}
       {installments.length > 0 && (
         <div
-          className="mt-10 rounded-lg p-6"
+          className="mt-4 rounded-lg p-4"
           style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
           <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
             Payment History
           </h4>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {installments.map((pay, idx) => (
               <div
                 key={pay.id}
-                className="flex justify-between items-center pl-4 py-2"
+                className="flex justify-between items-center pl-4 py-1"
                 style={{ borderLeftWidth: '4px', borderLeftColor: t.border_color }}
               >
                 <div className="flex items-center gap-3 flex-wrap">
@@ -378,9 +378,9 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className="mt-16">
+      <div data-pdf-footer className="mt-6">
         {/* SIGNATURE SECTION */}
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
           {[
             { label: "Received by", sig: b.signature_received_by },
             { label: "Prepared by", sig: b.signature_prepared_by },
@@ -388,7 +388,7 @@ export const ThemedInvoiceDocument = ({
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
               {item.sig && (
-                <img src={item.sig} alt={item.label} style={{ height: "36px", margin: "0 auto 4px", objectFit: "contain" }} />
+                <img src={item.sig} alt={item.label} style={{ height: "32px", margin: "0 auto 4px", objectFit: "contain" }} />
               )}
               <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "6px" }}>
                 <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
@@ -398,14 +398,14 @@ export const ThemedInvoiceDocument = ({
         </div>
 
         {/* THANK YOU - centered below signatures */}
-        <div className="text-center mt-3">
+        <div className="text-center mt-2">
           <p className="text-sm" style={{ color: t.footer_text_color }}>
             {footerThankYou}
           </p>
         </div>
 
         {/* BOTTOM ROW - Address Left, QR Right */}
-        <div className="flex justify-between items-end mt-12">
+        <div className="flex justify-between items-end mt-6">
           <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
             {addressLine1 && <p>{addressLine1}</p>}
             {addressLine2 && <p>{addressLine2}</p>}
@@ -421,7 +421,7 @@ export const ThemedInvoiceDocument = ({
 
           {showQR && (
             <div className="flex flex-col items-center">
-              <InvoiceQRCode invoiceId={invoice.id} size={70} />
+              <InvoiceQRCode invoiceId={invoice.id} size={64} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
                 Scan the QR code for details
               </p>
