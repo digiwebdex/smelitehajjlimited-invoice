@@ -347,7 +347,7 @@
   .invoice-print-area > div {
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 12mm !important;
+    padding: 8mm !important;
     min-height: auto !important;
   }
 
