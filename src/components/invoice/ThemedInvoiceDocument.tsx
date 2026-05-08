@@ -408,9 +408,11 @@ export const ThemedInvoiceDocument = ({
             { label: "Authorize by", sig: b.signature_authorize_by },
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
-              {item.sig && (
-                <img src={item.sig} alt={item.label} style={{ height: "32px", margin: "0 auto 4px", objectFit: "contain" }} />
-              )}
+              <div style={{ height: "36px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                {item.sig && (
+                  <img src={item.sig} alt={item.label} style={{ height: "32px", objectFit: "contain" }} />
+                )}
+              </div>
               <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "6px" }}>
                 <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
               </div>
