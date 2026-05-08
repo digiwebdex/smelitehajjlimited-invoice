@@ -183,8 +183,8 @@ export const ThemedInvoiceDocument = ({
           </p>
           <div className="mt-2">
             <span
-              className="px-3 py-1 text-sm font-medium rounded-full capitalize"
-              style={getStatusBadgeStyle(invoice.status)}
+              className="inline-flex items-center justify-center px-3 text-sm font-medium rounded-full capitalize"
+              style={{ ...getStatusBadgeStyle(invoice.status), lineHeight: 1, height: "22px", paddingTop: 0, paddingBottom: 0 }}
             >
               {invoice.status}
             </span>
