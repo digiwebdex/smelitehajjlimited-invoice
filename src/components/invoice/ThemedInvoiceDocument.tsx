@@ -188,7 +188,7 @@ export const ThemedInvoiceDocument = ({
 
       {/* BILL TO + DATES */}
       <div
-        className="flex justify-between mt-6 pt-6"
+        className="flex justify-between mt-4 pt-4"
         style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
       >
         <div
