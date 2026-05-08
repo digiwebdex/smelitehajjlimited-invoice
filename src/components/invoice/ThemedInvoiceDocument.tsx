@@ -326,7 +326,7 @@ export const ThemedInvoiceDocument = ({
       {/* NOTES */}
       {invoice.notes && (
         <div
-          className="mt-10 rounded-lg p-6"
+          className="mt-4 rounded-lg p-4"
           style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
           <h4 className="font-semibold mb-3 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
@@ -341,17 +341,17 @@ export const ThemedInvoiceDocument = ({
       {/* PAYMENT HISTORY */}
       {installments.length > 0 && (
         <div
-          className="mt-10 rounded-lg p-6"
+          className="mt-4 rounded-lg p-4"
           style={{ borderWidth: '1px', borderColor: t.border_color }}
         >
           <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
             Payment History
           </h4>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {installments.map((pay, idx) => (
               <div
                 key={pay.id}
-                className="flex justify-between items-center pl-4 py-2"
+                className="flex justify-between items-center pl-4 py-1"
                 style={{ borderLeftWidth: '4px', borderLeftColor: t.border_color }}
               >
                 <div className="flex items-center gap-3 flex-wrap">
