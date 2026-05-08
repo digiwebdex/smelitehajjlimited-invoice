@@ -348,7 +348,14 @@
     box-shadow: none !important;
     border-radius: 0 !important;
     padding: 8mm !important;
-    min-height: auto !important;
+    min-height: 281mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .invoice-print-area [data-pdf-footer] {
+    margin-top: auto !important;
+    padding-top: 6mm !important;
   }
 
   /* Legacy A4 template (kept for safety, hidden if present) */
