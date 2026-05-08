@@ -399,7 +399,7 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className={cn("mt-6", pdfMode && "mt-auto pt-6")}>
+      <div data-pdf-footer className={cn("mt-6", pdfMode && "mt-auto pt-2")}>
         {/* SIGNATURE SECTION */}
         <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
           {[
@@ -408,12 +408,12 @@ export const ThemedInvoiceDocument = ({
             { label: "Authorize by", sig: b.signature_authorize_by },
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
-              <div style={{ height: "36px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+              <div style={{ height: "24px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
                 {item.sig && (
-                  <img src={item.sig} alt={item.label} style={{ height: "32px", objectFit: "contain" }} />
+                  <img src={item.sig} alt={item.label} style={{ height: "24px", objectFit: "contain" }} />
                 )}
               </div>
-              <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "6px" }}>
+              <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
                 <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
               </div>
             </div>
