@@ -415,8 +415,8 @@ export const ThemedInvoiceDocument = ({
           <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
             {addressLine1 && <p>{addressLine1}</p>}
             {addressLine2 && <p>{addressLine2}</p>}
-            {(footerPhone || footerEmail) && (
-              <p>{[footerPhone, footerEmail].filter(Boolean).join(" | ")}</p>
+            {footerPhone && <p>{footerPhone}</p>}
+            {footerEmail && <p>{footerEmail}</p>
             )}
             {footerWebsite && (
               <p style={{ color: t.primary_color }}>
