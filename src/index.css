@@ -291,12 +291,7 @@
   /* A4 Page Setup */
   @page {
     size: A4;
-    margin: 10mm 0.5in 0 0;
-  }
-
-  @page:first {
-    margin-top: 0;
-    margin-right: 0.5in;
+    margin: 0;
   }
 
   /* Clean background — no shade */
@@ -355,8 +350,8 @@
   .invoice-print-area > div {
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 8mm !important;
-    min-height: 281mm !important;
+    padding: 8mm 13mm 8mm 8mm !important;
+    min-height: 297mm !important;
     display: flex !important;
     flex-direction: column !important;
   }
