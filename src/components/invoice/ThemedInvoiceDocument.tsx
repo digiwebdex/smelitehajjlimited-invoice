@@ -359,8 +359,8 @@ export const ThemedInvoiceDocument = ({
                     {formatDate(pay.paid_date)}
                   </span>
                   <span
-                    className="px-2 py-1 text-white text-xs rounded font-medium"
-                    style={{ backgroundColor: t.subtotal_text_color }}
+                    className="px-3 py-1 text-xs rounded-full font-medium"
+                    style={{ backgroundColor: "#cbd5e1", color: "#1f2937" }}
                   >
                     {pay.payment_method || "Bank Transfer"}
                   </span>
@@ -378,47 +378,37 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className="mt-10">
-      {/* SIGNATURE SECTION */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
-        {[
-          { label: "Received by", sig: b.signature_received_by },
-          { label: "Prepared by", sig: b.signature_prepared_by },
-          { label: "Authorize by", sig: b.signature_authorize_by },
-        ].map((item) => (
-          <div key={item.label} style={{ width: "150px", textAlign: "center" }}>
-            {item.sig && (
-              <img src={item.sig} alt={item.label} style={{ height: "40px", margin: "0 auto 4px", objectFit: "contain" }} />
-            )}
-            <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
-              <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
+      <div data-pdf-footer className="mt-16">
+        {/* SIGNATURE SECTION */}
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "24px" }}>
+          {[
+            { label: "Received by", sig: b.signature_received_by },
+            { label: "Prepared by", sig: b.signature_prepared_by },
+            { label: "Authorize by", sig: b.signature_authorize_by },
+          ].map((item) => (
+            <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
+              {item.sig && (
+                <img src={item.sig} alt={item.label} style={{ height: "36px", margin: "0 auto 4px", objectFit: "contain" }} />
+              )}
+              <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "6px" }}>
+                <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* FOOTER - Using branding settings */}
-      <div
-        className="pt-6"
-        style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
-      >
-        {/* THANK YOU CENTER (TOP) */}
-        <div className="text-center mb-2">
+        {/* THANK YOU - centered below signatures */}
+        <div className="text-center mt-3">
           <p className="text-sm" style={{ color: t.footer_text_color }}>
             {footerThankYou}
           </p>
         </div>
 
         {/* BOTTOM ROW - Address Left, QR Right */}
-        <div className="flex justify-between items-end">
-          {/* LEFT SIDE - ADDRESS (Two lines) */}
-          <div className="text-xs" style={{ color: t.footer_text_color }}>
-            {addressLine1 && (
-              <p>{addressLine1}</p>
-            )}
-            {addressLine2 && (
-              <p>{addressLine2}</p>
-            )}
+        <div className="flex justify-between items-end mt-12">
+          <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
+            {addressLine1 && <p>{addressLine1}</p>}
+            {addressLine2 && <p>{addressLine2}</p>}
             {(footerPhone || footerEmail) && (
               <p>{[footerPhone, footerEmail].filter(Boolean).join(" | ")}</p>
             )}
@@ -429,17 +419,15 @@ export const ThemedInvoiceDocument = ({
             )}
           </div>
 
-          {/* RIGHT SIDE - QR */}
           {showQR && (
             <div className="flex flex-col items-center">
               <InvoiceQRCode invoiceId={invoice.id} size={70} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
-                Scan for details
+                Scan the QR code for details
               </p>
             </div>
           )}
         </div>
-      </div>
       </div> {/* end signature+footer wrapper */}
     </div>
   );
