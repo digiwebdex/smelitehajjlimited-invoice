@@ -132,7 +132,13 @@ export const ThemedInvoiceDocument = ({
   }[footerAlign];
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none">
+    <div
+      className={cn(
+        "bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none",
+        pdfMode && "flex flex-col"
+      )}
+      style={pdfMode ? { minHeight: "1075px" } : undefined}
+    >
       {/* HEADER */}
       <div className="flex justify-between items-start pb-4">
         <div className="flex items-center gap-4">
