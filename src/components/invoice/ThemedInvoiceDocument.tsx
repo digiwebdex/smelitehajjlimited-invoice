@@ -428,7 +428,7 @@ export const ThemedInvoiceDocument = ({
         </div>
 
         {/* BOTTOM ROW - Address Left, QR Right */}
-        <div className="flex justify-between items-end mt-6">
+        <div className="flex justify-between items-end mt-3">
           <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
             {addressLine1 && <p>{addressLine1}</p>}
             {addressLine2 && <p>{addressLine2}</p>}
