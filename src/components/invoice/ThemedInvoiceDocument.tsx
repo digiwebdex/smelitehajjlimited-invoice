@@ -259,14 +259,14 @@ export const ThemedInvoiceDocument = ({
           <tbody>
             {items.map((item) => (
               <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className={cn("py-1", "font-medium text-black align-middle uppercase leading-tight")}>
+                <td className="font-medium text-black uppercase leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
                   {item.title || "—"}
                 </td>
-                <td className={cn("py-1", "text-left text-black align-middle leading-tight")}>{item.qty || 1}</td>
-                <td className={cn("py-1", "text-left text-black align-middle leading-tight")}>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>{item.qty || 1}</td>
+                <td className="text-left text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
                   {formatCurrency(item.unit_price || item.amount)}
                 </td>
-                <td className={cn("py-1", "text-right font-semibold text-black align-middle leading-tight")}>
+                <td className="text-right font-semibold text-black leading-tight" style={{ verticalAlign: "middle", paddingTop: "6px", paddingBottom: "6px" }}>
                   {formatCurrency(item.amount)}
                 </td>
               </tr>
