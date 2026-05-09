@@ -16,6 +16,7 @@ import { useBranding } from "@/hooks/useBranding";
 import { useToast } from "@/hooks/use-toast";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
 import { renderAndDownloadInvoicePdf } from "@/lib/renderAndDownloadInvoicePdf";
+import { printInvoiceFromNode } from "@/lib/printInvoice";
 import { QuickEditSheet } from "@/components/invoice/QuickEditSheet";
 import { Invoice, Company } from "@/types";
 import { defaultTheme } from "@/types/theme";
@@ -170,7 +171,10 @@ export default function InvoiceView() {
               <FileDown className="h-4 w-4 mr-2" />
               Download Invoice
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
+            <Button
+              variant="outline"
+              onClick={() => printRef.current && printInvoiceFromNode(printRef.current)}
+            >
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
@@ -244,16 +248,21 @@ export default function InvoiceView() {
           </div>
         </div>
 
-        {/* Invoice Document - same DOM used for screen, print and PDF */}
-        <div ref={printRef} className="invoice-print-area max-w-4xl mx-auto">
-          <ThemedInvoiceDocument
-            invoice={invoiceData}
-            items={items}
-            installments={installments}
-            company={companyData}
-            theme={activeTheme}
-            branding={branding}
-          />
+        {/* On-screen preview card. Print/PDF use a clean A4 template via printInvoiceFromNode / renderAndDownloadInvoicePdf. */}
+        <div className="max-w-4xl mx-auto">
+          <div
+            ref={printRef}
+            className="invoice-print-area bg-white rounded-xl shadow-lg overflow-hidden"
+          >
+            <ThemedInvoiceDocument
+              invoice={invoiceData}
+              items={items}
+              installments={installments}
+              company={companyData}
+              theme={activeTheme}
+              branding={branding}
+            />
+          </div>
         </div>
         {/* Quick Edit Sheet */}
         <QuickEditSheet

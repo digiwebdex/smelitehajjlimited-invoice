@@ -280,418 +280,92 @@
   @apply bg-muted-foreground/30;
 }
 
-/* Print styles - Strict single-page A4 */
+/* ===== Invoice Print Styles =====
+ * Natural-flow pagination. The browser handles the item-table flow;
+ * the .invoice-footer-block uses break-inside: avoid so it lands on
+ * the last page only. For short invoices everything fits on page 1.
+ */
 @media print {
-  *, *::before, *::after {
-    box-shadow: none !important;
-    outline: none !important;
-    box-sizing: border-box;
-  }
-
   @page {
     size: A4 portrait;
     margin: 0;
   }
 
   html, body {
-    width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
-    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important;
     background: #ffffff !important;
-    background-image: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
-  /* Hide everything by default */
+  /* Hide every node by default — the print-host iframe approach is
+     used by the buttons, but this is a safe fallback for Ctrl+P. */
   body * {
     visibility: hidden !important;
   }
 
-  /* Collapse all body subtrees so they cannot push extra pages */
-  body > * {
-    height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-  }
-
-  /* Show only the invoice print area and its descendants */
   .invoice-print-area,
   .invoice-print-area * {
     visibility: visible !important;
   }
 
-  .no-print,
-  button,
-  nav,
-  aside,
-  [data-sidebar],
-  [data-sidebar-wrapper] {
-    display: none !important;
-    visibility: hidden !important;
+  /* Strip ancestor layout (sidebar, padding, min-heights) */
+  body, #root, [data-sidebar-wrapper], main, .min-h-screen {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
   }
 
-  /* Pin the invoice exactly to the page */
   .invoice-print-area {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 210mm !important;
-    height: 295mm !important;
     max-width: 210mm !important;
-    max-height: 295mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
-    overflow: hidden !important;
     box-shadow: none !important;
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* The inner card (ThemedInvoiceDocument root) becomes the A4 sheet */
-  .invoice-print-area > div {
-    width: 210mm !important;
-    height: 295mm !important;
-    max-height: 295mm !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 10mm 14mm 40mm 14mm !important;
-    background: #ffffff !important;
+    border: 0 !important;
     border-radius: 0 !important;
+  }
+
+  /* Strip on-screen card chrome from the document */
+  .invoice-print-area .invoice-document {
     box-shadow: none !important;
-    overflow: hidden !important;
-    position: relative !important;
-    display: block !important;
-    page-break-inside: avoid !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+  }
+
+  /* Items table: header repeats, rows never split */
+  .invoice-items thead { display: table-header-group !important; }
+  .invoice-items tfoot { display: table-footer-group !important; }
+  .invoice-items tr,
+  .invoice-row {
     break-inside: avoid !important;
-  }
-
-  .invoice-print-area .invoice-main-content {
-    max-height: calc(295mm - 10mm - 40mm - 4mm) !important;
-    overflow: hidden !important;
-    padding-bottom: 0 !important;
-  }
-
-  /* Force final sheet element to never trigger a new page */
-  .invoice-print-area,
-  .invoice-print-area * {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Tighten vertical rhythm so everything fits */
-  .invoice-print-area .mt-8 { margin-top: 10px !important; }
-  .invoice-print-area .mt-6 { margin-top: 8px !important; }
-  .invoice-print-area .mt-4 { margin-top: 6px !important; }
-  .invoice-print-area .mt-3 { margin-top: 4px !important; }
-  .invoice-print-area .mt-2 { margin-top: 3px !important; }
-  .invoice-print-area .pt-4 { padding-top: 6px !important; }
-  .invoice-print-area .pb-4 { padding-bottom: 6px !important; }
-  .invoice-print-area .py-2 { padding-top: 4px !important; padding-bottom: 4px !important; }
-  .invoice-print-area .p-4 { padding: 8px !important; }
-  .invoice-print-area .p-8 { padding: 0 !important; }
-
-  /* Pin signature + address + QR row to bottom of sheet */
-  .invoice-print-area .invoice-bottom-block {
-    position: absolute !important;
-    left: 14mm !important;
-    right: 14mm !important;
-    bottom: 6mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
     page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
 
-  .invoice-print-area [data-pdf-footer] + * {
+  .invoice-keep-together,
+  .invoice-footer-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Hide app shell controls */
+  .no-print,
+  nav, aside,
+  [data-sidebar],
+  [data-sidebar-wrapper] {
     display: none !important;
   }
+}
 
-  /* Avoid breaks on key sections */
-  .invoice-print-area table,
-  .invoice-print-area thead,
-  .invoice-print-area tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .invoice-print-area thead {
-    display: table-header-group !important;
-  }
-
-  /* Make main content full width - remove all constraints */
-  main,
-  .min-h-screen,
-  [class*="SidebarInset"],
-  [class*="peer-data"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: auto !important;
-    transform: none !important;
-    position: static !important;
-    left: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  /* Invoice document styling for print */
-  .max-w-4xl {
-    max-width: 210mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Remove shadows and borders from cards (except where needed) */
-  .card-elevated,
-  .shadow-lg,
-  .shadow-md,
-  .shadow-sm,
-  .shadow,
-  [class*="shadow-"],
-  [class*="ring-"] {
-    box-shadow: none !important;
-  }
-
-  /* Remove rounded corners except for logos */
-  .rounded-xl:not(.rounded-full),
-  .rounded-lg:not(.rounded-full),
-  .rounded-md:not(.rounded-full),
-  .card:not(.rounded-full),
-  .bg-card:not(.rounded-full) {
-    border-radius: 0 !important;
-  }
-
-  /* ===== CIRCULAR LOGO - Keep rounded-full for company logos ===== */
-  .rounded-full {
-    border-radius: 9999px !important;
-  }
-  
-  img.rounded-full,
-  div.rounded-full {
-    border-radius: 9999px !important;
-    overflow: hidden !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== BALANCE BOX COLORS - CRITICAL ===== */
-  .bg-red-500 {
-    background-color: #ef4444 !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-green-500 {
-    background-color: #22c55e !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-red-600 {
-    background-color: #dc2626 !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-green-600 {
-    background-color: #16a34a !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== ORANGE COLORS ===== */
-  .text-orange-500 {
-    color: #f97316 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-orange-500 {
-    background-color: #f97316 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== SUCCESS/GREEN COLORS - Total Paid ===== */
-  .text-success {
-    color: #16a34a !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-success {
-    background-color: #16a34a !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== ACCENT/TEAL COLORS ===== */
-  .text-accent,
-  .text-teal-600,
-  .text-teal-500 {
-    color: #14b8a6 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-accent {
-    background-color: #14b8a6 !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .border-accent {
-    border-color: #14b8a6 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== GRAY TEXT COLORS - Footer ===== */
-  .text-gray-500 {
-    color: #6b7280 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .text-gray-400 {
-    color: #9ca3af !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== PAYMENT BADGE COLORS ===== */
-  .bg-gray-400 {
-    background-color: #9ca3af !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== STATUS BADGES ===== */
-  .status-paid {
-    background-color: #dcfce7 !important;
-    color: #166534 !important;
-    border: 1px solid #86efac !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .status-partial {
-    background-color: #fef3c7 !important;
-    color: #92400e !important;
-    border: 1px solid #fcd34d !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .status-unpaid {
-    background-color: #fee2e2 !important;
-    color: #991b1b !important;
-    border: 1px solid #fca5a5 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .bg-green-100 {
-    background-color: #dcfce7 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .text-green-800 {
-    color: #166534 !important;
-  }
-  .bg-yellow-100 {
-    background-color: #fef3c7 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .text-yellow-800 {
-    color: #92400e !important;
-  }
-  .bg-red-100 {
-    background-color: #fee2e2 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .text-red-800 {
-    color: #991b1b !important;
-  }
-
-  /* ===== HIDE LEFT ACCENT BORDERS IN PRINT ===== */
-  .border-l-4 {
-    border-left: none !important;
-  }
-
-  /* Keep horizontal borders */
-  .border-t {
-    border-top: 1px solid #e5e7eb !important;
-  }
-  .border-b,
-  .border-b-2 {
-    border-bottom: 1px solid #e5e7eb !important;
-  }
-  .border-b-2 {
-    border-bottom-width: 2px !important;
-  }
-  .border-gray-300 {
-    border-color: #d1d5db !important;
-  }
-  .border-gray-200 {
-    border-color: #e5e7eb !important;
-  }
-
-  /* Payment history box */
-  .border.border-gray-200.rounded-lg {
-    border: none !important;
-    border-radius: 0 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== TEXT COLORS ===== */
-  .text-foreground,
-  .text-primary {
-    color: #0f172a !important;
-  }
-  .text-muted-foreground {
-    color: #6b7280 !important;
-  }
-  h1, h2, h3, h4 {
-    color: #0f172a !important;
-  }
-
-  /* ===== TABLE STYLING ===== */
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-  th {
-    color: #6b7280 !important;
-  }
-  td {
-    color: #1f2937 !important;
-  }
-
-  /* ===== TYPOGRAPHY - Match PDF ===== */
-  * {
-    font-size: 100% !important;
-    line-height: 1.4 !important;
-  }
-  h1 { font-size: 1.5rem !important; }
-  h2 { font-size: 1.25rem !important; }
-  h3 { font-size: 1rem !important; }
-
-  /* ===== QR CODE ===== */
-  canvas,
-  svg {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* ===== PAGE BREAKS ===== */
-  .page-break {
-    page-break-before: always;
-  }
+.page-break {
+  page-break-before: always;
 }

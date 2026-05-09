@@ -7,4 +7,4 @@ export { PaymentCard } from "./PaymentCard";
 export { PaymentsSection } from "./PaymentsSection";
 export { InvoiceSummaryCard } from "./InvoiceSummaryCard";
 export { ThemedInvoiceDocument } from "./ThemedInvoiceDocument";
-export { A4PrintTemplate } from "./A4PrintTemplate";
+
