@@ -139,6 +139,7 @@ export const ThemedInvoiceDocument = ({
       )}
       style={pdfMode ? { minHeight: "1040px" } : undefined}
     >
+      <div className="invoice-main-content">
       {/* HEADER */}
       <div className="flex justify-between items-start pb-4">
         <div className="flex items-center gap-4">
@@ -397,6 +398,7 @@ export const ThemedInvoiceDocument = ({
           </div>
         </div>
       )}
+      </div>
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
       <div data-pdf-footer className={cn("invoice-bottom-block mt-6", pdfMode && "mt-auto pt-2")}>
