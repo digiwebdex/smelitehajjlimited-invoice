@@ -80,7 +80,7 @@ export const ThemedInvoiceDocument = ({
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
 
-  const currencySymbol = "৳";
+  const currencySymbol = "Tk ";
   const formatCurrency = (amount: number) => {
     return `${currencySymbol}${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
@@ -399,7 +399,7 @@ export const ThemedInvoiceDocument = ({
       )}
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className={cn("mt-6", pdfMode && "mt-auto pt-2")}>
+      <div data-pdf-footer className={cn("invoice-bottom-block mt-6", pdfMode && "mt-auto pt-2")}>
         {/* SIGNATURE SECTION */}
         <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
           {[
