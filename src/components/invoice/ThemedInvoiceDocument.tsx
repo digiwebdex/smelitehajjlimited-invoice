@@ -139,6 +139,7 @@ export const ThemedInvoiceDocument = ({
       )}
       style={pdfMode ? { minHeight: "1040px" } : undefined}
     >
+      <div className="invoice-main-content">
       {/* HEADER */}
       <div className="flex justify-between items-start pb-4">
         <div className="flex items-center gap-4">
@@ -397,6 +398,7 @@ export const ThemedInvoiceDocument = ({
           </div>
         </div>
       )}
+      </div>
 
       {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
       <div data-pdf-footer className={cn("invoice-bottom-block mt-6", pdfMode && "mt-auto pt-2")}>
@@ -448,7 +450,7 @@ export const ThemedInvoiceDocument = ({
 
           {showQR && (
             <div className="flex flex-col items-center">
-              <InvoiceQRCode invoiceId={invoice.id} size={64} />
+              <InvoiceQRCode invoiceId={invoice.id} size={64} showLabel={false} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
                 Scan the QR code for details
               </p>
