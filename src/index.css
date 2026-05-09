@@ -365,6 +365,13 @@
     break-inside: avoid !important;
   }
 
+  .invoice-print-area .invoice-main-content {
+    height: 100% !important;
+    max-height: calc(297mm - 12mm - 42mm - 12mm) !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+
   /* Tighten vertical rhythm so everything fits */
   .invoice-print-area .mt-8 { margin-top: 10px !important; }
   .invoice-print-area .mt-6 { margin-top: 8px !important; }
@@ -387,6 +394,10 @@
     padding: 0 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  .invoice-print-area [data-pdf-footer] + * {
+    display: none !important;
   }
 
   /* Avoid breaks on key sections */
