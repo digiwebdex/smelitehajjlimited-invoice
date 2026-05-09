@@ -11,7 +11,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const app = express();
 
