@@ -13,8 +13,9 @@ module.exports = {
   apps: [
     {
       name: 'smelitehajj-api',
-      script: './server.js',
+      script: '/var/www/smelitehajj-invoice/migration/backend/server.js',
       cwd: '/var/www/smelitehajj-invoice/migration/backend',
+      interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
