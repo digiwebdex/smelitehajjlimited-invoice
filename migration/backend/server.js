@@ -11,7 +11,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // Static files for uploads
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
@@ -782,7 +782,7 @@ app.post('/api/branding/reset', authenticate, async (req, res) => {
 // ============================================
 // SERVE FRONTEND (Production)
 // ============================================
-const frontendPath = path.join(__dirname, '..', 'dist');
+const frontendPath = path.resolve(__dirname, '..', '..', 'dist');
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
   app.get('*', (req, res) => {
