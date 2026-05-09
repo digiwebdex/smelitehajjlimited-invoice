@@ -80,7 +80,7 @@ export const ThemedInvoiceDocument = ({
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
 
-  const currencySymbol = "৳";
+  const currencySymbol = "Tk ";
   const formatCurrency = (amount: number) => {
     return `${currencySymbol}${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
