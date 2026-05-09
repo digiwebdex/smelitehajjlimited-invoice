@@ -153,8 +153,8 @@ export const ThemedInvoiceDocument = ({
               src={headerLogo}
               alt={headerName}
               style={{
-                width: "56px",
-                height: "56px",
+                width: "104px",
+                height: "104px",
                 borderRadius: "9999px",
                 objectFit: "cover",
               }}
@@ -162,8 +162,8 @@ export const ThemedInvoiceDocument = ({
           ) : (
             <div
               style={{
-                width: "56px",
-                height: "56px",
+                width: "104px",
+                height: "104px",
                 borderRadius: "9999px",
                 backgroundColor: t.primary_color,
                 color: "#ffffff",
@@ -572,7 +572,7 @@ export const ThemedInvoiceDocument = ({
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
               <div
                 style={{
-                  height: "56px",
+                  height: "104px",
                   display: "flex",
                   alignItems: "flex-end",
                   justifyContent: "center",
@@ -583,7 +583,7 @@ export const ThemedInvoiceDocument = ({
                   <img
                     src={item.sig}
                     alt={item.label}
-                    style={{ height: "56px", maxWidth: "100%", objectFit: "contain" }}
+                    style={{ height: "104px", maxWidth: "100%", objectFit: "contain" }}
                   />
                 )}
               </div>
