@@ -295,8 +295,9 @@
 
   html, body {
     width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
     min-height: 0 !important;
-    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -310,6 +311,13 @@
   /* Hide everything by default */
   body * {
     visibility: hidden !important;
+  }
+
+  /* Collapse all body subtrees so they cannot push extra pages */
+  body > * {
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
   }
 
   /* Show only the invoice print area and its descendants */
