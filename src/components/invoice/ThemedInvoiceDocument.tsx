@@ -153,8 +153,8 @@ export const ThemedInvoiceDocument = ({
               src={headerLogo}
               alt={headerName}
               style={{
-                width: "104px",
-                height: "104px",
+                width: "56px",
+                height: "56px",
                 borderRadius: "9999px",
                 objectFit: "cover",
               }}
@@ -162,8 +162,8 @@ export const ThemedInvoiceDocument = ({
           ) : (
             <div
               style={{
-                width: "104px",
-                height: "104px",
+                width: "56px",
+                height: "56px",
                 borderRadius: "9999px",
                 backgroundColor: t.primary_color,
                 color: "#ffffff",
