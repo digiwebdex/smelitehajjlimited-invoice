@@ -572,7 +572,7 @@ export const ThemedInvoiceDocument = ({
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
               <div
                 style={{
-                  height: "180px",
+                  height: "260px",
                   display: "flex",
                   alignItems: "flex-end",
                   justifyContent: "center",
@@ -583,7 +583,7 @@ export const ThemedInvoiceDocument = ({
                   <img
                     src={item.sig}
                     alt={item.label}
-                    style={{ height: "180px", maxWidth: "100%", objectFit: "contain" }}
+                    style={{ height: "260px", maxWidth: "100%", objectFit: "contain" }}
                   />
                 )}
               </div>
