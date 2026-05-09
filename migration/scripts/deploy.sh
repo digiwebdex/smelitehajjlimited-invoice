@@ -85,7 +85,7 @@ fi
 # 6. Restart API with FORCED env refresh (drops stale PM2-baked env from other projects)
 echo "Restarting API (forced env refresh)..."
 pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
-pm2 start ecosystem.config.js --update-env
+pm2 start "$BACKEND_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" --update-env
 pm2 save
 
 # 7. Wait for readiness with polling (no blind sleep)
