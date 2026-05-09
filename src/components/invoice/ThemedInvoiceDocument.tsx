@@ -450,7 +450,7 @@ export const ThemedInvoiceDocument = ({
 
           {showQR && (
             <div className="flex flex-col items-center">
-              <InvoiceQRCode invoiceId={invoice.id} size={64} />
+              <InvoiceQRCode invoiceId={invoice.id} size={64} showLabel={false} />
               <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
                 Scan the QR code for details
               </p>
