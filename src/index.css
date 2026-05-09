@@ -313,6 +313,13 @@
     visibility: hidden !important;
   }
 
+  /* Collapse all body subtrees so they cannot push extra pages */
+  body > * {
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+
   /* Show only the invoice print area and its descendants */
   .invoice-print-area,
   .invoice-print-area * {
