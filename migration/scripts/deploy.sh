@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================
 # SM Elite Hajj Invoice - Secure Deploy Script
-# LOCKED: port 3003, db port 5440, db sm_elite_hajj
+# LOCKED: port 3012, db port 5440, db sm_elite_hajj
 # ============================================
 
 set -e
@@ -12,6 +12,17 @@ PM2_APP_NAME="smelitehajj-api"
 LOCKED_PORT=3012
 LOCKED_DB_PORT=5440
 LOCKED_DB_NAME="sm_elite_hajj"
+
+ensure_env_value() {
+    local key="$1"
+    local value="$2"
+
+    if grep -q "^${key}=" .env; then
+        sed -i "s|^${key}=.*|${key}=${value}|" .env
+    else
+        printf '\n%s=%s\n' "$key" "$value" >> .env
+    fi
+}
 
 echo "============================================"
 echo "  SM Elite Hajj Invoice - Secure Deployment"
@@ -66,15 +77,15 @@ CURRENT_JWT=$(grep -E "^JWT_SECRET=" .env | cut -d= -f2-)
 
 if [ "$CURRENT_PORT" != "$LOCKED_PORT" ]; then
     echo "Fixing PORT in .env -> ${LOCKED_PORT}"
-    sed -i "s/^PORT=.*/PORT=${LOCKED_PORT}/" .env
+    ensure_env_value "PORT" "$LOCKED_PORT"
 fi
 if [ "$CURRENT_DB_PORT" != "$LOCKED_DB_PORT" ]; then
     echo "Fixing DB_PORT in .env -> ${LOCKED_DB_PORT}"
-    sed -i "s/^DB_PORT=.*/DB_PORT=${LOCKED_DB_PORT}/" .env
+    ensure_env_value "DB_PORT" "$LOCKED_DB_PORT"
 fi
 if [ "$CURRENT_DB_NAME" != "$LOCKED_DB_NAME" ]; then
     echo "Fixing DB_NAME in .env -> ${LOCKED_DB_NAME}"
-    sed -i "s/^DB_NAME=.*/DB_NAME=${LOCKED_DB_NAME}/" .env
+    ensure_env_value "DB_NAME" "$LOCKED_DB_NAME"
 fi
 if [ -z "$CURRENT_JWT" ] || [ "$CURRENT_JWT" = "generate-a-secure-random-string-here" ] || [ "${#CURRENT_JWT}" -lt 16 ]; then
     echo "ERROR: JWT_SECRET in .env is missing or too weak (>=16 chars required)."
