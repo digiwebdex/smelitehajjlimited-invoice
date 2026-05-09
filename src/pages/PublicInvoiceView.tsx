@@ -8,6 +8,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBranding } from "@/hooks/useBranding";
 import { ThemedInvoiceDocument } from "@/components/invoice/ThemedInvoiceDocument";
 import { renderAndDownloadInvoicePdf } from "@/lib/renderAndDownloadInvoicePdf";
+import { printInvoiceFromNode } from "@/lib/printInvoice";
 import { defaultTheme } from "@/types/theme";
 
 export default function PublicInvoiceView() {
@@ -137,22 +138,30 @@ export default function PublicInvoiceView() {
           <FileDown className="h-4 w-4 mr-2" />
           Download Invoice
         </Button>
-        <Button variant="outline" onClick={() => window.print()}>
+        <Button
+          variant="outline"
+          onClick={() => printRef.current && printInvoiceFromNode(printRef.current)}
+        >
           <Printer className="h-4 w-4 mr-2" />
           Print Invoice
         </Button>
       </div>
 
-      {/* Invoice Document - shared DOM for screen, print and PDF */}
-      <div ref={printRef} className="invoice-print-area max-w-4xl mx-auto">
-        <ThemedInvoiceDocument
-          invoice={invoiceData}
-          items={items}
-          installments={installments}
-          company={companyData}
-          theme={activeTheme}
-          branding={branding}
-        />
+      {/* On-screen preview card. Print/PDF use clean A4 templates. */}
+      <div className="max-w-4xl mx-auto">
+        <div
+          ref={printRef}
+          className="invoice-print-area bg-white rounded-xl shadow-lg overflow-hidden"
+        >
+          <ThemedInvoiceDocument
+            invoice={invoiceData}
+            items={items}
+            installments={installments}
+            company={companyData}
+            theme={activeTheme}
+            branding={branding}
+          />
+        </div>
       </div>
 
       {/* Branding Footer */}
