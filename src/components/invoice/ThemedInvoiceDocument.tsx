@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { InvoiceQRCode } from "@/components/InvoiceQRCode";
 import { ThemeSettings, defaultTheme } from "@/types/theme";
 import { BrandSettings, defaultBranding } from "@/types/branding";
@@ -68,6 +67,13 @@ interface ThemedInvoiceDocumentProps {
   pdfMode?: boolean;
 }
 
+/**
+ * Modern-minimal sans-serif invoice document.
+ * One template — used for on-screen preview, print and PDF.
+ * Layout is plain block flow: the browser/print engine paginates
+ * the item table naturally; signature + address + QR live in a
+ * single break-inside:avoid block so they always land on the last page.
+ */
 export const ThemedInvoiceDocument = ({
   invoice,
   items,
@@ -75,18 +81,15 @@ export const ThemedInvoiceDocument = ({
   company,
   theme,
   branding,
-  pdfMode = false,
 }: ThemedInvoiceDocumentProps) => {
   const t = theme || defaultTheme;
   const b = branding || defaultBranding;
 
-  const currencySymbol = "Tk ";
-  const formatCurrency = (amount: number) => {
-    return `${currencySymbol}${new Intl.NumberFormat("en-BD", {
+  const formatCurrency = (amount: number) =>
+    `Tk ${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount)}`;
-  };
 
   const formatDate = (dateString: string | undefined | null) => {
     if (!dateString) return "—";
@@ -97,19 +100,13 @@ export const ThemedInvoiceDocument = ({
     });
   };
 
-  const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case "paid":
-        return { backgroundColor: t.badge_paid_color, color: "#ffffff" };
-      case "partial":
-        return { backgroundColor: t.badge_partial_color, color: "#ffffff" };
-      case "unpaid":
-      default:
-        return { backgroundColor: t.badge_unpaid_color, color: "#ffffff" };
-    }
+  const statusStyle: Record<string, { bg: string; fg: string }> = {
+    paid: { bg: "#ecfdf5", fg: "#047857" },
+    partial: { bg: "#fffbeb", fg: "#b45309" },
+    unpaid: { bg: "#fef2f2", fg: "#b91c1c" },
   };
+  const sb = statusStyle[invoice.status] || statusStyle.unpaid;
 
-  // Use company data first, then branding as fallback
   const headerLogo = company?.logo_url || b.company_logo;
   const headerName = company?.name || b.company_name || "Company Name";
   const headerTagline = company?.tagline || b.tagline;
@@ -117,7 +114,6 @@ export const ThemedInvoiceDocument = ({
   const {
     addressLine1,
     addressLine2,
-    footerAlign,
     footerEmail,
     footerPhone,
     footerThankYou,
@@ -125,339 +121,532 @@ export const ThemedInvoiceDocument = ({
     showQR,
   } = getInvoiceFooterDetails(company, branding);
 
-  const footerAlignClass = {
-    left: "text-left items-start",
-    center: "text-center items-center",
-    right: "text-right items-end",
-  }[footerAlign];
+  const isPaidInFull = invoice.due_amount <= 0.001;
+  const wordsAmount = isPaidInFull ? invoice.total_amount : invoice.due_amount;
 
   return (
     <div
-      className={cn(
-        "bg-white shadow-lg rounded-xl p-8 print:shadow-none print:p-0 print:rounded-none",
-        pdfMode && "flex flex-col"
-      )}
-      style={pdfMode ? { minHeight: "1040px" } : undefined}
+      className="invoice-document"
+      style={{
+        backgroundColor: "#ffffff",
+        color: "#0f172a",
+        fontFamily:
+          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontSize: "11pt",
+        lineHeight: 1.5,
+        padding: "16mm 14mm",
+        boxSizing: "border-box",
+      }}
     >
-      <div className="invoice-main-content">
       {/* HEADER */}
-      <div className="flex justify-between items-start pb-4">
-        <div className="flex items-center gap-4">
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "14mm",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {headerLogo ? (
             <img
               src={headerLogo}
               alt={headerName}
-              className="w-16 h-16 rounded-full object-cover"
-              style={{ borderColor: t.primary_color, borderWidth: '2px' }}
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "9999px",
+                objectFit: "cover",
+              }}
             />
           ) : (
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
-              style={{ backgroundColor: t.primary_color, borderColor: t.primary_color, borderWidth: '2px' }}
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "9999px",
+                backgroundColor: t.primary_color,
+                color: "#ffffff",
+                fontSize: "22px",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
               {headerName?.charAt(0) || "C"}
             </div>
           )}
           <div>
-            <h2
-              className="text-xl font-bold"
-              style={{ color: t.header_text_color }}
-            >
+            <div style={{ fontSize: "16pt", fontWeight: 700, letterSpacing: "-0.01em" }}>
               {headerName}
-            </h2>
+            </div>
             {headerTagline && (
-              <p className="text-sm italic" style={{ color: t.header_text_color, opacity: 0.7 }}>
+              <div style={{ fontSize: "9pt", color: "#64748b", marginTop: "2px" }}>
                 {headerTagline}
-              </p>
+              </div>
             )}
           </div>
         </div>
-        <div className="text-right">
-          <h1
-            className="text-3xl font-bold"
-            style={{ color: t.invoice_title_color }}
+
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: "26pt",
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              color: "#0f172a",
+              lineHeight: 1,
+            }}
           >
             INVOICE
-          </h1>
-          <p className="text-orange-500 font-semibold text-lg mt-1">
+          </div>
+          <div
+            style={{
+              fontSize: "10pt",
+              color: "#64748b",
+              marginTop: "6px",
+              letterSpacing: "0.04em",
+            }}
+          >
             {invoice.invoice_number}
-          </p>
-          <div className="mt-2">
+          </div>
+          <div style={{ marginTop: "8px" }}>
             <span
-              className="inline-block text-sm font-medium rounded-full capitalize"
               style={{
-                ...getStatusBadgeStyle(invoice.status),
-                lineHeight: "26px",
-                height: "26px",
-                padding: "0 14px",
-                verticalAlign: "middle",
-                whiteSpace: "nowrap",
+                display: "inline-block",
+                backgroundColor: sb.bg,
+                color: sb.fg,
+                fontSize: "8.5pt",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
               {invoice.status}
             </span>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* BILL TO + DATES */}
-      <div
-        className="flex justify-between mt-4 pt-4"
-        style={{ borderTopWidth: '1px', borderTopColor: t.border_color }}
+      {/* META: Bill To + Date */}
+      <section
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "20mm",
+          marginBottom: "12mm",
+        }}
       >
-        <div
-          className="pl-4"
-          style={{ borderLeftWidth: '4px', borderLeftColor: t.accent_color }}
-        >
-          <p className="text-sm uppercase tracking-wide mb-2" style={{ color: t.subtotal_text_color }}>
-            Bill To
-          </p>
-          <h3 className="font-bold text-lg text-black">
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: "8pt",
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: "6px",
+            }}
+          >
+            Billed to
+          </div>
+          <div style={{ fontSize: "12pt", fontWeight: 600, color: "#0f172a" }}>
             {invoice.client_name}
-          </h3>
+          </div>
           {invoice.client_email && (
-            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
+            <div style={{ fontSize: "9.5pt", color: "#475569", marginTop: "2px" }}>
               {invoice.client_email}
-            </p>
+            </div>
           )}
           {invoice.client_phone && (
-            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
+            <div style={{ fontSize: "9.5pt", color: "#475569" }}>
               {invoice.client_phone}
-            </p>
+            </div>
           )}
           {invoice.client_address && (
-            <p className="text-sm" style={{ color: t.subtotal_text_color }}>
+            <div style={{ fontSize: "9.5pt", color: "#475569" }}>
               {invoice.client_address}
-            </p>
+            </div>
           )}
         </div>
-        <div className="text-right text-sm">
-          <p>
-            <span className="font-medium" style={{ color: t.subtotal_text_color }}>INVOICE DATE :</span>{" "}
-            <span className="font-semibold text-black">{formatDate(invoice.invoice_date)}</span>
-          </p>
+
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: "8pt",
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: "6px",
+            }}
+          >
+            Invoice date
+          </div>
+          <div style={{ fontSize: "11pt", fontWeight: 600, color: "#0f172a" }}>
+            {formatDate(invoice.invoice_date)}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* UNIFIED ITEM + SUMMARY TABLE — matches A4/PDF layout exactly */}
-      <div className="mt-4">
-        <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
-          <colgroup>
-            <col style={{ width: "50%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "18%" }} />
-            <col style={{ width: "20%" }} />
-          </colgroup>
-          <thead>
-            <tr style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
-                Description
-              </th>
-              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
-                Qty
-              </th>
-              <th className="text-left py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
-                Unit Price
-              </th>
-              <th className="text-right py-2 font-semibold uppercase tracking-wide text-xs" style={{ color: t.table_header_text }}>
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id} style={{ borderBottomWidth: '1px', borderBottomColor: t.border_color }}>
-                <td className="font-medium text-black uppercase" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
-                  {item.title || "—"}
-                </td>
-                <td className="text-left text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>{item.qty || 1}</td>
-                <td className="text-left text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
-                  {formatCurrency(item.unit_price || item.amount)}
-                </td>
-                <td className="text-right font-semibold text-black" style={{ verticalAlign: "top", paddingTop: "8px", paddingBottom: "8px" }}>
-                  {formatCurrency(item.amount)}
-                </td>
-              </tr>
-            ))}
-
-            {/* Spacer */}
-            <tr><td colSpan={4} style={{ height: "6px" }} /></tr>
-
-            {/* Subtotal */}
-            <tr>
-              <td colSpan={2} />
-              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Subtotal</td>
-              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.subtotal)}</td>
-            </tr>
-            {/* Tax */}
-            <tr>
-              <td colSpan={2} />
-              <td className="py-1.5 text-sm" style={{ color: t.subtotal_text_color }}>Tax</td>
-              <td className="py-1.5 text-right text-sm font-semibold text-black">{formatCurrency(invoice.vat_amount)}</td>
-            </tr>
-            {/* Total */}
-            <tr>
-              <td colSpan={2} />
-              <td className="py-1.5 font-bold text-black">Total</td>
-              <td className="py-1.5 text-right font-bold text-black">{formatCurrency(invoice.total_amount)}</td>
-            </tr>
-            {/* Total Paid */}
-            <tr>
-              <td colSpan={2} />
-              <td className="py-1.5 font-bold" style={{ color: t.paid_text_color }}>Total Paid</td>
-              <td className="py-1.5 text-right font-bold" style={{ color: t.paid_text_color }}>{formatCurrency(invoice.paid_amount)}</td>
-            </tr>
-            {/* Balance / Paid in Full */}
-            <tr>
-              <td colSpan={2} />
-              <td
-                colSpan={2}
+      {/* ITEM TABLE */}
+      <table
+        className="invoice-items"
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginBottom: "8mm",
+        }}
+      >
+        <colgroup>
+          <col style={{ width: "54%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "18%" }} />
+          <col style={{ width: "18%" }} />
+        </colgroup>
+        <thead>
+          <tr>
+            {["Description", "Qty", "Unit Price", "Amount"].map((h, i) => (
+              <th
+                key={h}
                 style={{
-                  backgroundColor: invoice.due_amount > 0 ? t.badge_unpaid_color : t.balance_bg_color,
-                  color: t.balance_text_color,
-                  padding: "8px 12px",
-                  fontWeight: "bold",
+                  textAlign: i >= 2 ? "right" : i === 1 ? "center" : "left",
+                  padding: "10px 4px",
+                  fontSize: "8pt",
+                  fontWeight: 600,
+                  color: "#94a3b8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  borderBottom: "1px solid #e2e8f0",
                 }}
               >
-                <div className="flex justify-between">
-                  <span>{invoice.due_amount > 0 ? "Balance" : "Paid in Full"}</span>
-                  <span>{formatCurrency(invoice.due_amount)}</span>
-                </div>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id} className="invoice-row">
+              <td
+                style={{
+                  padding: "12px 4px",
+                  fontSize: "10.5pt",
+                  color: "#0f172a",
+                  fontWeight: 500,
+                  borderBottom: "1px solid #f1f5f9",
+                }}
+              >
+                {item.title || "—"}
+              </td>
+              <td
+                style={{
+                  padding: "12px 4px",
+                  fontSize: "10.5pt",
+                  color: "#475569",
+                  textAlign: "center",
+                  borderBottom: "1px solid #f1f5f9",
+                }}
+              >
+                {item.qty || 1}
+              </td>
+              <td
+                style={{
+                  padding: "12px 4px",
+                  fontSize: "10.5pt",
+                  color: "#475569",
+                  textAlign: "right",
+                  borderBottom: "1px solid #f1f5f9",
+                }}
+              >
+                {formatCurrency(item.unit_price || item.amount)}
+              </td>
+              <td
+                style={{
+                  padding: "12px 4px",
+                  fontSize: "10.5pt",
+                  color: "#0f172a",
+                  textAlign: "right",
+                  fontWeight: 600,
+                  borderBottom: "1px solid #f1f5f9",
+                }}
+              >
+                {formatCurrency(item.amount)}
               </td>
             </tr>
-            {/* In Word */}
-            <tr>
-              <td colSpan={2} />
-              <td colSpan={2} className={cn("pt-2", "text-xs break-words leading-tight")} style={{ color: t.subtotal_text_color, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                <span className="font-semibold">In Word : </span>
-                <span>{numberToWords(invoice.due_amount > 0 ? invoice.due_amount : invoice.total_amount)} Taka Only</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
+
+      {/* TOTALS */}
+      <section
+        className="invoice-totals invoice-keep-together"
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: "10mm",
+        }}
+      >
+        <div style={{ width: "62%" }}>
+          {[
+            { label: "Subtotal", value: invoice.subtotal, muted: true },
+            { label: "Tax", value: invoice.vat_amount, muted: true },
+            { label: "Total", value: invoice.total_amount, bold: true },
+            {
+              label: "Total Paid",
+              value: invoice.paid_amount,
+              color: "#16a34a",
+            },
+          ].map((row) => (
+            <div
+              key={row.label}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "6px 0",
+                fontSize: "10.5pt",
+                color: row.color || (row.muted ? "#64748b" : "#0f172a"),
+                fontWeight: row.bold ? 700 : row.color ? 600 : 400,
+              }}
+            >
+              <span>{row.label}</span>
+              <span>{formatCurrency(row.value)}</span>
+            </div>
+          ))}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "8px",
+              padding: "12px 14px",
+              backgroundColor: isPaidInFull ? "#dcfce7" : "#0f172a",
+              color: isPaidInFull ? "#166534" : "#ffffff",
+              borderRadius: "6px",
+              fontSize: "12pt",
+              fontWeight: 700,
+              WebkitPrintColorAdjust: "exact",
+              printColorAdjust: "exact",
+            }}
+          >
+            <span>{isPaidInFull ? "Paid in Full" : "Balance Due"}</span>
+            <span>{formatCurrency(invoice.due_amount)}</span>
+          </div>
+
+          <div
+            style={{
+              marginTop: "8px",
+              fontSize: "9pt",
+              color: "#64748b",
+              wordBreak: "break-word",
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>In Word: </span>
+            {numberToWords(wordsAmount)} Taka Only
+          </div>
+        </div>
+      </section>
 
       {/* NOTES */}
       {invoice.notes && (
-        <div
-          className="mt-4 rounded-lg p-4"
-          style={{ borderWidth: '1px', borderColor: t.border_color }}
+        <section
+          className="invoice-keep-together"
+          style={{
+            marginBottom: "8mm",
+            padding: "12px 14px",
+            backgroundColor: "#f8fafc",
+            borderRadius: "6px",
+            WebkitPrintColorAdjust: "exact",
+            printColorAdjust: "exact",
+          }}
         >
-          <h4 className="font-semibold mb-3 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
-            Notes / Payment Terms
-          </h4>
-          <p className="text-sm whitespace-pre-wrap" style={{ color: t.subtotal_text_color }}>
+          <div
+            style={{
+              fontSize: "8pt",
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: "6px",
+            }}
+          >
+            Notes
+          </div>
+          <div
+            style={{
+              fontSize: "10pt",
+              color: "#334155",
+              whiteSpace: "pre-wrap",
+            }}
+          >
             {invoice.notes}
-          </p>
-        </div>
+          </div>
+        </section>
       )}
 
       {/* PAYMENT HISTORY */}
       {installments.length > 0 && (
-        <div
-          className="mt-4 rounded-lg p-4"
-          style={{ borderWidth: '1px', borderColor: t.border_color }}
+        <section
+          className="invoice-keep-together"
+          style={{ marginBottom: "10mm" }}
         >
-          <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm" style={{ color: t.primary_color }}>
+          <div
+            style={{
+              fontSize: "8pt",
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: "8px",
+            }}
+          >
             Payment History
-          </h4>
-          <div className="space-y-2">
+          </div>
+          <div>
             {installments.map((pay, idx) => (
               <div
                 key={pay.id}
-                className="flex justify-between items-center pl-4 py-1"
-                style={{ borderLeftWidth: '4px', borderLeftColor: t.border_color }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 0",
+                  borderBottom:
+                    idx === installments.length - 1 ? "none" : "1px solid #f1f5f9",
+                  fontSize: "10pt",
+                }}
               >
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-sm font-medium" style={{ color: t.primary_color }}>
-                    {formatDate(pay.paid_date)}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ color: "#0f172a", fontWeight: 600 }}>
+                    {getOrdinal(idx + 1)} Payment
                   </span>
+                  <span style={{ color: "#94a3b8" }}>·</span>
+                  <span style={{ color: "#475569" }}>{formatDate(pay.paid_date)}</span>
                   <span
-                    className="inline-block text-xs rounded-full font-medium capitalize"
                     style={{
-                      backgroundColor: "#cbd5e1",
-                      color: "#1f2937",
-                      lineHeight: "22px",
-                      height: "22px",
-                      padding: "0 12px",
-                      verticalAlign: "middle",
-                      whiteSpace: "nowrap",
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      fontSize: "8pt",
+                      fontWeight: 500,
+                      padding: "2px 8px",
+                      borderRadius: "9999px",
+                      textTransform: "capitalize",
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
                     }}
                   >
                     {pay.payment_method || "Bank Transfer"}
                   </span>
-                  <span className="text-sm" style={{ color: t.subtotal_text_color }}>
-                    — {getOrdinal(idx + 1)} Payment
-                  </span>
                 </div>
-                <div className="font-bold text-lg" style={{ color: t.accent_color }}>
+                <div style={{ color: "#16a34a", fontWeight: 700 }}>
                   {formatCurrency(pay.amount)}
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
-      </div>
 
-      {/* SIGNATURE + FOOTER wrapper pushed to bottom */}
-      <div data-pdf-footer className={cn("invoice-bottom-block mt-6", pdfMode && "mt-auto pt-2")}>
-        {/* SIGNATURE SECTION */}
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
+      {/* FOOTER BLOCK — signatures + thank-you + address + QR.
+          Single break-inside:avoid block guarantees it lands on the
+          last page only. */}
+      <footer
+        data-pdf-footer
+        className="invoice-footer-block invoice-keep-together"
+        style={{ marginTop: "auto", paddingTop: "12mm" }}
+      >
+        {/* Signatures */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "10mm",
+            marginBottom: "10mm",
+          }}
+        >
           {[
             { label: "Received by", sig: b.signature_received_by },
             { label: "Prepared by", sig: b.signature_prepared_by },
-            { label: "Authorize by", sig: b.signature_authorize_by },
+            { label: "Authorized by", sig: b.signature_authorize_by },
           ].map((item) => (
             <div key={item.label} style={{ flex: 1, textAlign: "center" }}>
-              <div style={{ height: "24px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+              <div
+                style={{
+                  height: "26px",
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  marginBottom: "4px",
+                }}
+              >
                 {item.sig && (
-                  <img src={item.sig} alt={item.label} style={{ height: "24px", objectFit: "contain" }} />
+                  <img
+                    src={item.sig}
+                    alt={item.label}
+                    style={{ height: "26px", objectFit: "contain" }}
+                  />
                 )}
               </div>
-              <div style={{ borderTop: `1px solid ${t.border_color}`, paddingTop: "4px" }}>
-                <span className="text-xs" style={{ color: t.subtotal_text_color }}>{item.label}</span>
+              <div
+                style={{
+                  borderTop: "1px solid #cbd5e1",
+                  paddingTop: "6px",
+                  fontSize: "9pt",
+                  color: "#64748b",
+                }}
+              >
+                {item.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* THANK YOU - centered below signatures */}
-        <div className="text-center mt-2">
-          <p className="text-sm" style={{ color: t.footer_text_color }}>
-            {footerThankYou}
-          </p>
+        {/* Thank-you */}
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: "10pt",
+            color: "#475569",
+            marginBottom: "8mm",
+          }}
+        >
+          {footerThankYou}
         </div>
 
-        {/* BOTTOM ROW - Address Left, QR Right */}
-        <div className="flex justify-between items-end mt-3">
-          <div className="text-xs leading-relaxed" style={{ color: t.footer_text_color }}>
-            {addressLine1 && <p>{addressLine1}</p>}
-            {addressLine2 && <p>{addressLine2}</p>}
+        {/* Address + QR */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            gap: "10mm",
+            paddingTop: "6mm",
+            borderTop: "1px solid #e2e8f0",
+          }}
+        >
+          <div style={{ fontSize: "8.5pt", color: "#64748b", lineHeight: 1.6 }}>
+            {addressLine1 && <div>{addressLine1}</div>}
+            {addressLine2 && <div>{addressLine2}</div>}
             {(footerPhone || footerEmail) && (
-              <p>
-                {footerPhone}
-                {footerPhone && footerEmail && " | "}
-                {footerEmail}
-              </p>
+              <div>
+                {[footerPhone, footerEmail].filter(Boolean).join(" · ")}
+              </div>
             )}
             {footerWebsite && (
-              <p style={{ color: t.primary_color }}>
-                <span className="font-semibold">Website : </span>{footerWebsite}
-              </p>
+              <div style={{ color: t.primary_color }}>{footerWebsite}</div>
             )}
           </div>
 
           {showQR && (
-            <div className="flex flex-col items-center">
+            <div style={{ textAlign: "center" }}>
               <InvoiceQRCode invoiceId={invoice.id} size={64} showLabel={false} />
-              <p className="text-xs mt-1" style={{ color: t.footer_text_color }}>
-                Scan the QR code for details
-              </p>
+              <div style={{ fontSize: "7pt", color: "#94a3b8", marginTop: "3px" }}>
+                Scan for details
+              </div>
             </div>
           )}
         </div>
-      </div> {/* end signature+footer wrapper */}
+      </footer>
     </div>
   );
 };
