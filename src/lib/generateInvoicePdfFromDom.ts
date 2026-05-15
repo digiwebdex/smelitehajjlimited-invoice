@@ -28,6 +28,24 @@ const getBreakpointsFromDom = (element: HTMLElement, pixelsPerMm: number): numbe
     "div",
   ];
 
+  // Atomic blocks that must NEVER be split across pages. We collect their
+  // [top, bottom] ranges and exclude any breakpoint candidate strictly
+  // inside them — the only valid splits are at their top or bottom edges.
+  const atomicNodes = element.querySelectorAll<HTMLElement>(
+    "[data-pdf-footer], .invoice-keep-together"
+  );
+  const atomicRanges: Array<[number, number]> = [];
+  atomicNodes.forEach((node) => {
+    const rect = node.getBoundingClientRect();
+    if (rect.height <= 0) return;
+    const top = rect.top - rootRect.top;
+    const bottom = rect.bottom - rootRect.top;
+    atomicRanges.push([top, bottom]);
+  });
+
+  const isInsideAtomic = (pos: number) =>
+    atomicRanges.some(([top, bottom]) => pos > top + 0.5 && pos < bottom - 0.5);
+
   const nodes = element.querySelectorAll<HTMLElement>(selectors.join(", "));
   const positions = new Set<number>([0]);
 
@@ -40,8 +58,11 @@ const getBreakpointsFromDom = (element: HTMLElement, pixelsPerMm: number): numbe
     const bottom = rect.bottom - rootRect.top;
     if (rect.height <= 0) return;
 
-    positions.add(Math.max(0, Math.round(top * pixelsPerMm) / pixelsPerMm));
-    positions.add(Math.max(0, Math.round(bottom * pixelsPerMm) / pixelsPerMm));
+    const topMm = Math.max(0, Math.round(top * pixelsPerMm) / pixelsPerMm);
+    const bottomMm = Math.max(0, Math.round(bottom * pixelsPerMm) / pixelsPerMm);
+
+    if (!isInsideAtomic(topMm)) positions.add(topMm);
+    if (!isInsideAtomic(bottomMm)) positions.add(bottomMm);
   });
 
   return Array.from(positions).sort((a, b) => a - b);
